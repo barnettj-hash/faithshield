@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-11-release-stability-v2";
+const CONTENT_VERSION = "2026-03-12-desktop-question-fallback-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -2607,7 +2607,7 @@ function usedQuestionSourcesForDifficulty(difficultyId = state.difficulty) {
 
   Object.values(state.stageActivities || {}).forEach((activity) => {
     if (!activity || !QUESTION_ACTIVITY_TYPES.has(activity.type)) return;
-    const sourceRef = normalizeSourceRef(activity.sourceRef);
+    const sourceRef = normalizeSourceRef(activity.historySourceRef || activity.sourceRef);
     if (sourceRef) used.add(sourceRef);
   });
 
@@ -2697,16 +2697,63 @@ function nextFallbackReferenceSet(era, bucket, usedSources, count) {
   return null;
 }
 
+function buildFallbackQuizOptionsByEra(correctEntry, era, optionCount) {
+  const total = Math.max(2, Math.min(4, optionCount || 3));
+  const eraOrder = Object.keys(REFERENCE_PLAN_BY_ERA);
+  const eraIndex = Math.max(0, eraOrder.indexOf(era));
+  const nearbyEras = [eraOrder[eraIndex - 1], eraOrder[eraIndex + 1]].filter(Boolean);
+  const optionPool = [];
+  const seen = new Set([correctEntry.ref]);
+
+  nearbyEras.forEach((neighbor) => {
+    (FALLBACK_REFERENCE_POOLS.quiz.byEra[neighbor] || []).forEach((entry) => {
+      if (seen.has(entry.ref)) return;
+      seen.add(entry.ref);
+      optionPool.push(entry.ref);
+    });
+  });
+
+  if (optionPool.length < total - 1) {
+    FALLBACK_REFERENCE_POOLS.quiz.all.forEach((entry) => {
+      if (entry.era === era || seen.has(entry.ref)) return;
+      seen.add(entry.ref);
+      optionPool.push(entry.ref);
+    });
+  }
+
+  return shuffled([correctEntry.ref].concat(shuffled(optionPool).slice(0, total - 1)));
+}
+
 function buildFallbackQuizActivity(meta, era, difficulty, usedSources) {
+  const variantSeed = (meta.level + meta.stage) % 3;
+
+  if (variantSeed === 1 || variantSeed === 2) {
+    const refSet = nextFallbackReferenceSet(era, "quiz", usedSources, Math.max(3, Math.min(4, difficulty.quizOptions || 3)));
+    if (refSet && refSet.length >= 3) {
+      const answerEntry = variantSeed === 1 ? refSet[0] : refSet[refSet.length - 1];
+      return {
+        type: "quiz",
+        prompt: stagePrompt(meta, variantSeed === 1
+          ? `Which reference comes earliest in ${eraStoryLabel(era)}?`
+          : `Which reference comes latest in ${eraStoryLabel(era)}?`),
+        options: shuffled(refSet.map((entry) => entry.ref)),
+        answer: answerEntry.ref,
+        sourceRef: "",
+        historySourceRef: refSet.map((entry) => entry.ref).join("; ")
+      };
+    }
+  }
+
   const ref = nextFallbackReference(era, "quiz", usedSources);
   if (!ref) return null;
 
   return {
     type: "quiz",
-    prompt: stagePrompt(meta, `In ${eraStoryLabel(era)}, which book contains ${ref.ref}?`),
-    options: buildBookOptions(ref.book, difficulty.quizOptions),
-    answer: ref.book,
-    sourceRef: ref.ref
+    prompt: stagePrompt(meta, `Which reference belongs to ${eraStoryLabel(era)}?`),
+    options: buildFallbackQuizOptionsByEra(ref, era, difficulty.quizOptions),
+    answer: ref.ref,
+    sourceRef: "",
+    historySourceRef: ref.ref
   };
 }
 
@@ -2779,6 +2826,76 @@ function buildFallbackFactActivity(meta, era, difficulty, usedSources) {
     parts: factMode.pool,
     sourceRef: fact.sourceRef
   };
+}
+
+function buildAuthoredActivityByKind(meta, era, difficulty, usedSources, kind) {
+  if (kind === "quiz") {
+    const quizSource = difficulty.id === "advanced" ? advancedQuizBank : difficulty.id === "medium" ? mediumQuizBank : quizBank;
+    const pick = pickWithoutRepeat(quizSource, era, "quiz", { usedSources, allowReuse: false });
+    if (!pick.item) return null;
+    const q = pick.item;
+    return {
+      type: "quiz",
+      prompt: stagePrompt(meta, q.prompt, pick.reuseCount),
+      options: buildQuizOptions(q, era, difficulty.quizOptions, quizSource),
+      answer: q.answer,
+      sourceRef: q.sourceRef
+    };
+  }
+
+  if (kind === "spelling") {
+    const spellingSource = difficulty.id === "advanced" ? advancedSpellingBank : difficulty.id === "medium" ? mediumSpellingBank : spellingBank;
+    const pick = pickWithoutRepeat(spellingSource, era, "spelling", { usedSources, allowReuse: false });
+    if (!pick.item) return null;
+    const s = pick.item;
+    return {
+      type: "spelling",
+      prompt: stagePrompt(meta, s.prompt, pick.reuseCount),
+      answer: s.answer,
+      sourceRef: s.sourceRef
+    };
+  }
+
+  if (kind === "order") {
+    const orderSource = difficulty.id === "advanced" ? advancedOrderBank : difficulty.id === "medium" ? mediumOrderBank : orderBank;
+    const pick = pickWithoutRepeat(orderSource, era, "order", { usedSources, allowReuse: false });
+    if (!pick.item) return null;
+    const order = pick.item;
+    return {
+      type: "order",
+      prompt: stagePrompt(meta, t("putEventsOrder"), pick.reuseCount),
+      items: order.items,
+      maxMoves: difficulty.orderMaxMoves,
+      nearShuffle: difficulty.orderNearShuffle,
+      sourceRef: order.sourceRef
+    };
+  }
+
+  if (kind === "fact") {
+    const factSource = difficulty.id === "advanced" ? advancedFactBank : difficulty.id === "medium" ? mediumFactBank : factBank;
+    const pick = pickWithoutRepeat(factSource, era, "fact", { usedSources, allowReuse: false });
+    if (!pick.item) return null;
+    const fact = pick.item;
+    const factMode = buildFactActivity(fact, era, difficulty);
+    return {
+      type: "fact",
+      prompt: stagePrompt(meta, t("buildFactOrder"), pick.reuseCount),
+      answerParts: factMode.answerParts,
+      prefilled: factMode.prefilled,
+      parts: factMode.pool,
+      sourceRef: fact.sourceRef
+    };
+  }
+
+  return null;
+}
+
+function stageKindPlan(meta, difficulty) {
+  if (meta.stage === 1) return ["quiz", "fact", "order", "spelling", "fallback-quiz", "fallback-order"];
+  if (meta.stage === 2) return ["order", "fact", "quiz", "spelling", "fallback-order", "fallback-quiz"];
+  if (meta.stage === 3) return ["fact", "quiz", "order", "spelling", "fallback-order", "fallback-quiz"];
+  if (meta.stage === 4) return ["spelling", "quiz", "fact", "order", "fallback-quiz", "fallback-order"];
+  return [];
 }
 
 function buildQuestionPoolExhaustedActivity(meta, activityKind = "question") {
@@ -3057,67 +3174,16 @@ function activityFor(meta) {
 
   let activity;
 
-  if (meta.stage === 1 || meta.stage === 4) {
-    const useSpelling = meta.stage === 4;
-
-    if (useSpelling) {
-      const spellingSource = difficulty.id === "advanced" ? advancedSpellingBank : difficulty.id === "medium" ? mediumSpellingBank : spellingBank;
-      const pick = pickWithoutRepeat(spellingSource, era, "spelling", { usedSources, allowReuse: false });
-
-      if (pick.item) {
-        const s = pick.item;
-        activity = {
-          type: "spelling",
-          prompt: stagePrompt(meta, s.prompt, pick.reuseCount),
-          answer: s.answer,
-          sourceRef: s.sourceRef
-        };
+  if (meta.stage >= 1 && meta.stage <= 4) {
+    for (const kind of stageKindPlan(meta, difficulty)) {
+      if (kind === "fallback-quiz") {
+        activity = buildFallbackQuizActivity(meta, era, difficulty, usedSources);
+      } else if (kind === "fallback-order") {
+        activity = buildFallbackOrderActivity(meta, era, difficulty, usedSources);
+      } else {
+        activity = buildAuthoredActivityByKind(meta, era, difficulty, usedSources, kind);
       }
-    } else {
-      const quizSource = difficulty.id === "advanced" ? advancedQuizBank : difficulty.id === "medium" ? mediumQuizBank : quizBank;
-      const pick = pickWithoutRepeat(quizSource, era, "quiz", { usedSources, allowReuse: false });
-
-      if (pick.item) {
-        const q = pick.item;
-        activity = {
-          type: "quiz",
-          prompt: stagePrompt(meta, q.prompt, pick.reuseCount),
-          options: buildQuizOptions(q, era, difficulty.quizOptions, quizSource),
-          answer: q.answer,
-          sourceRef: q.sourceRef
-        };
-      }
-    }
-  } else if (meta.stage === 2) {
-    const orderSource = difficulty.id === "advanced" ? advancedOrderBank : difficulty.id === "medium" ? mediumOrderBank : orderBank;
-    const pick = pickWithoutRepeat(orderSource, era, "order", { usedSources, allowReuse: false });
-
-    if (pick.item) {
-      const order = pick.item;
-      activity = {
-        type: "order",
-        prompt: stagePrompt(meta, t("putEventsOrder"), pick.reuseCount),
-        items: order.items,
-        maxMoves: difficulty.orderMaxMoves,
-        nearShuffle: difficulty.orderNearShuffle,
-        sourceRef: order.sourceRef
-      };
-    }
-  } else if (meta.stage === 3) {
-    const factSource = difficulty.id === "advanced" ? advancedFactBank : difficulty.id === "medium" ? mediumFactBank : factBank;
-    const pick = pickWithoutRepeat(factSource, era, "fact", { usedSources, allowReuse: false });
-
-    if (pick.item) {
-      const fact = pick.item;
-      const factMode = buildFactActivity(fact, era, difficulty);
-      activity = {
-        type: "fact",
-        prompt: stagePrompt(meta, t("buildFactOrder"), pick.reuseCount),
-        answerParts: factMode.answerParts,
-        prefilled: factMode.prefilled,
-        parts: factMode.pool,
-        sourceRef: fact.sourceRef
-      };
+      if (activity) break;
     }
   } else {
     const mode = modeForLevel(meta.level, difficulty);
@@ -3129,10 +3195,9 @@ function activityFor(meta) {
   }
 
   if (!activity) {
-    const exhaustedStage4Spelling = meta.stage === 4 && (meta.level % 3 === 0 || (difficulty.id === "advanced" && meta.level % 2 === 0));
     const exhaustedType = meta.stage === 2
       ? "order"
-      : (meta.stage === 3 ? "fact" : (exhaustedStage4Spelling ? "spelling" : "quiz"));
+      : (meta.stage === 3 ? "fact" : (meta.stage === 4 ? "spelling" : "quiz"));
     activity = buildQuestionPoolExhaustedActivity(meta, exhaustedType);
   }
 
@@ -4664,7 +4729,7 @@ function renderQuiz(meta, activity) {
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
   const hint = createChallengeHint("Keyboard: press 1-4 to choose an answer, then Enter to submit.");
-  const source = renderSourceVerse(activity.sourceRef);
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
   const optionsWrap = document.createElement("div");
   optionsWrap.className = "quiz-options";
   const feedback = document.createElement("p");
@@ -4767,7 +4832,7 @@ function renderQuiz(meta, activity) {
     window.removeEventListener("keydown", onKey);
   };
 
-  if (shouldShowQuestionSource()) {
+  if (shouldShowQuestionSource() && source) {
     activityPanel.append(header, prompt, hint, source, optionsWrap, submit, feedback);
   } else {
     activityPanel.append(header, prompt, hint, optionsWrap, submit, feedback);
@@ -4780,7 +4845,7 @@ function renderSpelling(meta, activity) {
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
   const hint = createChallengeHint("Keyboard: type your answer and press Enter.");
-  const source = renderSourceVerse(activity.sourceRef);
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
 
   const input = document.createElement("input");
   input.className = "answer-input";
@@ -4840,7 +4905,7 @@ function renderSpelling(meta, activity) {
   });
   activeCleanup = null;
 
-  if (shouldShowQuestionSource()) {
+  if (shouldShowQuestionSource() && source) {
     activityPanel.append(header, prompt, hint, source, input, submit, feedback);
   } else {
     activityPanel.append(header, prompt, hint, input, submit, feedback);
@@ -4854,7 +4919,7 @@ function renderOrder(meta, activity) {
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
   const hint = createChallengeHint("Keyboard: Up/Down selects a line, Shift+Up/Down moves it, Enter checks, U undoes, and R resets.");
-  const source = renderSourceVerse(activity.sourceRef);
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
   const listWrap = document.createElement("div");
   listWrap.className = "order-list";
   const status = document.createElement("p");
@@ -5034,7 +5099,7 @@ function renderFact(meta, activity) {
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
   const hint = createChallengeHint("Keyboard: Enter checks, U undoes, and R resets the phrase builder.");
-  const source = renderSourceVerse(activity.sourceRef);
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
 
   let pool = activity.parts.slice();
   const chosen = activity.prefilled ? activity.prefilled.slice() : [];
@@ -5195,7 +5260,7 @@ function renderInteractive(meta, mode, sourceRef) {
   const header = renderHeader(meta);
   const prompt = document.createElement("p");
   prompt.textContent = `${mode.label} (${currentDifficulty().label}): ${t("challengePrompt")}`;
-  const source = renderSourceVerse(sourceRef || meta.theme.sourceRef);
+  const source = sourceRef ? renderSourceVerse(sourceRef) : null;
   const feedback = document.createElement("p");
   feedback.className = "feedback";
 
