@@ -1,0 +1,17 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Roman Shield">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#c5912f"/>
+      <stop offset="100%" stop-color="#8e5e14"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b3312b"/>
+      <stop offset="100%" stop-color="#7f1f1a"/>
+    </linearGradient>
+  </defs>
+  <path d="M256 24c-73 44-146 50-204 52v186c0 132 85 191 204 226 119-35 204-94 204-226V76c-58-2-131-8-204-52z" fill="url(#g1)"/>
+  <path d="M256 60c-57 31-113 37-165 39v161c0 104 63 153 165 186 102-33 165-82 165-186V99c-52-2-108-8-165-39z" fill="url(#g2)"/>
+  <circle cx="256" cy="256" r="72" fill="#cf9f3f" stroke="#7b4b12" stroke-width="14"/>
+  <path d="M256 116v280M116 256h280" stroke="#cf9f3f" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="20" fill="#7b4b12"/>
+</svg>

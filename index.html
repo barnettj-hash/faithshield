@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <title>FAITHSHIELD | Bible Adventure</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/faith-shield.svg" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
+    <main class="app">
+      <header class="hero">
+        <img class="logo" src="./assets/stage-art.png" alt="FAITHSHIELD Roman shield icon" onerror="if(this.dataset.f1){this.src=this.dataset.f1;this.dataset.f1='';}else if(this.dataset.f2){this.src=this.dataset.f2;this.dataset.f2='';}else if(this.dataset.f3){this.src=this.dataset.f3;this.dataset.f3='';}else{this.onerror=null;}" data-f1="./stage-art.png" data-f2="./assets/faith-shield.svg" data-f3="./faith-shield.svg" />
+        <div>
+          <p id="heroEyebrow" class="eyebrow">Interactive Bible Learning</p>
+          <h1>FAITHSHIELD</h1>
+          <p id="heroMission" class="mission">
+            Faith begins at God's Word. Build a stronger faith through deeper knowledge of God's Word. This is your goal now: accept the challenge.
+          </p>
+          <p id="heroSubtitle" class="subtitle">
+            Journey from <strong>Genesis</strong> to <strong>David</strong> across 100 levels. Questions remix each run with skill-based challenges.
+          </p>
+        </div>
+      </header>
+
+      <section class="progress-wrap">
+        <div class="progress-label-row">
+          <p id="progressText">Progress: 0/500 stages | 0/100 levels</p>
+          <button id="resetBtn" class="ghost-btn" type="button">Reset Progress</button>
+        </div>
+        <div class="progress-bar">
+          <span id="progressFill"></span>
+        </div>
+        <div class="hud-grid">
+          <p id="xpText" class="hud-pill">XP: 0</p>
+          <p id="livesText" class="hud-pill">Lives: 5</p>
+          <p id="badgeText" class="hud-pill">Badges: 0/40</p>
+          <p id="dailyStrikeText" class="hud-pill">Daily Strike: 0</p>
+          <button id="restoreLivesBtn" class="ghost-btn" type="button">Restore Lives</button>
+          <button id="dailyStrikeBtn" class="ghost-btn" type="button">Claim Daily Strike</button>
+          <button id="musicToggleBtn" class="ghost-btn" type="button">Music: On</button>
+          <button id="musicVolumeBtn" class="ghost-btn" type="button">Music Volume: Medium</button>
+          <button id="musicStyleBtn" class="ghost-btn" type="button">Music Style: Cinematic</button>
+          <button id="sfxToggleBtn" class="ghost-btn" type="button">SFX: On</button>
+          <button id="openBadgeShieldBtn" class="ghost-btn badge-shield-btn" type="button">Badge Shield (0/40)</button>
+          <div class="language-wrap" role="group" aria-label="Game language">
+            <span id="languageLabel" class="difficulty-label">Language</span>
+            <select id="languageSelect" class="language-select" aria-label="Language">
+              <option value="en">English</option>
+              <option value="es">Spanish</option>
+              <option value="vi">Vietnamese</option>
+              <option value="zh">Chinese</option>
+              <option value="de">German</option>
+            </select>
+          </div>
+          <div class="difficulty-wrap"
+ role="group" aria-label="Game difficulty">
+            <span id="difficultyLabel" class="difficulty-label">Difficulty</span>
+            <div class="difficulty-picker">
+              <button id="difficultyEasyBtn" data-difficulty="easy" class="ghost-btn difficulty-btn" type="button" aria-pressed="false">Easy</button>
+              <button id="difficultyMediumBtn" data-difficulty="medium" class="ghost-btn difficulty-btn" type="button" aria-pressed="true">Medium</button>
+              <button id="difficultyAdvancedBtn" data-difficulty="advanced" class="ghost-btn difficulty-btn" type="button" aria-pressed="false">Advanced</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="daily-word-card" aria-live="polite">
+        <h2 id="dailyThoughtHeading">Bible Thought For Today</h2>
+        <p id="dailyThoughtRef" class="meta">Romans 10:17 (WEB)</p>
+        <p id="dailyThoughtText" class="daily-thought">Faith comes by hearing, and hearing by the word of God.</p>
+        <p id="dailyPracticalText" class="daily-practical">Practical point: Set a daily time to read Scripture and apply one truth today.</p>
+      </section>
+
+
+<section class="feature-card" aria-live="polite">
+  <div class="feature-head">
+    <h2 id="todayPlanHeading">Today's Plan</h2>
+    <p id="todayPlanProgress" class="meta">0/4 completed</p>
+  </div>
+  <div id="todayPlanChecklist" class="plan-list"></div>
+</section>
+
+<section class="feature-grid">
+  <article class="feature-card">
+    <div class="feature-head">
+      <h2 id="streakHeading">Streak Shield</h2>
+      <button id="graceDayBtn" class="ghost-btn" type="button">Use Faith Day</button>
+    </div>
+    <p id="streakStatsText" class="meta">Current streak: 0 | Best streak: 0 | Faith days: 1</p>
+    <p id="streakNoteText" class="meta">Streak is active. Keep showing up daily.</p>
+  </article>
+</section>
+
+<section class="feature-grid">
+  <article class="feature-card">
+    <div class="feature-head">
+      <h2 id="memoryHeading">Memory Verse Trainer</h2>
+    </div>
+    <p id="memoryVerseRef" class="meta">Romans 10:17 (WEB)</p>
+    <p id="memoryVerseText" class="memory-verse">So faith comes by hearing, and hearing by the word of God.</p>
+    <p id="memoryPromptLabel" class="meta">Type the verse from memory:</p>
+    <input id="memoryInput" class="answer-input" type="text" autocomplete="off" spellcheck="false" />
+    <p id="memoryResultText" class="meta">Accuracy: 0%</p>
+    <div class="feature-actions">
+      <button id="previousVerseBtn" class="ghost-btn" type="button">Previous Verse</button>
+      <button id="revealVerseBtn" class="ghost-btn" type="button">Reveal Verse</button>
+      <button id="checkVerseBtn" class="cta-btn" type="button">Check Recall</button>
+      <button id="nextVerseBtn" class="ghost-btn" type="button">Next Verse</button>
+    </div>
+  </article>
+
+  <article class="feature-card">
+    <div class="feature-head">
+      <h2 id="journalHeading">Reflection Journal</h2>
+    </div>
+    <label id="moodLabel" class="meta" for="journalMoodSelect">Mood</label>
+    <select id="journalMoodSelect" class="language-select" aria-label="Mood">
+      <option value="focused">Focused</option>
+      <option value="joyful">Joyful</option>
+      <option value="tired">Tired</option>
+      <option value="burdened">Burdened</option>
+      <option value="hopeful">Hopeful</option>
+    </select>
+    <textarea id="reflectionInput" class="journal-input" rows="4" placeholder="What did God teach you today, and what action will you take?"></textarea>
+    <label id="practicalActionLabel" class="meta" for="practicalActionInput">Practical action</label>
+    <input id="practicalActionInput" class="answer-input" type="text" autocomplete="off" />
+    <button id="saveJournalBtn" class="cta-btn" type="button">Save Reflection</button>
+    <p id="journalStatusText" class="meta"></p>
+    <h3 id="recentReflectionsHeading">Recent reflections</h3>
+    <div id="journalList" class="journal-list"></div>
+  </article>
+</section>
+
+<section class="feature-grid">
+  <article class="feature-card">
+    <div class="feature-head">
+      <h2 id="accessibilityHeading">Accessibility</h2>
+    </div>
+    <div class="toggle-list">
+      <label class="toggle-row" for="largeTextToggle"><input id="largeTextToggle" type="checkbox" /> <span id="accessibilityLargeText">Larger text</span></label>
+      <label class="toggle-row" for="highContrastToggle"><input id="highContrastToggle" type="checkbox" /> <span id="accessibilityContrast">High contrast</span></label>
+      <label class="toggle-row" for="reducedMotionToggle"><input id="reducedMotionToggle" type="checkbox" /> <span id="accessibilityReducedMotion">Reduced motion</span></label>
+      <label class="toggle-row" for="readableFontToggle"><input id="readableFontToggle" type="checkbox" /> <span id="accessibilityReadableFont">Readable font</span></label>
+    </div>
+  </article>
+</section>
+
+      <section>
+        <h2 id="storyPathHeading">Story Path</h2>
+        <div id="stageGrid" class="stage-list"></div>
+      </section>
+
+      <section class="badge-section">
+        <div class="badge-head">
+          <h2 id="badgeCollectionHeading">Badge Collection</h2>
+          <button id="shareLatestBadgeBtn" class="ghost-btn" type="button">Share Latest Badge</button>
+        </div>
+        <p id="badgeHelper" class="meta">Complete stages to earn Bible-symbol badges.</p>
+        <div id="badgeGrid" class="badge-grid"></div>
+      </section>
+
+      <div id="activityOverlay" class="activity-overlay hidden" aria-live="polite" role="dialog" aria-modal="true">
+        <div class="activity-shell">
+          <div class="activity-shell-head">
+            <h3>Challenge</h3>
+            <button id="closeActivityBtn" class="ghost-btn" type="button">Close</button>
+          </div>
+          <section id="activityPanel" class="activity-panel"></section>
+        </div>
+      </div>
+
+      <div id="welcomeOverlay" class="welcome-overlay hidden" aria-live="polite" role="dialog" aria-modal="true">
+        <div class="welcome-card">
+          <p class="eyebrow">Welcome</p>
+          <h2>Faith begins at God's Word.</h2>
+          <p>Build a stronger faith through deeper knowledge of God's Word. This is your goal now: accept the challenge.</p>
+          <button id="acceptChallengeBtn" class="cta-btn" type="button">Accept the Challenge</button>
+        </div>
+      </div>
+
+      <div id="shareOverlay" class="welcome-overlay hidden" aria-live="polite" role="dialog" aria-modal="true">
+        <div class="welcome-card share-card">
+          <p class="eyebrow">Share Badge</p>
+          <h2 id="shareBadgeTitle">Share your accomplishment</h2>
+          <p id="shareBadgeText"></p>
+          <div class="share-actions">
+            <button id="shareByTextBtn" class="ghost-btn" type="button">Text Message</button>
+            <button id="shareByEmailBtn" class="ghost-btn" type="button">Email</button>
+            <button id="shareBySocialBtn" class="ghost-btn" type="button">Social Media</button>
+            <button id="copyShareTextBtn" class="ghost-btn" type="button">Copy Text</button>
+          </div>
+          <button id="closeShareBtn" class="cta-btn" type="button">Close</button>
+        </div>
+      </div>
+
+      <div id="badgeShieldOverlay" class="welcome-overlay hidden" aria-live="polite" role="dialog" aria-modal="true">
+        <div class="welcome-card shield-card">
+          <div class="badge-head">
+            <div>
+              <p class="eyebrow">Badge Shield</p>
+              <h2>Your Shield of Progress</h2>
+            </div>
+            <button id="closeBadgeShieldBtn" class="ghost-btn" type="button">Close</button>
+          </div>
+          <p id="badgeShieldProgress" class="meta">0/40 badges earned</p>
+          <p class="meta difficulty-badge-caption">Special difficulty badges</p>
+          <div id="difficultyBadgeRow" class="difficulty-badge-row" aria-label="Difficulty mastery badges"></div>
+          <div class="badge-shield-shell" aria-label="Badge shield">
+            <div id="badgeShieldGrid" class="badge-shield-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="finalOverlay"
+ class="welcome-overlay hidden" aria-live="polite" role="dialog" aria-modal="true">
+        <div class="welcome-card final-card">
+          <p class="eyebrow">Quest Complete</p>
+          <h2 id="finalHeading">Congratulations, Faith Player!</h2>
+          <p id="finalMessage">
+            Your time was not wasted in building your faith. The quest is not over. You have built only one-fourth of
+            your shield. The story continues, and the journey awaits.
+          </p>
+          <div class="certificate-shell" role="group" aria-label="Certificate of completion">
+            <p class="certificate-title">Certificate of Completion</p>
+            <p class="certificate-name" id="certificateName">Faith Player</p>
+            <p class="certificate-line">has completed the FAITHSHIELD Genesis-to-David journey and earned the Shield of Faith.</p>
+            <p class="certificate-date" id="certificateDate"></p>
+          </div>
+          <div class="final-actions">
+            <button id="startOverFinalBtn" class="cta-btn" type="button">Start Over</button>
+            <button id="openCreditsBtn" class="ghost-btn" type="button">Roll Ending Credits</button>
+            <button id="closeFinalBtn" class="ghost-btn" type="button">Keep Exploring</button>
+          </div>
+        </div>
+      </div>
+      <div id="creditsOverlay" class="welcome-overlay hidden" aria-live="polite" role="dialog" aria-modal="true">
+        <div class="welcome-card credits-card">
+          <p class="eyebrow">Movie Ending</p>
+          <h2>FAITHSHIELD Credits</h2>
+          <div class="credits-stage" aria-label="Scrolling ending credits">
+            <div id="creditsCrawlTrack" class="credits-crawl-track">
+              <p class="credits-line">Directed by Josh Barnett</p>
+              <p class="credits-line">Produced by Josh Barnett</p>
+              <p class="credits-line">Developer Josh Barnett</p>
+              <p class="credits-line">Sound Editing Josh Barnett</p>
+              <p class="credits-line">Information God's Holy Word.</p>
+              <p class="credits-line credits-story">The Story Continues.</p>
+            </div>
+          </div>
+          <div class="final-actions">
+            <button id="replayCreditsBtn" class="ghost-btn" type="button">Replay Credits</button>
+            <button id="closeCreditsBtn" class="ghost-btn" type="button">Back to Game</button>
+            <button id="startOverCreditsBtn" class="cta-btn" type="button">Start Over</button>
+          </div>
+        </div>
+      </div>
+      <div id="storyTheaterOverlay" class="welcome-overlay hidden" aria-live="polite" role="dialog" aria-modal="true">
+        <div class="welcome-card theater-card">
+          <div class="badge-head">
+            <div>
+              <p class="eyebrow">Story Theater</p>
+              <h2 id="storyTheaterTitle">Bible Event Preview</h2>
+            </div>
+            <button id="closeStoryTheaterBtn" class="ghost-btn" type="button">Close</button>
+          </div>
+          <video id="storyTheaterVideo" class="story-theater-video" controls playsinline preload="metadata" poster="./assets/stage-art.png">
+            Your browser does not support the video tag.
+          </video>
+          <p id="storyTheaterNote" class="meta">Tip: these videos are separate from the challenge questions and never locked.</p>
+        </div>
+      </div>
+
+    </main>
+    <script src="./app.js"></script>
+    <script src="./faith-enhancements.js"></script>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-label="Mercy in Cycles poster art">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a2740" />
+      <stop offset="52%" stop-color="#394f67" />
+      <stop offset="100%" stop-color="#7a553c" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.72" cy="0.24" r="0.8">
+      <stop offset="0%" stop-color="#ffe2a0" stop-opacity="0.36" />
+      <stop offset="100%" stop-color="#ffe2a0" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="grain" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="transparent"/>
+      <circle cx="1" cy="1" r="0.55" fill="#fff" opacity="0.06"/>
+      <circle cx="6" cy="4" r="0.45" fill="#fff" opacity="0.04"/>
+      <circle cx="3" cy="7" r="0.5" fill="#fff" opacity="0.03"/>
+    </pattern>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+  <rect width="1920" height="1080" fill="url(#grain)" opacity="0.42"/>
+
+  <g opacity="0.17" stroke="#f4d28e" stroke-width="2" fill="none">
+    <path d="M120 920 C 520 700, 980 700, 1800 900"/>
+    <path d="M80 980 C 620 760, 1220 760, 1860 980"/>
+  </g>
+
+  <rect x="124" y="104" width="1672" height="872" rx="42" fill="rgba(11,16,24,0.18)" stroke="#e8c57a" stroke-opacity="0.62" stroke-width="3"/>
+
+  <text x="170" y="220" fill="#f0cb82" font-family="Georgia, 'Times New Roman', serif" font-size="54" font-weight="700" letter-spacing="3">FAITHSHIELD</text>
+  <text x="170" y="320" fill="#fff0c8" font-family="Georgia, 'Times New Roman', serif" font-size="120" font-weight="700">Mercy in Cycles</text>
+  <text x="170" y="390" fill="#f7ddb0" font-family="Avenir Next, Trebuchet MS, sans-serif" font-size="48" font-weight="700">God raises help again and again</text>
+
+  <rect x="170" y="462" width="1260" height="132" rx="20" fill="rgba(9,14,22,0.45)" stroke="#f0cd87" stroke-opacity="0.45"/>
+  <text x="206" y="535" fill="#ffe5b2" font-family="Avenir Next, Trebuchet MS, sans-serif" font-size="44" font-weight="600">Faith grows by hearing the Word of God.</text>
+
+  <rect x="170" y="642" width="560" height="86" rx="43" fill="rgba(4,8,13,0.58)" stroke="#f0cd87" stroke-opacity="0.58"/>
+  <text x="214" y="698" fill="#ffe4ad" font-family="Avenir Next, Trebuchet MS, sans-serif" font-size="42" font-weight="700">Source: Judges 2:16-19</text>
+
+  <circle cx="1602" cy="298" r="154" fill="rgba(255,223,162,0.12)" stroke="#f4cf87" stroke-opacity="0.5"/>
+  <path d="M1602 188 L1668 286 L1602 426 L1536 286 Z" fill="rgba(255,235,190,0.26)" stroke="#f5d08a" stroke-opacity="0.72"/>
+</svg>
