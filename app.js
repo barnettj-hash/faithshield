@@ -984,6 +984,7 @@ let lastStageGridRenderKey = "";
 let stageGridRenderDelayTimer = 0;
 let hasRenderedStageGridOnce = false;
 let pendingStageFocusId = null;
+let pendingHubReturnTargetId = null;
 let lastPersistFingerprint = "";
 const runtimePerformance = {
   reducedMotionQuery: null,
@@ -1176,6 +1177,8 @@ state.stats = {
 };
 
 const stageGrid = document.getElementById("stageGrid");
+const gameDashboard = document.getElementById("gameDashboard");
+const storyPathHeading = document.getElementById("storyPathHeading");
 const activityOverlay = document.getElementById("activityOverlay");
 const activityPanel = document.getElementById("activityPanel");
 const closeActivityBtn = document.getElementById("closeActivityBtn");
@@ -2397,12 +2400,16 @@ function dismissWelcome() {
 
 function closeActivity() {
   clearActiveChallenge();
+  if (document.activeElement && typeof document.activeElement.blur === "function") {
+    document.activeElement.blur();
+  }
   state.activeStage = null;
   persist();
   activityPanel.innerHTML = "";
   activityOverlay.classList.add("hidden");
   trimPreloadedMediaCaches();
   updateOverlayLock();
+  flushQueuedHubReturn();
 
   updateAudioState();
 }
@@ -2411,6 +2418,38 @@ function queueStageAutoClose(stageId, delayMs = 850) {
   window.setTimeout(() => {
     if (state.activeStage === stageId) closeActivity();
   }, delayMs);
+}
+
+function isDesktopViewport() {
+  return currentViewportWidth() >= 980;
+}
+
+function queueHubReturn(targetId = "storyPathHeading") {
+  pendingHubReturnTargetId = targetId;
+}
+
+function flushQueuedHubReturn() {
+  const targetId = pendingHubReturnTargetId;
+  pendingHubReturnTargetId = null;
+  if (!targetId || !isDesktopViewport()) return;
+
+  const target = document.getElementById(targetId)
+    || storyPathHeading
+    || gameDashboard
+    || document.querySelector(".progress-wrap");
+  if (!target) return;
+
+  window.requestAnimationFrame(() => {
+    target.scrollIntoView({ block: "start", inline: "nearest", behavior: "smooth" });
+  });
+}
+
+function completeStage(meta, mode, options = {}) {
+  if (options.returnTarget !== false) {
+    queueHubReturn(options.returnTarget || "storyPathHeading");
+  }
+  markDone(meta.id, mode);
+  queueStageAutoClose(meta.id, options.delayMs || 850);
 }
 
 function maybeAwardBadges() {
@@ -2755,9 +2794,42 @@ function buildQuestionPoolExhaustedActivity(meta, activityKind = "question") {
     type: "exhausted",
     sourceRef: meta.theme.sourceRef,
     prompt: stagePrompt(meta, `This ${kindLabel} pool is exhausted for now.`),
-    message: "No-repeat mode is on, and all available items for this category have been used.",
-    detail: "Try another stage type, switch eras, or reset progress to refresh the question pool."
+    message: "Desktop no-repeat mode keeps these questions authored only, and all available items for this category have been used.",
+    detail: "Try another stage type, switch eras, or reset progress if you want a fresh question pool."
   };
+}
+
+function createChallengeHint(text) {
+  const hint = document.createElement("p");
+  hint.className = "challenge-hint";
+  hint.textContent = text;
+  return hint;
+}
+
+function createSkillStatus(text) {
+  const status = document.createElement("p");
+  status.className = "skill-status";
+  status.textContent = text;
+  return status;
+}
+
+function drawRoundedRect(context, x, y, width, height, radius, fillStyle, strokeStyle = null) {
+  const safeRadius = Math.max(0, Math.min(radius, width / 2, height / 2));
+  context.beginPath();
+  context.moveTo(x + safeRadius, y);
+  context.arcTo(x + width, y, x + width, y + height, safeRadius);
+  context.arcTo(x + width, y + height, x, y + height, safeRadius);
+  context.arcTo(x, y + height, x, y, safeRadius);
+  context.arcTo(x, y, x + width, y, safeRadius);
+  context.closePath();
+  if (fillStyle) {
+    context.fillStyle = fillStyle;
+    context.fill();
+  }
+  if (strokeStyle) {
+    context.strokeStyle = strokeStyle;
+    context.stroke();
+  }
 }
 
 function historyRecordFor(key) {
@@ -2986,7 +3058,7 @@ function activityFor(meta) {
   let activity;
 
   if (meta.stage === 1 || meta.stage === 4) {
-    const useSpelling = meta.stage === 4 && (meta.level % 3 === 0 || (difficulty.id === "advanced" && meta.level % 2 === 0));
+    const useSpelling = meta.stage === 4;
 
     if (useSpelling) {
       const spellingSource = difficulty.id === "advanced" ? advancedSpellingBank : difficulty.id === "medium" ? mediumSpellingBank : spellingBank;
@@ -3000,8 +3072,6 @@ function activityFor(meta) {
           answer: s.answer,
           sourceRef: s.sourceRef
         };
-      } else {
-        activity = buildFallbackSpellingActivity(meta, era, difficulty, usedSources);
       }
     } else {
       const quizSource = difficulty.id === "advanced" ? advancedQuizBank : difficulty.id === "medium" ? mediumQuizBank : quizBank;
@@ -3016,8 +3086,6 @@ function activityFor(meta) {
           answer: q.answer,
           sourceRef: q.sourceRef
         };
-      } else {
-        activity = buildFallbackQuizActivity(meta, era, difficulty, usedSources);
       }
     }
   } else if (meta.stage === 2) {
@@ -3034,8 +3102,6 @@ function activityFor(meta) {
         nearShuffle: difficulty.orderNearShuffle,
         sourceRef: order.sourceRef
       };
-    } else {
-      activity = buildFallbackOrderActivity(meta, era, difficulty, usedSources);
     }
   } else if (meta.stage === 3) {
     const factSource = difficulty.id === "advanced" ? advancedFactBank : difficulty.id === "medium" ? mediumFactBank : factBank;
@@ -3052,8 +3118,6 @@ function activityFor(meta) {
         parts: factMode.pool,
         sourceRef: fact.sourceRef
       };
-    } else {
-      activity = buildFallbackFactActivity(meta, era, difficulty, usedSources);
     }
   } else {
     const mode = modeForLevel(meta.level, difficulty);
@@ -4595,26 +4659,37 @@ function openStage(stageId) {
 
 function renderQuiz(meta, activity) {
   activityPanel.innerHTML = "";
+  let selectedIndex = -1;
   const header = renderHeader(meta);
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
+  const hint = createChallengeHint("Keyboard: press 1-4 to choose an answer, then Enter to submit.");
   const source = renderSourceVerse(activity.sourceRef);
   const optionsWrap = document.createElement("div");
   optionsWrap.className = "quiz-options";
   const feedback = document.createElement("p");
   feedback.className = "feedback";
   let selected = "";
+  const optionButtons = [];
 
-  activity.options.forEach((option) => {
+  const selectOption = (index) => {
+    if (index < 0 || index >= activity.options.length) return;
+    selectedIndex = index;
+    selected = activity.options[index];
+    optionButtons.forEach((node, nodeIndex) => {
+      node.classList.toggle("selected", nodeIndex === index);
+    });
+  };
+
+  activity.options.forEach((option, index) => {
     const btn = document.createElement("button");
     btn.className = "option-btn";
     btn.type = "button";
     btn.textContent = option;
     btn.addEventListener("click", () => {
-      selected = option;
-      [...optionsWrap.children].forEach((node) => node.classList.remove("selected"));
-      btn.classList.add("selected");
+      selectOption(index);
     });
+    optionButtons.push(btn);
     optionsWrap.appendChild(btn);
   });
 
@@ -4636,7 +4711,7 @@ function renderQuiz(meta, activity) {
     }
 
     const isCorrect = selected === activity.answer;
-    [...optionsWrap.children].forEach((node) => {
+    optionButtons.forEach((node) => {
       node.classList.remove("selected", "correct", "wrong");
       if (node.textContent === activity.answer) node.classList.add("correct");
       if (node.textContent === selected && !isCorrect) node.classList.add("wrong");
@@ -4646,8 +4721,7 @@ function renderQuiz(meta, activity) {
       feedback.className = "feedback ok";
       feedback.textContent = t("correctStageComplete");
       playSfx("success");
-      markDone(meta.id);
-      queueStageAutoClose(meta.id);
+      completeStage(meta);
     } else {
       const hasLives = loseLife();
       feedback.className = "feedback warn";
@@ -4657,10 +4731,46 @@ function renderQuiz(meta, activity) {
     }
   });
 
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+    if (/^[1-4]$/.test(event.key)) {
+      const index = Number(event.key) - 1;
+      if (index < optionButtons.length) {
+        event.preventDefault();
+        selectOption(index);
+      }
+      return;
+    }
+
+    if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+      event.preventDefault();
+      selectOption(Math.min(optionButtons.length - 1, selectedIndex + 1));
+      return;
+    }
+
+    if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      selectOption(Math.max(0, selectedIndex <= 0 ? 0 : selectedIndex - 1));
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submit.click();
+    }
+  };
+
+  window.addEventListener("keydown", onKey);
+  activeCleanup = () => {
+    window.removeEventListener("keydown", onKey);
+  };
+
   if (shouldShowQuestionSource()) {
-    activityPanel.append(header, prompt, source, optionsWrap, submit, feedback);
+    activityPanel.append(header, prompt, hint, source, optionsWrap, submit, feedback);
   } else {
-    activityPanel.append(header, prompt, optionsWrap, submit, feedback);
+    activityPanel.append(header, prompt, hint, optionsWrap, submit, feedback);
   }
 }
 
@@ -4669,6 +4779,7 @@ function renderSpelling(meta, activity) {
   const header = renderHeader(meta);
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
+  const hint = createChallengeHint("Keyboard: type your answer and press Enter.");
   const source = renderSourceVerse(activity.sourceRef);
 
   const input = document.createElement("input");
@@ -4727,11 +4838,12 @@ function renderSpelling(meta, activity) {
   input.addEventListener("keydown", (event) => {
     if (event.key === "Enter") checkAnswer();
   });
+  activeCleanup = null;
 
   if (shouldShowQuestionSource()) {
-    activityPanel.append(header, prompt, source, input, submit, feedback);
+    activityPanel.append(header, prompt, hint, source, input, submit, feedback);
   } else {
-    activityPanel.append(header, prompt, input, submit, feedback);
+    activityPanel.append(header, prompt, hint, input, submit, feedback);
   }
 }
 
@@ -4741,16 +4853,18 @@ function renderOrder(meta, activity) {
   const header = renderHeader(meta);
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
+  const hint = createChallengeHint("Keyboard: Up/Down selects a line, Shift+Up/Down moves it, Enter checks, U undoes, and R resets.");
   const source = renderSourceVerse(activity.sourceRef);
   const listWrap = document.createElement("div");
   listWrap.className = "order-list";
   const status = document.createElement("p");
-  status.className = "meta";
+  status.className = "skill-status";
   const feedback = document.createElement("p");
   feedback.className = "feedback";
 
   let current = activity.nearShuffle ? nearlyOrdered(activity.items) : shuffled(activity.items);
   let moves = 0;
+  let selectedIndex = 0;
 
   const updateStatus = () => {
     status.textContent = `${t("movesLabel")}: ${moves}/${activity.maxMoves}`;
@@ -4761,6 +4875,12 @@ function renderOrder(meta, activity) {
     current.forEach((item, idx) => {
       const row = document.createElement("div");
       row.className = "order-item";
+      row.tabIndex = 0;
+      row.classList.toggle("selected", idx === selectedIndex);
+      row.addEventListener("click", () => {
+        selectedIndex = idx;
+        redraw();
+      });
 
       const text = document.createElement("span");
       text.textContent = `${idx + 1}. ${item}`;
@@ -4774,8 +4894,10 @@ function renderOrder(meta, activity) {
       up.textContent = "↑";
       up.disabled = idx === 0;
       up.addEventListener("click", () => {
+        selectedIndex = idx;
         [current[idx], current[idx - 1]] = [current[idx - 1], current[idx]];
         moves += 1;
+        selectedIndex = Math.max(0, idx - 1);
         updateStatus();
         redraw();
       });
@@ -4786,8 +4908,10 @@ function renderOrder(meta, activity) {
       down.textContent = "↓";
       down.disabled = idx === current.length - 1;
       down.addEventListener("click", () => {
+        selectedIndex = idx;
         [current[idx], current[idx + 1]] = [current[idx + 1], current[idx]];
         moves += 1;
+        selectedIndex = Math.min(current.length - 1, idx + 1);
         updateStatus();
         redraw();
       });
@@ -4828,8 +4952,7 @@ function renderOrder(meta, activity) {
       feedback.className = "feedback ok";
       feedback.textContent = t("greatSequenceComplete");
       playSfx("success");
-      markDone(meta.id);
-      queueStageAutoClose(meta.id);
+      completeStage(meta);
     } else {
       const hasLives = loseLife();
       feedback.className = "feedback warn";
@@ -4839,10 +4962,69 @@ function renderOrder(meta, activity) {
     }
   });
 
+  const moveSelected = (delta) => {
+    const nextIndex = selectedIndex + delta;
+    if (nextIndex < 0 || nextIndex >= current.length) return;
+    [current[selectedIndex], current[nextIndex]] = [current[nextIndex], current[selectedIndex]];
+    selectedIndex = nextIndex;
+    moves += 1;
+    updateStatus();
+    redraw();
+  };
+
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (event.shiftKey) {
+        moveSelected(-1);
+      } else {
+        selectedIndex = Math.max(0, selectedIndex - 1);
+        redraw();
+      }
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (event.shiftKey) {
+        moveSelected(1);
+      } else {
+        selectedIndex = Math.min(current.length - 1, selectedIndex + 1);
+        redraw();
+      }
+      return;
+    }
+
+    if (event.key === "u" || event.key === "U") {
+      event.preventDefault();
+      undo.click();
+      return;
+    }
+
+    if (event.key === "r" || event.key === "R") {
+      event.preventDefault();
+      reset.click();
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submit.click();
+    }
+  };
+
+  window.addEventListener("keydown", onKey);
+  activeCleanup = () => {
+    window.removeEventListener("keydown", onKey);
+  };
+
   if (shouldShowQuestionSource()) {
-    activityPanel.append(header, prompt, source, status, listWrap, submit, feedback);
+    activityPanel.append(header, prompt, hint, source, status, listWrap, submit, feedback);
   } else {
-    activityPanel.append(header, prompt, status, listWrap, submit, feedback);
+    activityPanel.append(header, prompt, hint, status, listWrap, submit, feedback);
   }
 }
 
@@ -4851,6 +5033,7 @@ function renderFact(meta, activity) {
   const header = renderHeader(meta);
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
+  const hint = createChallengeHint("Keyboard: Enter checks, U undoes, and R resets the phrase builder.");
   const source = renderSourceVerse(activity.sourceRef);
 
   let pool = activity.parts.slice();
@@ -4926,8 +5109,7 @@ function renderFact(meta, activity) {
       feedback.className = "feedback ok";
       feedback.textContent = t("factCompleteCleared");
       playSfx("success");
-      markDone(meta.id);
-      queueStageAutoClose(meta.id);
+      completeStage(meta);
     } else {
       const hasLives = loseLife();
       feedback.className = "feedback warn";
@@ -4937,12 +5119,39 @@ function renderFact(meta, activity) {
     }
   });
 
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+    if (event.key === "u" || event.key === "U") {
+      event.preventDefault();
+      undo.click();
+      return;
+    }
+
+    if (event.key === "r" || event.key === "R") {
+      event.preventDefault();
+      reset.click();
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submit.click();
+    }
+  };
+
+  window.addEventListener("keydown", onKey);
+  activeCleanup = () => {
+    window.removeEventListener("keydown", onKey);
+  };
+
   controls.append(undo, reset);
   draw();
   if (shouldShowQuestionSource()) {
-    activityPanel.append(header, prompt, source, buildLine, poolWrap, controls, submit, feedback);
+    activityPanel.append(header, prompt, hint, source, buildLine, poolWrap, controls, submit, feedback);
   } else {
-    activityPanel.append(header, prompt, buildLine, poolWrap, controls, submit, feedback);
+    activityPanel.append(header, prompt, hint, buildLine, poolWrap, controls, submit, feedback);
   }
 }
 
@@ -5021,15 +5230,17 @@ function renderTiming(meta, mode, feedback) {
   const wrap = document.createElement("div");
   wrap.className = "activity-panel";
   wrap.style.marginTop = "0.75rem";
+  const hint = createChallengeHint("Keyboard: press Space or Enter when the marker is inside the gold zone.");
 
-  const status = document.createElement("p");
-  status.textContent = `${t("hitsLabel")}: 0/${mode.target} | ${t("missesLabel")}: 0/${mode.maxMisses}`;
+  const status = createSkillStatus(`${t("hitsLabel")}: 0/${mode.target} | ${t("missesLabel")}: 0/${mode.maxMisses}`);
 
   const bar = document.createElement("div");
   bar.style.position = "relative";
-  bar.style.height = "28px";
+  bar.style.height = "34px";
   bar.style.borderRadius = "999px";
-  bar.style.background = "rgba(245,233,203,0.2)";
+  bar.style.background = "linear-gradient(180deg, rgba(26,34,47,0.96), rgba(14,20,29,0.96))";
+  bar.style.border = "1px solid rgba(240, 207, 147, 0.2)";
+  bar.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,0.02), 0 12px 24px rgba(4,8,12,0.22)";
   bar.style.overflow = "hidden";
   bar.style.touchAction = "manipulation";
   bar.style.cursor = "pointer";
@@ -5040,14 +5251,17 @@ function renderTiming(meta, mode, feedback) {
   zone.style.width = "16%";
   zone.style.top = "0";
   zone.style.bottom = "0";
-  zone.style.background = "rgba(213,169,72,0.5)";
+  zone.style.background = "linear-gradient(180deg, rgba(213,169,72,0.72), rgba(191,138,42,0.84))";
+  zone.style.boxShadow = "0 0 18px rgba(213,169,72,0.35)";
 
   const marker = document.createElement("div");
   marker.style.position = "absolute";
-  marker.style.width = "10px";
+  marker.style.width = "12px";
   marker.style.top = "-2px";
   marker.style.bottom = "-2px";
-  marker.style.background = "#f8f2df";
+  marker.style.background = "linear-gradient(180deg, #fff7df, #f2d18a)";
+  marker.style.borderRadius = "999px";
+  marker.style.boxShadow = "0 0 14px rgba(255, 243, 214, 0.45)";
 
   const strike = document.createElement("button");
   strike.className = "cta-btn";
@@ -5055,7 +5269,7 @@ function renderTiming(meta, mode, feedback) {
   strike.textContent = t("strikeAction");
 
   bar.append(zone, marker);
-  wrap.append(status, bar, strike);
+  wrap.append(hint, status, bar, strike);
   activityPanel.append(wrap);
 
   let hits = 0;
@@ -5101,8 +5315,7 @@ function renderTiming(meta, mode, feedback) {
       feedback.className = "feedback ok";
       feedback.textContent = t("challengeComplete");
       playSfx("success");
-      markDone(meta.id, mode);
-      queueStageAutoClose(meta.id);
+      completeStage(meta, mode);
     }
 
     if (misses >= mode.maxMisses) {
@@ -5114,19 +5327,30 @@ function renderTiming(meta, mode, feedback) {
     }
   };
 
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id) return;
+    if (event.key !== " " && event.key !== "Enter") return;
+    event.preventDefault();
+    onStrike();
+  };
+
   strike.addEventListener("click", onStrike);
   bar.addEventListener("click", onStrike);
+  window.addEventListener("keydown", onKey);
   raf = requestAnimationFrame(tick);
 
   return () => {
     running = false;
     strike.removeEventListener("click", onStrike);
     bar.removeEventListener("click", onStrike);
+    window.removeEventListener("keydown", onKey);
     cancelAnimationFrame(raf);
   };
 }
 
 function renderCollect(meta, mode, feedback) {
+  const hint = createChallengeHint("Keyboard: move with Left/Right or A/D. Mouse and trackpad movement still work too.");
+  activityPanel.append(hint);
   const canvas = document.createElement("canvas");
   canvas.className = "skill-canvas";
   canvas.width = 540;
@@ -5135,8 +5359,7 @@ function renderCollect(meta, mode, feedback) {
   activityPanel.append(canvas);
   const c = canvas.getContext("2d");
 
-  const status = document.createElement("p");
-  status.textContent = `${t("caughtLabel")}: 0/${mode.target} | ${t("missesLabel")}: 0/${mode.maxMisses} | ${t("timeLabel")}: ${mode.seconds}`;
+  const status = createSkillStatus(`${t("caughtLabel")}: 0/${mode.target} | ${t("missesLabel")}: 0/${mode.maxMisses} | ${t("timeLabel")}: ${mode.seconds}`);
   activityPanel.append(status);
 
   const player = { x: 260, y: 266, w: 72, h: 18 };
@@ -5159,8 +5382,8 @@ function renderCollect(meta, mode, feedback) {
   };
 
   const onKey = (event) => {
-    if (event.key === "ArrowLeft") player.x -= 24;
-    if (event.key === "ArrowRight") player.x += 24;
+    if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") player.x -= 24;
+    if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") player.x += 24;
     player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
   };
 
@@ -5181,13 +5404,25 @@ function renderCollect(meta, mode, feedback) {
     }
 
     c.clearRect(0, 0, canvas.width, canvas.height);
-    c.fillStyle = "#222f44";
+    const sky = c.createLinearGradient(0, 0, 0, canvas.height);
+    sky.addColorStop(0, "#203d60");
+    sky.addColorStop(0.65, "#101926");
+    sky.addColorStop(1, "#0c121a");
+    c.fillStyle = sky;
     c.fillRect(0, 0, canvas.width, canvas.height);
+    c.fillStyle = "rgba(255, 222, 150, 0.14)";
+    c.beginPath();
+    c.arc(440, 72, 44, 0, Math.PI * 2);
+    c.fill();
     c.fillStyle = "#34441f";
     c.fillRect(0, 270, canvas.width, 30);
+    c.fillStyle = "rgba(255,255,255,0.05)";
+    for (let stripe = 0; stripe < canvas.width; stripe += 24) {
+      c.fillRect(stripe, 276, 12, 6);
+    }
 
-    c.fillStyle = "#d5a948";
-    c.fillRect(player.x, player.y, player.w, player.h);
+    drawRoundedRect(c, player.x, player.y, player.w, player.h, 8, "#d5a948");
+    drawRoundedRect(c, player.x + 8, player.y - 10, player.w - 16, 10, 6, "rgba(245, 233, 203, 0.16)");
 
     for (let i = drops.length - 1; i >= 0; i -= 1) {
       const d = drops[i];
@@ -5195,6 +5430,13 @@ function renderCollect(meta, mode, feedback) {
       c.beginPath();
       c.arc(d.x, d.y, d.r, 0, Math.PI * 2);
       c.fillStyle = "#f1dfb7";
+      c.shadowBlur = 14;
+      c.shadowColor = "rgba(241, 223, 183, 0.35)";
+      c.fill();
+      c.shadowBlur = 0;
+      c.fillStyle = "rgba(255,255,255,0.28)";
+      c.beginPath();
+      c.arc(d.x - d.r * 0.28, d.y - d.r * 0.34, Math.max(2, d.r * 0.24), 0, Math.PI * 2);
       c.fill();
 
       const caught = d.y + d.r >= player.y && d.x > player.x && d.x < player.x + player.w;
@@ -5215,8 +5457,7 @@ function renderCollect(meta, mode, feedback) {
       feedback.className = "feedback ok";
       feedback.textContent = t("challengeComplete");
       playSfx("success");
-      markDone(meta.id, mode);
-      queueStageAutoClose(meta.id);
+      completeStage(meta, mode);
       return;
     }
 
@@ -5245,6 +5486,8 @@ function renderCollect(meta, mode, feedback) {
 }
 
 function renderDodge(meta, mode, feedback) {
+  const hint = createChallengeHint("Keyboard: move with Left/Right or A/D. Stay alive until the timer ends.");
+  activityPanel.append(hint);
   const canvas = document.createElement("canvas");
   canvas.className = "skill-canvas";
   canvas.width = 540;
@@ -5253,8 +5496,7 @@ function renderDodge(meta, mode, feedback) {
   activityPanel.append(canvas);
   const c = canvas.getContext("2d");
 
-  const status = document.createElement("p");
-  status.textContent = `${t("surviveLabel")}: 0/${mode.target} ${t("secShort")}`;
+  const status = createSkillStatus(`${t("surviveLabel")}: 0/${mode.target} ${t("secShort")}`);
   activityPanel.append(status);
 
   const player = { x: 260, y: 260, w: 28, h: 28 };
@@ -5271,8 +5513,8 @@ function renderDodge(meta, mode, feedback) {
   };
 
   const onKey = (event) => {
-    if (event.key === "ArrowLeft") player.x -= 26;
-    if (event.key === "ArrowRight") player.x += 26;
+    if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") player.x -= 26;
+    if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") player.x += 26;
     player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
   };
 
@@ -5293,19 +5535,38 @@ function renderDodge(meta, mode, feedback) {
     }
 
     c.clearRect(0, 0, canvas.width, canvas.height);
-    c.fillStyle = "#212e42";
+    const sky = c.createLinearGradient(0, 0, 0, canvas.height);
+    sky.addColorStop(0, "#151f2d");
+    sky.addColorStop(0.72, "#0b1119");
+    sky.addColorStop(1, "#080c12");
+    c.fillStyle = sky;
     c.fillRect(0, 0, canvas.width, canvas.height);
+    c.strokeStyle = "rgba(189, 222, 255, 0.16)";
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(410, 0);
+    c.lineTo(392, 48);
+    c.lineTo(438, 108);
+    c.stroke();
 
-    c.fillStyle = "#d5a948";
-    c.fillRect(player.x, player.y, player.w, player.h);
+    drawRoundedRect(c, player.x, player.y, player.w, player.h, 8, "#d5a948");
+    c.fillStyle = "rgba(255,245,214,0.3)";
+    c.fillRect(player.x + 7, player.y + 7, player.w - 14, 5);
 
     for (let i = threats.length - 1; i >= 0; i -= 1) {
       const threat = threats[i];
       threat.y += threat.v;
       c.beginPath();
       c.arc(threat.x, threat.y, threat.r, 0, Math.PI * 2);
-      c.fillStyle = "#bb4f39";
+      const threatFill = c.createRadialGradient(threat.x - 2, threat.y - 2, 2, threat.x, threat.y, threat.r);
+      threatFill.addColorStop(0, "#ffd7b1");
+      threatFill.addColorStop(0.35, "#db7d4f");
+      threatFill.addColorStop(1, "#7f291e");
+      c.fillStyle = threatFill;
+      c.shadowBlur = 18;
+      c.shadowColor = "rgba(219, 125, 79, 0.35)";
       c.fill();
+      c.shadowBlur = 0;
 
       const hitX = threat.x > player.x && threat.x < player.x + player.w;
       const hitY = threat.y + threat.r > player.y && threat.y - threat.r < player.y + player.h;
@@ -5329,8 +5590,7 @@ function renderDodge(meta, mode, feedback) {
       feedback.className = "feedback ok";
       feedback.textContent = t("challengeComplete");
       playSfx("success");
-      markDone(meta.id, mode);
-      queueStageAutoClose(meta.id);
+      completeStage(meta, mode);
       return;
     }
 
@@ -5351,7 +5611,9 @@ function renderDodge(meta, mode, feedback) {
 function renderSlingshot(meta, mode, feedback) {
   const prompt = document.createElement("p");
   prompt.textContent = t("slingshotPrompt");
-  activityPanel.append(prompt);
+  const hint = createChallengeHint("Keyboard: arrows adjust your pull, Space or Enter launches, and R resets the shot.");
+  const status = createSkillStatus("Aim low and pull back before you release.");
+  activityPanel.append(prompt, hint, status);
 
   const canvas = document.createElement("canvas");
   canvas.className = "skill-canvas";
@@ -5376,26 +5638,60 @@ function renderSlingshot(meta, mode, feedback) {
   let running = true;
   let raf = 0;
   let activePointerId = null;
+  let keyboardPull = { x: -56, y: 18 };
 
   function resetStone() {
     stone = { x: sling.x, y: sling.y, vx: 0, vy: 0, flying: false };
-    dragPoint = { x: sling.x, y: sling.y };
+    dragPoint = { x: sling.x + keyboardPull.x, y: sling.y + keyboardPull.y };
     dragging = false;
+  }
+
+  function applyKeyboardPull() {
+    const maxPull = mode.maxPull || 82;
+    const len = Math.hypot(keyboardPull.x, keyboardPull.y);
+    const scale = len > maxPull ? maxPull / len : 1;
+    keyboardPull.x *= scale;
+    keyboardPull.y *= scale;
+    if (!stone.flying && !dragging) {
+      dragPoint.x = sling.x + keyboardPull.x;
+      dragPoint.y = sling.y + keyboardPull.y;
+      stone.x = dragPoint.x;
+      stone.y = dragPoint.y;
+    }
   }
 
   function draw() {
     c.clearRect(0, 0, canvas.width, canvas.height);
-    c.fillStyle = "#2a3649";
+    const sky = c.createLinearGradient(0, 0, 0, canvas.height);
+    sky.addColorStop(0, "#213653");
+    sky.addColorStop(0.7, "#111822");
+    sky.addColorStop(1, "#090d13");
+    c.fillStyle = sky;
     c.fillRect(0, 0, canvas.width, canvas.height);
     c.fillStyle = "#343f23";
     c.fillRect(0, 250, canvas.width, 50);
+    c.fillStyle = "rgba(255, 214, 127, 0.12)";
+    c.beginPath();
+    c.arc(102, 72, 34, 0, Math.PI * 2);
+    c.fill();
 
-    c.fillStyle = "#8d5c2e";
-    c.fillRect(430, 95, 46, 145);
+    drawRoundedRect(c, 430, 95, 46, 145, 10, "#8d5c2e");
     c.beginPath();
     c.arc(giant.x, giant.y, giant.r, 0, Math.PI * 2);
-    c.fillStyle = "#dfb07b";
+    const targetGlow = c.createRadialGradient(giant.x, giant.y, 4, giant.x, giant.y, giant.r + 14);
+    targetGlow.addColorStop(0, "#ffd6af");
+    targetGlow.addColorStop(0.55, "#dfb07b");
+    targetGlow.addColorStop(1, "rgba(111, 64, 34, 0.88)");
+    c.fillStyle = targetGlow;
+    c.shadowBlur = 18;
+    c.shadowColor = "rgba(223,176,123,0.28)";
     c.fill();
+    c.shadowBlur = 0;
+    c.strokeStyle = "rgba(255, 243, 214, 0.55)";
+    c.lineWidth = 3;
+    c.beginPath();
+    c.arc(giant.x, giant.y, giant.r + 8, 0, Math.PI * 2);
+    c.stroke();
 
     c.strokeStyle = "#b98549";
     c.lineWidth = 5;
@@ -5408,7 +5704,10 @@ function renderSlingshot(meta, mode, feedback) {
     c.beginPath();
     c.arc(stone.x, stone.y, 8, 0, Math.PI * 2);
     c.fillStyle = "#d9c7ae";
+    c.shadowBlur = 12;
+    c.shadowColor = "rgba(217, 199, 174, 0.32)";
     c.fill();
+    c.shadowBlur = 0;
   }
 
   function tick() {
@@ -5428,8 +5727,7 @@ function renderSlingshot(meta, mode, feedback) {
         feedback.className = "feedback ok";
         feedback.textContent = t("directHitComplete");
         playSfx("success");
-        markDone(meta.id, mode);
-        queueStageAutoClose(meta.id);
+        completeStage(meta, mode);
       }
 
       if (stone.y > canvas.height + 20 || stone.x > canvas.width + 20 || stone.x < -20) {
@@ -5485,6 +5783,8 @@ function renderSlingshot(meta, mode, feedback) {
     dragPoint.y = sling.y + dy * scale;
     stone.x = dragPoint.x;
     stone.y = dragPoint.y;
+    keyboardPull.x = dragPoint.x - sling.x;
+    keyboardPull.y = dragPoint.y - sling.y;
   };
 
   const onUp = (event) => {
@@ -5495,6 +5795,7 @@ function renderSlingshot(meta, mode, feedback) {
     stone.vx = (sling.x - dragPoint.x) * (mode.pullPowerScale || 0.14);
     stone.vy = (sling.y - dragPoint.y) * (mode.pullPowerScale || 0.14);
     stone.flying = true;
+    status.textContent = "Stone released. Hold steady for the hit.";
     playSfx("click");
   };
 
@@ -5509,14 +5810,69 @@ function renderSlingshot(meta, mode, feedback) {
     finished = false;
     feedback.textContent = "";
     resetStone();
+    status.textContent = "Aim low and pull back before you release.";
+  };
+
+  const launchStone = () => {
+    if (finished || stone.flying || !canPlayStage()) return;
+    stone.vx = (sling.x - dragPoint.x) * (mode.pullPowerScale || 0.14);
+    stone.vy = (sling.y - dragPoint.y) * (mode.pullPowerScale || 0.14);
+    stone.flying = true;
+    status.textContent = "Stone released. Hold steady for the hit.";
+    playSfx("click");
+  };
+
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+    if (!stone.flying && !finished) {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        keyboardPull.x = Math.max(-(mode.maxPull || 82), keyboardPull.x - 8);
+        applyKeyboardPull();
+        return;
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        keyboardPull.x = Math.min(mode.maxPull || 82, keyboardPull.x + 8);
+        applyKeyboardPull();
+        return;
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        keyboardPull.y = Math.max(-(mode.maxPull || 82), keyboardPull.y - 8);
+        applyKeyboardPull();
+        return;
+      }
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        keyboardPull.y = Math.min(mode.maxPull || 82, keyboardPull.y + 8);
+        applyKeyboardPull();
+        return;
+      }
+    }
+
+    if (event.key === " " || event.key === "Enter") {
+      event.preventDefault();
+      launchStone();
+      return;
+    }
+
+    if (event.key === "r" || event.key === "R") {
+      event.preventDefault();
+      onRetry();
+    }
   };
 
   canvas.addEventListener("pointerdown", onDown);
   window.addEventListener("pointermove", onMove, { passive: false });
   window.addEventListener("pointerup", onUp, { passive: false });
   window.addEventListener("pointercancel", onCancel, { passive: false });
+  window.addEventListener("keydown", onKey);
   retry.addEventListener("click", onRetry);
 
+  applyKeyboardPull();
   raf = requestAnimationFrame(tick);
 
   return () => {
@@ -5526,6 +5882,7 @@ function renderSlingshot(meta, mode, feedback) {
     window.removeEventListener("pointermove", onMove);
     window.removeEventListener("pointerup", onUp);
     window.removeEventListener("pointercancel", onCancel);
+    window.removeEventListener("keydown", onKey);
     retry.removeEventListener("click", onRetry);
   };
 }

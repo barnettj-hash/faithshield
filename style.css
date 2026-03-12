@@ -1642,6 +1642,27 @@ body.has-overlay {
   gap: 0.55rem;
 }
 
+.challenge-hint {
+  margin: 0.1rem 0 0.55rem;
+  color: #f1d49a;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.skill-status {
+  margin: 0.15rem 0 0.75rem;
+  padding: 0.62rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 233, 203, 0.2);
+  background: linear-gradient(180deg, rgba(245, 233, 203, 0.08), rgba(245, 233, 203, 0.03));
+  color: #f8dfb4;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+
 .option-btn {
   text-align: left;
   padding: 0.7rem;
@@ -1690,6 +1711,13 @@ body.has-overlay {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.order-item.selected {
+  border-color: rgba(237, 201, 119, 0.58);
+  background: rgba(213, 169, 72, 0.18);
+  transform: translateY(-1px);
 }
 
 .order-controls {
@@ -1728,6 +1756,7 @@ canvas {
   border: 1px solid rgba(245, 233, 203, 0.25);
   background: linear-gradient(180deg, #232f42, #1a2028);
   display: block;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), 0 16px 30px rgba(3, 7, 11, 0.24);
 }
 
 .skill-canvas {
