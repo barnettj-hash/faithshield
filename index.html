@@ -12,6 +12,16 @@
     <div class="bg-orb orb-b"></div>
 
     <main class="app">
+      <nav class="site-topbar" aria-label="Site navigation">
+        <a class="site-topbar-brand" href="#gameDashboard">FAITHSHIELD Desktop</a>
+        <div class="site-topbar-links">
+          <a href="#gameDashboard">Play</a>
+          <a href="https://barnettj-hash.github.io/faithshield-support/" target="_blank" rel="noopener">Support</a>
+          <a href="https://barnettj-hash.github.io/faithshield-support/privacy.html" target="_blank" rel="noopener">Privacy</a>
+          <a href="mailto:support@faithshield.app">Contact</a>
+        </div>
+      </nav>
+
       <header class="hero">
         <img class="logo" src="./assets/stage-art.png" alt="FAITHSHIELD Roman shield icon" onerror="if(this.dataset.f1){this.src=this.dataset.f1;this.dataset.f1='';}else if(this.dataset.f2){this.src=this.dataset.f2;this.dataset.f2='';}else if(this.dataset.f3){this.src=this.dataset.f3;this.dataset.f3='';}else{this.onerror=null;}" data-f1="./stage-art.png" data-f2="./assets/faith-shield.svg" data-f3="./faith-shield.svg" />
         <div>
@@ -32,6 +42,10 @@
             <a class="hero-link" href="https://barnettj-hash.github.io/faithshield-support/" target="_blank" rel="noopener">Support</a>
             <a class="hero-link" href="https://barnettj-hash.github.io/faithshield-support/privacy.html" target="_blank" rel="noopener">Privacy</a>
             <a class="hero-link" href="mailto:support@faithshield.app">Contact</a>
+          </div>
+          <div class="hero-actions" aria-label="Primary actions">
+            <a class="cta-btn hero-cta" href="#gameDashboard">Start Playing</a>
+            <a class="ghost-btn hero-cta" href="https://barnettj-hash.github.io/faithshield-support/" target="_blank" rel="noopener">Open Support</a>
           </div>
         </div>
       </header>
@@ -72,7 +86,7 @@
         </article>
       </section>
 
-      <section class="progress-wrap">
+      <section id="gameDashboard" class="progress-wrap">
         <div class="progress-label-row">
           <p id="progressText">Progress: 0/500 stages | 0/100 levels</p>
           <button id="resetBtn" class="ghost-btn" type="button">Reset Progress</button>

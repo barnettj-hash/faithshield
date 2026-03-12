@@ -79,6 +79,52 @@ body {
   min-width: 0;
 }
 
+.site-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.72rem 0.9rem;
+  border-radius: 18px;
+  border: 1px solid rgba(237, 201, 119, 0.22);
+  background: rgba(9, 15, 24, 0.72);
+  box-shadow: 0 14px 28px rgba(2, 8, 13, 0.16);
+  backdrop-filter: blur(10px);
+}
+
+.site-topbar-brand {
+  color: #f6dba4;
+  text-decoration: none;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.site-topbar-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.8rem;
+}
+
+.site-topbar-links a {
+  color: #f3cf83;
+  text-decoration: none;
+  font-weight: 800;
+  border-bottom: 1px solid transparent;
+  transition: color 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.site-topbar-links a:hover,
+.site-topbar-links a:focus-visible,
+.site-topbar-brand:hover,
+.site-topbar-brand:focus-visible {
+  color: #ffe6b5;
+  border-color: rgba(255, 230, 181, 0.5);
+  transform: translateY(-1px);
+}
+
 .hud-grid > *,
 .feature-grid > *,
 .stage-grid > *,
@@ -215,6 +261,17 @@ h2 {
   flex-wrap: wrap;
   gap: 0.8rem;
   margin-top: 0.95rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.hero-cta {
+  text-decoration: none;
 }
 
 .hero-link {
@@ -634,6 +691,13 @@ body.a11y-reduced-motion *::after {
   overflow-wrap: anywhere;
   word-break: break-word;
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+a.ghost-btn,
+a.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .ghost-btn {
@@ -1307,6 +1371,7 @@ body.has-overlay {
 }
 
 .daily-word-card,
+.site-topbar,
 .feature-card,
 .premium-band,
 .showcase-card,
@@ -1320,6 +1385,7 @@ body.has-overlay {
 }
 
 .daily-word-card:hover,
+.site-topbar:hover,
 .feature-card:hover,
 .premium-band:hover,
 .showcase-card:hover,
@@ -1906,7 +1972,8 @@ canvas {
   }
 
   .hero-rail,
-  .hero-links {
+  .hero-links,
+  .hero-actions {
     justify-content: center;
   }
 
@@ -1941,6 +2008,16 @@ canvas {
   .progress-label-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .site-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.82rem 0.9rem;
+  }
+
+  .site-topbar-links {
+    justify-content: flex-start;
   }
 
   .hud-grid {
