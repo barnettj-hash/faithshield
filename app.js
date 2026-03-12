@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-12-desktop-question-fallback-v1";
+const CONTENT_VERSION = "2026-03-12-desktop-question-variety-v2";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -2799,11 +2799,12 @@ function buildFallbackOrderActivity(meta, era, difficulty, usedSources) {
   const ordered = refs.map((entry) => entry.ref);
   return {
     type: "order",
-    prompt: stagePrompt(meta, `Arrange these ${eraStoryLabel(era)} checkpoints in canonical order:`),
+    prompt: stagePrompt(meta, `Put these ${eraStoryLabel(era)} references into Bible order:`),
     items: ordered,
     maxMoves: difficulty.orderMaxMoves,
     nearShuffle: difficulty.orderNearShuffle,
-    sourceRef: ordered.join("; ")
+    sourceRef: "",
+    historySourceRef: ordered.join("; ")
   };
 }
 
@@ -2813,18 +2814,19 @@ function buildFallbackFactActivity(meta, era, difficulty, usedSources) {
 
   const fact = {
     era,
-    parts: ["Story", "checkpoint", "from", ref.book, "chapter", String(ref.chapter), "verse", String(ref.verse)],
+    parts: [ref.book, String(ref.chapter), String(ref.verse), "story", "checkpoint"],
     sourceRef: ref.ref
   };
   const factMode = buildFactActivity(fact, era, difficulty);
 
   return {
     type: "fact",
-    prompt: stagePrompt(meta, `Build this ${eraStoryLabel(era)} story fact in the right order:`),
+    prompt: stagePrompt(meta, `Build this ${eraStoryLabel(era)} reference phrase in the right order:`),
     answerParts: factMode.answerParts,
     prefilled: factMode.prefilled,
     parts: factMode.pool,
-    sourceRef: fact.sourceRef
+    sourceRef: "",
+    historySourceRef: fact.sourceRef
   };
 }
 
@@ -2890,12 +2892,32 @@ function buildAuthoredActivityByKind(meta, era, difficulty, usedSources, kind) {
   return null;
 }
 
+function rotateKinds(list, steps = 0) {
+  if (!Array.isArray(list) || !list.length) return [];
+  const offset = ((steps % list.length) + list.length) % list.length;
+  return list.slice(offset).concat(list.slice(0, offset));
+}
+
 function stageKindPlan(meta, difficulty) {
-  if (meta.stage === 1) return ["quiz", "fact", "order", "spelling", "fallback-quiz", "fallback-order"];
-  if (meta.stage === 2) return ["order", "fact", "quiz", "spelling", "fallback-order", "fallback-quiz"];
-  if (meta.stage === 3) return ["fact", "quiz", "order", "spelling", "fallback-order", "fallback-quiz"];
-  if (meta.stage === 4) return ["spelling", "quiz", "fact", "order", "fallback-quiz", "fallback-order"];
-  return [];
+  const baseKinds = meta.stage === 1
+    ? ["quiz", "fact", "order", "spelling"]
+    : meta.stage === 2
+      ? ["order", "fact", "quiz", "spelling"]
+      : meta.stage === 3
+        ? ["fact", "quiz", "spelling", "order"]
+        : meta.stage === 4
+          ? ["spelling", "quiz", "fact", "order"]
+          : [];
+
+  if (!baseKinds.length) return [];
+
+  const difficultyShift = difficulty.id === "advanced" ? 2 : difficulty.id === "medium" ? 1 : 0;
+  const rotation = (meta.level - 1 + difficultyShift) % baseKinds.length;
+  const fallbackKinds = meta.stage === 4
+    ? ["fallback-quiz", "fallback-order"]
+    : ["fallback-order", "fallback-quiz"];
+
+  return rotateKinds(baseKinds, rotation).concat(fallbackKinds);
 }
 
 function buildQuestionPoolExhaustedActivity(meta, activityKind = "question") {
@@ -3048,7 +3070,7 @@ function currentDifficulty() {
 }
 
 function shouldShowQuestionSource() {
-  return currentDifficulty().id !== "advanced";
+  return currentDifficulty().id === "easy";
 }
 
 function normalizeSpellingAnswer(value) {
@@ -5086,7 +5108,7 @@ function renderOrder(meta, activity) {
     window.removeEventListener("keydown", onKey);
   };
 
-  if (shouldShowQuestionSource()) {
+  if (shouldShowQuestionSource() && source) {
     activityPanel.append(header, prompt, hint, source, status, listWrap, submit, feedback);
   } else {
     activityPanel.append(header, prompt, hint, status, listWrap, submit, feedback);
