@@ -12,9 +12,9 @@ const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 const DIFFICULTY_LEVELS = ["easy", "medium", "advanced"];
 const SUPPORTED_LANGUAGES = ["en", "es", "de", "zh", "vi", "pt"];
 const MUSIC_LEVELS = {
-  low: 0.28,
-  medium: 0.37,
-  high: 0.46
+  low: 0.34,
+  medium: 0.46,
+  high: 0.58
 };
 const MUSIC_STYLES = {
   cinematic: true,
@@ -1350,19 +1350,19 @@ function ensureAudio() {
   const musicFilter = ctx.createBiquadFilter();
   const musicCompressor = ctx.createDynamicsCompressor();
 
-  master.gain.value = 0.78;
+  master.gain.value = 0.9;
   musicGain.gain.value = 0;
   sfxGain.gain.value = state.audio.sfx ? 0.30 : 0;
 
   musicFilter.type = "lowpass";
-  musicFilter.frequency.value = 3200;
-  musicFilter.Q.value = 0.35;
+  musicFilter.frequency.value = 4200;
+  musicFilter.Q.value = 0.28;
 
-  musicCompressor.threshold.value = -22;
+  musicCompressor.threshold.value = -24;
   musicCompressor.knee.value = 18;
-  musicCompressor.ratio.value = 2.4;
+  musicCompressor.ratio.value = 2.1;
   musicCompressor.attack.value = 0.01;
-  musicCompressor.release.value = 0.22;
+  musicCompressor.release.value = 0.3;
 
   musicGain.connect(musicFilter);
   musicFilter.connect(musicCompressor);
@@ -1388,8 +1388,8 @@ function setMusicGainSmooth(target, fadeSeconds = 0.55) {
   const baseFade = Math.max(0.08, fadeSeconds);
   const fade =
     clampedTarget > current && Date.now() < (audioEngine.bootMusicHoldUntil || 0)
-      ? Math.max(baseFade, 0.9)
-      : baseFade;
+      ? Math.max(baseFade, 1.1)
+      : Math.max(baseFade, 0.2);
   gainNode.cancelScheduledValues(now);
   gainNode.setValueAtTime(current, now);
   gainNode.linearRampToValueAtTime(clampedTarget, now + fade);
@@ -5892,7 +5892,7 @@ function updateAudioState() {
   const creditsOpen = isCreditsOpen();
   const musicShouldBeAudible = state.audio.music && !theaterOpen && (!state.activeStage || isFinalOpen() || creditsOpen);
   const musicTarget = musicShouldBeAudible ? musicGainForCurrentLevel() : 0;
-  const musicFadeSeconds = musicShouldBeAudible ? 0.72 : (theaterOpen || state.activeStage ? 0.24 : 0.4);
+  const musicFadeSeconds = musicShouldBeAudible ? 0.92 : (theaterOpen || state.activeStage ? 0.24 : 0.46);
   setMusicGainSmooth(musicTarget, musicFadeSeconds);
   if (audioEngine.sfxGain) audioEngine.sfxGain.gain.value = state.audio.sfx ? 0.3 : 0;
 
