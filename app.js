@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-12-desktop-themed-stage5-v1";
+const CONTENT_VERSION = "2026-03-12-desktop-theme-lock-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -3583,7 +3583,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       usedSources,
       allowReuse: false,
       filter: themeFilter,
-      scopeKey
+      scopeKey,
+      requireScoped: true
     });
     if (!pick.item) return null;
     const q = pick.item;
@@ -3602,7 +3603,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       usedSources,
       allowReuse: false,
       filter: themeFilter,
-      scopeKey
+      scopeKey,
+      requireScoped: true
     });
     if (!pick.item) return null;
     const s = pick.item;
@@ -3620,7 +3622,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       usedSources,
       allowReuse: false,
       filter: themeFilter,
-      scopeKey
+      scopeKey,
+      requireScoped: true
     });
     if (!pick.item) return null;
     const order = pick.item;
@@ -3640,7 +3643,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       usedSources,
       allowReuse: false,
       filter: themeFilter,
-      scopeKey
+      scopeKey,
+      requireScoped: true
     });
     if (!pick.item) return null;
     const fact = pick.item;
@@ -3754,6 +3758,10 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
     ? options.filter
     : ((item) => item.era === era);
   const scopedPool = pool.filter(matcher);
+  const requireScoped = options.requireScoped === true;
+  if (requireScoped && !scopedPool.length) {
+    return { item: null, reuseCount: 0 };
+  }
   const source = scopedPool.length ? scopedPool : pool;
   if (!source.length) return { item: null, reuseCount: 0 };
 
