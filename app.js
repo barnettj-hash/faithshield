@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-12-desktop-question-variety-v2";
+const CONTENT_VERSION = "2026-03-12-desktop-genesis-balance-v3";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -347,6 +347,7 @@ const CANONICAL_BOOK_ORDER = {
   "1 Samuel": 7
 };
 const BOOK_OPTIONS = Object.keys(CANONICAL_BOOK_ORDER);
+const SORTED_CANONICAL_BOOKS = Object.keys(CANONICAL_BOOK_ORDER).sort((a, b) => b.length - a.length);
 const REFERENCE_PLAN_BY_ERA = {
   genesis: [{ book: "Genesis", start: 1, end: 11 }],
   patriarchs: [{ book: "Genesis", start: 12, end: 50 }],
@@ -365,11 +366,42 @@ const REFERENCE_PLAN_BY_ERA = {
   saul: [{ book: "1 Samuel", start: 8, end: 15 }],
   david: [{ book: "1 Samuel", start: 16, end: 31 }]
 };
+const THEME_LEVELS_BY_NAME = {
+  "Creation Dawn": 2,
+  "Fall and Mercy": 5,
+  "Flood and Covenant": 7,
+  "Nations and Babel": 6
+};
+const THEME_REFERENCE_PLAN_BY_NAME = {
+  "Creation Dawn": [{ book: "Genesis", start: 1, end: 2 }],
+  "Fall and Mercy": [{ book: "Genesis", start: 3, end: 3 }],
+  "Flood and Covenant": [{ book: "Genesis", start: 6, end: 9 }],
+  "Nations and Babel": [{ book: "Genesis", start: 10, end: 11 }],
+  "Call of Abram": [{ book: "Genesis", start: 12, end: 15 }],
+  "Promise Family": [{ book: "Genesis", start: 16, end: 25 }],
+  "Jacob to Israel": [{ book: "Genesis", start: 25, end: 36 }],
+  "Joseph in Egypt": [{ book: "Genesis", start: 37, end: 50 }],
+  "Burning Bush": [{ book: "Exodus", start: 1, end: 6 }],
+  "Plagues and Passover": [{ book: "Exodus", start: 7, end: 12 }],
+  "Sea Crossing": [{ book: "Exodus", start: 13, end: 15 }],
+  "Sinai Covenant": [{ book: "Exodus", start: 19, end: 24 }],
+  "Wilderness Trust": [
+    { book: "Exodus", start: 16, end: 18 },
+    { book: "Numbers", start: 1, end: 36 }
+  ],
+  "Jordan Crossing": [{ book: "Joshua", start: 1, end: 6 }],
+  "Land and Legacy": [{ book: "Joshua", start: 7, end: 24 }],
+  "Cycle of Judges": [{ book: "Judges", start: 1, end: 21 }],
+  "Ruth's Faithfulness": [{ book: "Ruth", start: 1, end: 4 }],
+  "Samuel's Calling": [{ book: "1 Samuel", start: 1, end: 7 }],
+  "Saul's Kingship": [{ book: "1 Samuel", start: 8, end: 15 }],
+  "David and Courage": [{ book: "1 Samuel", start: 16, end: 17 }]
+};
 const REFERENCE_VERSES_BY_BUCKET = {
-  quiz: [1, 2],
-  spelling: [1, 2],
-  order: [1, 2],
-  fact: [1, 2]
+  quiz: [1, 2, 3],
+  spelling: [1, 2, 3],
+  order: [1, 2, 3],
+  fact: [1, 2, 3]
 };
 const ERA_STORY_LABELS = {
   genesis: "Creation and the first families",
@@ -942,9 +974,33 @@ const factBank = [
   { era: "david", parts: ["The", "battle", "belongs", "to", "the", "Lord"], sourceRef: "1 Samuel 17:47" }
 ];
 
+function themeLevelCount(theme) {
+  return Math.max(1, Number(THEME_LEVELS_BY_NAME[theme.name] || 5));
+}
+
+function themeReferencePlan(theme) {
+  return THEME_REFERENCE_PLAN_BY_NAME[theme.name] || REFERENCE_PLAN_BY_ERA[theme.era] || [];
+}
+
+function buildLevelThemeSequence() {
+  const sequence = [];
+  timelineThemes.forEach((theme) => {
+    for (let count = 0; count < themeLevelCount(theme) && sequence.length < TOTAL_LEVELS; count += 1) {
+      sequence.push(theme);
+    }
+  });
+
+  while (sequence.length < TOTAL_LEVELS) {
+    sequence.push(timelineThemes[timelineThemes.length - 1]);
+  }
+
+  return sequence.slice(0, TOTAL_LEVELS);
+}
+
+const levelThemeSequence = buildLevelThemeSequence();
 const stages = Array.from({ length: TOTAL_LEVELS }, (_, levelIndex) => {
   const level = levelIndex + 1;
-  const theme = timelineThemes[Math.min(timelineThemes.length - 1, Math.floor(levelIndex / (TOTAL_LEVELS / timelineThemes.length)))];
+  const theme = levelThemeSequence[levelIndex] || timelineThemes[timelineThemes.length - 1];
   return Array.from({ length: STAGES_PER_LEVEL }, (_, stageIndex) => {
     const stage = stageIndex + 1;
     const id = `l${level}-s${stage}`;
@@ -2602,6 +2658,54 @@ function normalizeSourceRef(sourceRef) {
   return String(sourceRef || "").trim();
 }
 
+function parseSourceRefSegments(sourceRef) {
+  const clauses = normalizeSourceRef(sourceRef).split(";").map((part) => part.trim()).filter(Boolean);
+  const entries = [];
+  let activeBook = "";
+
+  clauses.forEach((clause) => {
+    let book = activeBook;
+    let remainder = clause;
+    const explicitBook = SORTED_CANONICAL_BOOKS.find((candidate) => clause.startsWith(candidate + " "));
+    if (explicitBook) {
+      book = explicitBook;
+      activeBook = explicitBook;
+      remainder = clause.slice(explicitBook.length).trim();
+    }
+
+    const match = remainder.match(/^(\d+):\d+(?:-(?:(\d+):)?\d+)?/);
+    if (!book || !match) return;
+
+    const startChapter = Number(match[1]);
+    const endChapter = match[2] ? Number(match[2]) : startChapter;
+    entries.push({ book, startChapter, endChapter });
+  });
+
+  return entries;
+}
+
+function entryMatchesPlan(entry, plan) {
+  return plan.some((segment) => segment.book === entry.book && entry.chapter >= segment.start && entry.chapter <= segment.end);
+}
+
+function sourceRefMatchesPlan(sourceRef, plan) {
+  const entries = parseSourceRefSegments(sourceRef);
+  if (!entries.length || !plan.length) return false;
+  return entries.some((entry) => plan.some((segment) => segment.book === entry.book && entry.endChapter >= segment.start && entry.startChapter <= segment.end));
+}
+
+function itemMatchesTheme(item, theme) {
+  const plan = themeReferencePlan(theme);
+  const sourceRef = normalizeSourceRef(item && item.sourceRef);
+  if (!plan.length) return item && item.era === theme.era;
+  if (!sourceRef) return item && item.era === theme.era;
+  return sourceRefMatchesPlan(sourceRef, plan);
+}
+
+function themeScopeKey(theme, bucket) {
+  return `${bucket}:theme:${theme.name}`;
+}
+
 function usedQuestionSourcesForDifficulty(difficultyId = state.difficulty) {
   const used = new Set();
 
@@ -2675,16 +2779,47 @@ function buildFallbackReferencePools() {
   return pools;
 }
 
-function nextFallbackReference(era, bucket, usedSources) {
+const themeFallbackReferencePoolCache = {};
+
+function fallbackReferencePoolForTheme(theme, bucket) {
+  const key = `${theme.name}:${bucket}`;
+  if (themeFallbackReferencePoolCache[key]) return themeFallbackReferencePoolCache[key];
+
+  const verses = REFERENCE_VERSES_BY_BUCKET[bucket] || REFERENCE_VERSES_BY_BUCKET.quiz;
+  const pool = [];
+  themeReferencePlan(theme).forEach((segment) => {
+    for (let chapter = segment.start; chapter <= segment.end; chapter += 1) {
+      verses.forEach((verse) => {
+        pool.push({
+          era: theme.era,
+          theme: theme.name,
+          book: segment.book,
+          chapter,
+          verse,
+          ref: `${segment.book} ${chapter}:${verse}`
+        });
+      });
+    }
+  });
+
+  themeFallbackReferencePoolCache[key] = pool;
+  return pool;
+}
+
+function nextFallbackReference(theme, bucket, usedSources) {
+  const themePool = fallbackReferencePoolForTheme(theme, bucket).filter((entry) => !usedSources.has(entry.ref));
+  if (themePool.length) return randomOf(themePool);
+
   const pool = FALLBACK_REFERENCE_POOLS[bucket] || FALLBACK_REFERENCE_POOLS.quiz;
-  const eraPool = (pool.byEra[era] || []).filter((entry) => !usedSources.has(entry.ref));
+  const eraPool = (pool.byEra[theme.era] || []).filter((entry) => !usedSources.has(entry.ref));
   const globalPool = pool.all.filter((entry) => !usedSources.has(entry.ref));
   return randomOf(eraPool.length ? eraPool : globalPool);
 }
 
-function nextFallbackReferenceSet(era, bucket, usedSources, count) {
+function nextFallbackReferenceSet(theme, bucket, usedSources, count) {
   const pool = FALLBACK_REFERENCE_POOLS[bucket] || FALLBACK_REFERENCE_POOLS.order;
-  let candidates = (pool.byEra[era] || []).slice();
+  let candidates = fallbackReferencePoolForTheme(theme, bucket).slice();
+  if (candidates.length < count) candidates = (pool.byEra[theme.era] || []).slice();
   if (candidates.length < count) candidates = pool.all.slice();
   if (candidates.length < count) return null;
 
@@ -2697,45 +2832,34 @@ function nextFallbackReferenceSet(era, bucket, usedSources, count) {
   return null;
 }
 
-function buildFallbackQuizOptionsByEra(correctEntry, era, optionCount) {
+function buildFallbackQuizOptionsForTheme(correctEntry, theme, optionCount) {
   const total = Math.max(2, Math.min(4, optionCount || 3));
-  const eraOrder = Object.keys(REFERENCE_PLAN_BY_ERA);
-  const eraIndex = Math.max(0, eraOrder.indexOf(era));
-  const nearbyEras = [eraOrder[eraIndex - 1], eraOrder[eraIndex + 1]].filter(Boolean);
   const optionPool = [];
+  const themePlan = themeReferencePlan(theme);
   const seen = new Set([correctEntry.ref]);
 
-  nearbyEras.forEach((neighbor) => {
-    (FALLBACK_REFERENCE_POOLS.quiz.byEra[neighbor] || []).forEach((entry) => {
-      if (seen.has(entry.ref)) return;
-      seen.add(entry.ref);
-      optionPool.push(entry.ref);
-    });
+  FALLBACK_REFERENCE_POOLS.quiz.all.forEach((entry) => {
+    if (seen.has(entry.ref) || entryMatchesPlan(entry, themePlan)) return;
+    seen.add(entry.ref);
+    optionPool.push(entry.ref);
   });
-
-  if (optionPool.length < total - 1) {
-    FALLBACK_REFERENCE_POOLS.quiz.all.forEach((entry) => {
-      if (entry.era === era || seen.has(entry.ref)) return;
-      seen.add(entry.ref);
-      optionPool.push(entry.ref);
-    });
-  }
 
   return shuffled([correctEntry.ref].concat(shuffled(optionPool).slice(0, total - 1)));
 }
 
-function buildFallbackQuizActivity(meta, era, difficulty, usedSources) {
+function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
   const variantSeed = (meta.level + meta.stage) % 3;
+  const themeLabel = theme.name;
 
   if (variantSeed === 1 || variantSeed === 2) {
-    const refSet = nextFallbackReferenceSet(era, "quiz", usedSources, Math.max(3, Math.min(4, difficulty.quizOptions || 3)));
+    const refSet = nextFallbackReferenceSet(theme, "quiz", usedSources, Math.max(3, Math.min(4, difficulty.quizOptions || 3)));
     if (refSet && refSet.length >= 3) {
       const answerEntry = variantSeed === 1 ? refSet[0] : refSet[refSet.length - 1];
       return {
         type: "quiz",
         prompt: stagePrompt(meta, variantSeed === 1
-          ? `Which reference comes earliest in ${eraStoryLabel(era)}?`
-          : `Which reference comes latest in ${eraStoryLabel(era)}?`),
+          ? `Which reference comes earliest in ${themeLabel}?`
+          : `Which reference comes latest in ${themeLabel}?`),
         options: shuffled(refSet.map((entry) => entry.ref)),
         answer: answerEntry.ref,
         sourceRef: "",
@@ -2744,13 +2868,13 @@ function buildFallbackQuizActivity(meta, era, difficulty, usedSources) {
     }
   }
 
-  const ref = nextFallbackReference(era, "quiz", usedSources);
+  const ref = nextFallbackReference(theme, "quiz", usedSources);
   if (!ref) return null;
 
   return {
     type: "quiz",
-    prompt: stagePrompt(meta, `Which reference belongs to ${eraStoryLabel(era)}?`),
-    options: buildFallbackQuizOptionsByEra(ref, era, difficulty.quizOptions),
+    prompt: stagePrompt(meta, `Which reference belongs to ${themeLabel}?`),
+    options: buildFallbackQuizOptionsForTheme(ref, theme, difficulty.quizOptions),
     answer: ref.ref,
     sourceRef: "",
     historySourceRef: ref.ref
@@ -2762,44 +2886,48 @@ function singleWordBookAnswer(book) {
   return parts.length ? parts[parts.length - 1] : String(book || "").trim();
 }
 
-function buildFallbackSpellingActivity(meta, era, difficulty, usedSources) {
-  const ref = nextFallbackReference(era, "spelling", usedSources);
-  if (!ref) return null;
+function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources) {
+  const plan = themeReferencePlan(theme);
+  const anchor = plan[0];
+  if (!anchor) return null;
 
   if (difficulty.id === "advanced") {
     return {
       type: "spelling",
-      prompt: stagePrompt(meta, `Advanced story checkpoint from ${eraStoryLabel(era)}: type the Bible book word for this reference: ${ref.ref}`),
-      answer: singleWordBookAnswer(ref.book),
-      sourceRef: ref.ref
+      prompt: stagePrompt(meta, `Advanced story checkpoint from ${theme.name}: type the Bible book word where this story happens.`),
+      answer: singleWordBookAnswer(anchor.book),
+      sourceRef: "",
+      historySourceRef: meta.theme.sourceRef
     };
   }
 
   if (difficulty.id === "medium") {
     return {
       type: "spelling",
-      prompt: stagePrompt(meta, `From ${eraStoryLabel(era)}, type the verse number for this reference: ${ref.ref}`),
-      answer: String(ref.verse),
-      sourceRef: ref.ref
+      prompt: stagePrompt(meta, `From ${theme.name}, type the Bible book word where this story appears.`),
+      answer: singleWordBookAnswer(anchor.book),
+      sourceRef: "",
+      historySourceRef: meta.theme.sourceRef
     };
   }
 
   return {
     type: "spelling",
-    prompt: stagePrompt(meta, `From ${eraStoryLabel(era)}, type the chapter number for this reference: ${ref.ref}`),
-    answer: String(ref.chapter),
-    sourceRef: ref.ref
+    prompt: stagePrompt(meta, `From ${theme.name}, type the chapter number where this story begins.`),
+    answer: String(anchor.start),
+    sourceRef: "",
+    historySourceRef: meta.theme.sourceRef
   };
 }
 
-function buildFallbackOrderActivity(meta, era, difficulty, usedSources) {
-  const refs = nextFallbackReferenceSet(era, "order", usedSources, 3);
+function buildFallbackOrderActivity(meta, theme, difficulty, usedSources) {
+  const refs = nextFallbackReferenceSet(theme, "order", usedSources, 3);
   if (!refs) return null;
 
   const ordered = refs.map((entry) => entry.ref);
   return {
     type: "order",
-    prompt: stagePrompt(meta, `Put these ${eraStoryLabel(era)} references into Bible order:`),
+    prompt: stagePrompt(meta, `Put these ${theme.name} references into Bible order:`),
     items: ordered,
     maxMoves: difficulty.orderMaxMoves,
     nearShuffle: difficulty.orderNearShuffle,
@@ -2808,20 +2936,20 @@ function buildFallbackOrderActivity(meta, era, difficulty, usedSources) {
   };
 }
 
-function buildFallbackFactActivity(meta, era, difficulty, usedSources) {
-  const ref = nextFallbackReference(era, "fact", usedSources);
+function buildFallbackFactActivity(meta, theme, difficulty, usedSources) {
+  const ref = nextFallbackReference(theme, "fact", usedSources);
   if (!ref) return null;
 
   const fact = {
-    era,
-    parts: [ref.book, String(ref.chapter), String(ref.verse), "story", "checkpoint"],
+    era: theme.era,
+    parts: [ref.book, String(ref.chapter), String(ref.verse), theme.name.split(/\s+/)[0], "checkpoint"],
     sourceRef: ref.ref
   };
-  const factMode = buildFactActivity(fact, era, difficulty);
+  const factMode = buildFactActivity(fact, theme.era, difficulty);
 
   return {
     type: "fact",
-    prompt: stagePrompt(meta, `Build this ${eraStoryLabel(era)} reference phrase in the right order:`),
+    prompt: stagePrompt(meta, `Build this ${theme.name} reference phrase in the right order:`),
     answerParts: factMode.answerParts,
     prefilled: factMode.prefilled,
     parts: factMode.pool,
@@ -2830,16 +2958,24 @@ function buildFallbackFactActivity(meta, era, difficulty, usedSources) {
   };
 }
 
-function buildAuthoredActivityByKind(meta, era, difficulty, usedSources, kind) {
+function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind) {
+  const themeFilter = (item) => itemMatchesTheme(item, theme);
+  const scopeKey = themeScopeKey(theme, kind);
+
   if (kind === "quiz") {
     const quizSource = difficulty.id === "advanced" ? advancedQuizBank : difficulty.id === "medium" ? mediumQuizBank : quizBank;
-    const pick = pickWithoutRepeat(quizSource, era, "quiz", { usedSources, allowReuse: false });
+    const pick = pickWithoutRepeat(quizSource, theme.era, "quiz", {
+      usedSources,
+      allowReuse: false,
+      filter: themeFilter,
+      scopeKey
+    });
     if (!pick.item) return null;
     const q = pick.item;
     return {
       type: "quiz",
       prompt: stagePrompt(meta, q.prompt, pick.reuseCount),
-      options: buildQuizOptions(q, era, difficulty.quizOptions, quizSource),
+      options: buildQuizOptions(q, theme.era, difficulty.quizOptions, quizSource),
       answer: q.answer,
       sourceRef: q.sourceRef
     };
@@ -2847,7 +2983,12 @@ function buildAuthoredActivityByKind(meta, era, difficulty, usedSources, kind) {
 
   if (kind === "spelling") {
     const spellingSource = difficulty.id === "advanced" ? advancedSpellingBank : difficulty.id === "medium" ? mediumSpellingBank : spellingBank;
-    const pick = pickWithoutRepeat(spellingSource, era, "spelling", { usedSources, allowReuse: false });
+    const pick = pickWithoutRepeat(spellingSource, theme.era, "spelling", {
+      usedSources,
+      allowReuse: false,
+      filter: themeFilter,
+      scopeKey
+    });
     if (!pick.item) return null;
     const s = pick.item;
     return {
@@ -2860,7 +3001,12 @@ function buildAuthoredActivityByKind(meta, era, difficulty, usedSources, kind) {
 
   if (kind === "order") {
     const orderSource = difficulty.id === "advanced" ? advancedOrderBank : difficulty.id === "medium" ? mediumOrderBank : orderBank;
-    const pick = pickWithoutRepeat(orderSource, era, "order", { usedSources, allowReuse: false });
+    const pick = pickWithoutRepeat(orderSource, theme.era, "order", {
+      usedSources,
+      allowReuse: false,
+      filter: themeFilter,
+      scopeKey
+    });
     if (!pick.item) return null;
     const order = pick.item;
     return {
@@ -2875,10 +3021,15 @@ function buildAuthoredActivityByKind(meta, era, difficulty, usedSources, kind) {
 
   if (kind === "fact") {
     const factSource = difficulty.id === "advanced" ? advancedFactBank : difficulty.id === "medium" ? mediumFactBank : factBank;
-    const pick = pickWithoutRepeat(factSource, era, "fact", { usedSources, allowReuse: false });
+    const pick = pickWithoutRepeat(factSource, theme.era, "fact", {
+      usedSources,
+      allowReuse: false,
+      filter: themeFilter,
+      scopeKey
+    });
     if (!pick.item) return null;
     const fact = pick.item;
-    const factMode = buildFactActivity(fact, era, difficulty);
+    const factMode = buildFactActivity(fact, theme.era, difficulty);
     return {
       type: "fact",
       prompt: stagePrompt(meta, t("buildFactOrder"), pick.reuseCount),
@@ -2914,8 +3065,8 @@ function stageKindPlan(meta, difficulty) {
   const difficultyShift = difficulty.id === "advanced" ? 2 : difficulty.id === "medium" ? 1 : 0;
   const rotation = (meta.level - 1 + difficultyShift) % baseKinds.length;
   const fallbackKinds = meta.stage === 4
-    ? ["fallback-quiz", "fallback-order"]
-    : ["fallback-order", "fallback-quiz"];
+    ? ["fallback-order", "fallback-quiz", "fallback-spelling"]
+    : ["fallback-order", "fallback-quiz", "fallback-spelling"];
 
   return rotateKinds(baseKinds, rotation).concat(fallbackKinds);
 }
@@ -2984,8 +3135,11 @@ function historyRecordFor(key) {
 }
 
 function pickWithoutRepeat(pool, era, bucket, options = {}) {
-  const byEra = pool.filter((item) => item.era === era);
-  const source = byEra.length ? byEra : pool;
+  const matcher = typeof options.filter === "function"
+    ? options.filter
+    : ((item) => item.era === era);
+  const scopedPool = pool.filter(matcher);
+  const source = scopedPool.length ? scopedPool : pool;
   if (!source.length) return { item: null, reuseCount: 0 };
 
   const usedSources = options.usedSources instanceof Set ? options.usedSources : null;
@@ -3004,7 +3158,8 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
 
   const pickPool = sourceFiltered.length ? sourceFiltered : source;
 
-  const historyKey = "global:" + bucket + ":" + (byEra.length ? era : "all");
+  const historyScope = options.scopeKey || (scopedPool.length ? era : "all");
+  const historyKey = "global:" + bucket + ":" + historyScope;
   const record = historyRecordFor(historyKey);
   const counts = {};
 
@@ -3199,11 +3354,13 @@ function activityFor(meta) {
   if (meta.stage >= 1 && meta.stage <= 4) {
     for (const kind of stageKindPlan(meta, difficulty)) {
       if (kind === "fallback-quiz") {
-        activity = buildFallbackQuizActivity(meta, era, difficulty, usedSources);
+        activity = buildFallbackQuizActivity(meta, meta.theme, difficulty, usedSources);
       } else if (kind === "fallback-order") {
-        activity = buildFallbackOrderActivity(meta, era, difficulty, usedSources);
+        activity = buildFallbackOrderActivity(meta, meta.theme, difficulty, usedSources);
+      } else if (kind === "fallback-spelling") {
+        activity = buildFallbackSpellingActivity(meta, meta.theme, difficulty, usedSources);
       } else {
-        activity = buildAuthoredActivityByKind(meta, era, difficulty, usedSources, kind);
+        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind);
       }
       if (activity) break;
     }
@@ -4011,7 +4168,7 @@ function renderStoryPreviewGrid() {
 
   storyPreviewEras().forEach((era) => {
     const eraThemes = timelineThemes.filter((theme) => theme.era === era);
-    const stageCount = eraThemes.length * STAGES_PER_LEVEL;
+    const stageCount = eraThemes.reduce((total, theme) => total + themeLevelCount(theme) * STAGES_PER_LEVEL, 0);
 
     const card = document.createElement("article");
     card.className = "story-preview-card";
@@ -4908,8 +5065,7 @@ function renderSpelling(meta, activity) {
       feedback.className = "feedback ok";
       feedback.textContent = t("correctSpellingComplete");
       playSfx("success");
-      markDone(meta.id);
-      queueStageAutoClose(meta.id);
+      completeStage(meta, null);
     } else {
       const hasLives = loseLife();
       feedback.className = "feedback warn";
