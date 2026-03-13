@@ -756,7 +756,7 @@
     const candidates = Array.isArray(navigator.languages) && navigator.languages.length
       ? navigator.languages
       : [navigator.language || "en"];
-    const ordered = ["es", "de", "zh", "vi", "pt", "en"];
+    const ordered = ["es", "en"];
     for (const wanted of ordered) {
       const found = candidates.some((code) => String(code || "").toLowerCase().startsWith(wanted));
       if (found) return wanted;
@@ -767,11 +767,7 @@
   function languageLabelFor(code) {
     const labels = {
       en: t("languageEnglish"),
-      es: t("languageSpanish"),
-      de: t("languageGerman"),
-      zh: t("languageChinese"),
-      vi: t("languageVietnamese"),
-      pt: t("languagePortuguese")
+      es: t("languageSpanish")
     };
     return labels[code] || labels.en;
   }
@@ -963,11 +959,7 @@ function memoryScore(expected, typed) {
 
     const optionLabels = {
       en: languageLabelFor("en"),
-      es: languageLabelFor("es"),
-      de: languageLabelFor("de"),
-      zh: languageLabelFor("zh"),
-      vi: languageLabelFor("vi"),
-      pt: languageLabelFor("pt")
+      es: languageLabelFor("es")
     };
 
     [dom("languageSelect"), dom("languageGuideSelect")].forEach((select) => {

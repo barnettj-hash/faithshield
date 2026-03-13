@@ -5,12 +5,12 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-12-desktop-theme-lock-v1";
+const CONTENT_VERSION = "2026-03-12-desktop-language-trim-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
 const DIFFICULTY_LEVELS = ["easy", "medium", "advanced"];
-const SUPPORTED_LANGUAGES = ["en", "es", "de", "zh", "vi", "pt"];
+const SUPPORTED_LANGUAGES = ["en", "es"];
 const MUSIC_LEVELS = {
   low: 0.34,
   medium: 0.46,
