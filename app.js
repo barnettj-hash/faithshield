@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-12-desktop-question-variety-v1";
+const CONTENT_VERSION = "2026-03-12-unified-question-variety-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -97,6 +97,29 @@ const timelineThemes = [
   { name: "Saul's Kingship", period: "1 Samuel 8-15", era: "saul", fact: "Saul became king but struggled to obey God fully.", sourceRef: "1 Samuel 10:1; 15:22-23" },
   { name: "David and Courage", period: "1 Samuel 16-17", era: "david", fact: "David trusted the Lord and defeated Goliath.", sourceRef: "1 Samuel 17:45-47" }
 ];
+
+const THEME_KEYWORDS = {
+  "Creation Dawn": ["light", "earth", "garden"],
+  "Fall and Mercy": ["serpent", "Eve", "Eden"],
+  "Flood and Covenant": ["Noah", "ark", "rainbow"],
+  "Nations and Babel": ["Babel", "tower", "nations"],
+  "Call of Abram": ["Abram", "Canaan", "blessing"],
+  "Promise Family": ["Isaac", "Sarah", "promise"],
+  "Jacob to Israel": ["Jacob", "Israel", "Bethel"],
+  "Joseph in Egypt": ["Joseph", "Egypt", "brothers"],
+  "Burning Bush": ["Moses", "bush", "Pharaoh"],
+  "Plagues and Passover": ["plague", "blood", "lamb"],
+  "Sea Crossing": ["sea", "Miriam", "dry"],
+  "Sinai Covenant": ["Sinai", "law", "covenant"],
+  "Wilderness Trust": ["manna", "quail", "wilderness"],
+  "Jordan Crossing": ["Jordan", "stones", "ark"],
+  "Land and Legacy": ["Jericho", "Ai", "worship"],
+  "Cycle of Judges": ["judge", "Gideon", "Samson"],
+  "Ruth's Faithfulness": ["Ruth", "Boaz", "Naomi"],
+  "Samuel's Calling": ["Samuel", "Eli", "Shiloh"],
+  "Saul's Kingship": ["Saul", "king", "obey"],
+  "David and Courage": ["David", "Goliath", "sling"]
+};
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "spelling", "order", "fact", "truefalse", "matching"]);
@@ -3459,7 +3482,8 @@ function nextFallbackReferenceSet(theme, bucket, usedSources, count) {
 function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "quiz");
-  const pick = pickWithoutRepeat(ALL_QUIZ_BANKS, theme.era, "quiz", {
+  const quizPool = ALL_QUIZ_BANKS.concat(derivedQuizPoolForTheme(theme));
+  const pick = pickWithoutRepeat(quizPool, theme.era, "quiz", {
     usedSources,
     allowReuse: false,
     filter: themeFilter,
@@ -3472,10 +3496,10 @@ function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
   return {
     type: "quiz",
     prompt: stagePrompt(meta, question.prompt, pick.reuseCount),
-    options: buildQuizOptions(question, theme.era, difficulty.quizOptions, ALL_QUIZ_BANKS),
+    options: buildQuizOptions(question, theme.era, difficulty.quizOptions, quizPool),
     answer: question.answer,
     sourceRef: question.sourceRef,
-    historySourceRef: question.sourceRef
+    historySourceRef: question.historySourceRef || question.sourceRef
   };
 }
 
@@ -3497,7 +3521,7 @@ function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources) {
     prompt: stagePrompt(meta, pick.item.prompt, pick.reuseCount),
     answer: pick.item.answer,
     sourceRef: pick.item.sourceRef,
-    historySourceRef: pick.item.sourceRef
+    historySourceRef: pick.item.historySourceRef || pick.item.sourceRef
   };
 }
 
@@ -3516,19 +3540,20 @@ function buildFallbackOrderActivity(meta, theme, difficulty, usedSources) {
 
   return {
     type: "order",
-    prompt: stagePrompt(meta, challengeCopy("Put these Bible events in order.", "Pon estos eventos bíblicos en orden."), pick.reuseCount),
+    prompt: stagePrompt(meta, pick.item.prompt || challengeCopy("Put these Bible events in order.", "Pon estos eventos bíblicos en orden."), pick.reuseCount),
     items: pick.item.items.slice(),
     maxMoves: difficulty.orderMaxMoves,
     nearShuffle: difficulty.orderNearShuffle,
     sourceRef: pick.item.sourceRef,
-    historySourceRef: pick.item.sourceRef
+    historySourceRef: pick.item.historySourceRef || pick.item.sourceRef
   };
 }
 
 function buildFallbackFactActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "fact");
-  const pick = pickWithoutRepeat(ALL_FACT_BANKS, theme.era, "fact", {
+  const factPool = ALL_FACT_BANKS.concat(derivedFactPoolForTheme(theme));
+  const pick = pickWithoutRepeat(factPool, theme.era, "fact", {
     usedSources,
     allowReuse: false,
     filter: themeFilter,
@@ -3545,14 +3570,15 @@ function buildFallbackFactActivity(meta, theme, difficulty, usedSources) {
     prefilled: factMode.prefilled,
     parts: factMode.pool,
     sourceRef: pick.item.sourceRef,
-    historySourceRef: pick.item.sourceRef
+    historySourceRef: pick.item.historySourceRef || pick.item.sourceRef
   };
 }
 
 function buildTrueFalseActivity(meta, theme, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "truefalse");
-  const pick = pickWithoutRepeat(ALL_QUIZ_BANKS, theme.era, "truefalse", {
+  const quizPool = ALL_QUIZ_BANKS.concat(derivedQuizPoolForTheme(theme));
+  const pick = pickWithoutRepeat(quizPool, theme.era, "truefalse", {
     usedSources,
     allowReuse: false,
     filter: themeFilter,
@@ -3573,14 +3599,15 @@ function buildTrueFalseActivity(meta, theme, usedSources) {
     claim: answerIsTrue ? question.answer : falseAnswer,
     answer: answerIsTrue,
     sourceRef: question.sourceRef,
-    historySourceRef: question.sourceRef
+    historySourceRef: question.historySourceRef || question.sourceRef
   };
 }
 
 function buildMatchingActivity(meta, theme, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "matching");
-  const pick = pickManyWithoutRepeat(ALL_QUIZ_BANKS, theme.era, "matching", 3, {
+  const quizPool = ALL_QUIZ_BANKS.concat(derivedQuizPoolForTheme(theme));
+  const pick = pickManyWithoutRepeat(quizPool, theme.era, "matching", 3, {
     usedSources,
     allowReuse: false,
     filter: themeFilter,
@@ -3601,7 +3628,7 @@ function buildMatchingActivity(meta, theme, usedSources) {
     pairs,
     options: shuffled(pairs.map((pair) => pair.right)),
     sourceRef: pick.items.map((item) => item.sourceRef).join("; "),
-    historySourceRef: pick.items.map((item) => item.sourceRef).join("; ")
+    historySourceRef: pick.items.map((item) => item.historySourceRef || item.sourceRef).join("; ")
   };
 }
 
@@ -3730,7 +3757,7 @@ function buildQuestionPoolExhaustedActivity(meta, activityKind = "question") {
     type: "exhausted",
     sourceRef: meta.theme.sourceRef,
     prompt: stagePrompt(meta, `This ${kindLabel} pool is exhausted for now.`),
-    message: "Desktop no-repeat mode keeps these questions authored only, and all available items for this category have been used.",
+    message: "No-repeat mode keeps these questions authored only, and all available items for this category have been used.",
     detail: "Try another stage type, switch eras, or reset progress if you want a fresh question pool."
   };
 }
@@ -3738,7 +3765,13 @@ function buildQuestionPoolExhaustedActivity(meta, activityKind = "question") {
 function createChallengeHint(text) {
   const hint = document.createElement("p");
   hint.className = "challenge-hint";
-  hint.textContent = text;
+  if (isDesktopViewport()) {
+    hint.textContent = text;
+  } else if (/^Keyboard:/i.test(text)) {
+    hint.textContent = "Controls: use touch to play this challenge.";
+  } else {
+    hint.textContent = text;
+  }
   return hint;
 }
 
@@ -3955,6 +3988,62 @@ function themeScopedQuizItems(theme) {
     .map(({ item }) => item);
 }
 
+function themesInEra(era) {
+  return timelineThemes.filter((theme) => theme.era === era);
+}
+
+function uniqueList(items) {
+  return Array.from(new Set((items || []).filter(Boolean)));
+}
+
+function derivedQuizPoolForTheme(theme) {
+  const eraThemes = themesInEra(theme.era);
+  const factOptions = uniqueList([theme.fact].concat(eraThemes.filter((entry) => entry.name !== theme.name).map((entry) => entry.fact))).slice(0, 4);
+  const periodOptions = uniqueList([theme.period].concat(eraThemes.filter((entry) => entry.name !== theme.name).map((entry) => entry.period))).slice(0, 4);
+  const keywordPool = uniqueList((THEME_KEYWORDS[theme.name] || []).slice(0, 1).concat(
+    eraThemes
+      .filter((entry) => entry.name !== theme.name)
+      .flatMap((entry) => (THEME_KEYWORDS[entry.name] || []).slice(0, 1))
+  )).slice(0, 4);
+
+  const out = [];
+
+  if (factOptions.length >= 2) {
+    out.push({
+      era: theme.era,
+      prompt: challengeCopy("Which Bible truth best matches this section?", "¿Qué verdad bíblica corresponde mejor a esta sección?"),
+      answer: theme.fact,
+      options: factOptions,
+      sourceRef: theme.sourceRef,
+      historySourceRef: `${theme.sourceRef}::summary`
+    });
+  }
+
+  if (periodOptions.length >= 2) {
+    out.push({
+      era: theme.era,
+      prompt: challengeCopy("Which Bible section matches this truth?", "¿Qué sección de la Biblia corresponde a esta verdad?"),
+      answer: theme.period,
+      options: periodOptions,
+      sourceRef: theme.sourceRef,
+      historySourceRef: `${theme.sourceRef}::period`
+    });
+  }
+
+  if (keywordPool.length >= 2 && THEME_KEYWORDS[theme.name] && THEME_KEYWORDS[theme.name].length) {
+    out.push({
+      era: theme.era,
+      prompt: challengeCopy("Which key Bible word fits this section?", "¿Qué palabra bíblica clave corresponde a esta sección?"),
+      answer: THEME_KEYWORDS[theme.name][0],
+      options: keywordPool,
+      sourceRef: theme.sourceRef,
+      historySourceRef: `${theme.sourceRef}::keyword`
+    });
+  }
+
+  return out;
+}
+
 function derivedSpellingPoolForTheme(theme) {
   const oneWordAnswers = themeScopedQuizItems(theme)
     .filter((item) => /^[A-Za-zÀ-ÿ'-]+$/.test(String(item.answer || "")))
@@ -3968,24 +4057,73 @@ function derivedSpellingPoolForTheme(theme) {
       sourceRef: item.sourceRef
     }));
 
-  return oneWordAnswers;
+  return oneWordAnswers.concat(
+    (THEME_KEYWORDS[theme.name] || []).map((word, index) => ({
+      era: theme.era,
+      prompt: challengeCopy(
+        `Type the one-word Bible term connected to this section: ${theme.fact}`,
+        `Escribe la palabra bíblica de una sola palabra conectada con esta sección: ${theme.fact}`
+      ),
+      answer: word,
+      sourceRef: theme.sourceRef,
+      historySourceRef: `${theme.sourceRef}::spell:${index + 1}`
+    }))
+  );
 }
 
 function derivedOrderSetsForTheme(theme) {
   const themeItems = themeScopedQuizItems(theme);
-  if (themeItems.length < 3) return [];
-
   const labels = themeItems.map((item) => clueTextFromPrompt(item.prompt));
   const sets = [];
   for (let index = 0; index <= labels.length - 3; index += 1) {
     sets.push({
       era: theme.era,
       items: labels.slice(index, index + 3),
-      sourceRef: themeItems.slice(index, index + 3).map((item) => item.sourceRef).join("; ")
+      sourceRef: themeItems.slice(index, index + 3).map((item) => item.sourceRef).join("; "),
+      historySourceRef: themeItems.slice(index, index + 3).map((item) => item.sourceRef).join("; ")
     });
   }
 
+  const eraThemes = themesInEra(theme.era);
+  if (eraThemes.length >= 3) {
+    const focusIndex = Math.max(0, eraThemes.findIndex((entry) => entry.name === theme.name));
+    const startIndex = Math.max(0, Math.min(focusIndex - 1, eraThemes.length - 3));
+    const trio = eraThemes.slice(startIndex, startIndex + 3);
+    if (trio.length === 3) {
+      sets.push({
+        era: theme.era,
+        prompt: challengeCopy("Put these Bible sections in order.", "Pon estas secciones de la Biblia en orden."),
+        items: trio.map((entry) => entry.name),
+        sourceRef: trio.map((entry) => entry.sourceRef).join("; "),
+        historySourceRef: trio.map((entry) => `${entry.sourceRef}::theme`).join("; ")
+      });
+      sets.push({
+        era: theme.era,
+        prompt: challengeCopy("Put these Bible sections in order.", "Pon estas secciones de la Biblia en orden."),
+        items: trio.map((entry) => entry.period),
+        sourceRef: trio.map((entry) => entry.sourceRef).join("; "),
+        historySourceRef: trio.map((entry) => `${entry.sourceRef}::period`).join("; ")
+      });
+    }
+  }
+
   return sets;
+}
+
+function derivedFactPoolForTheme(theme) {
+  const parts = String(theme.fact || "")
+    .replace(/[.,;:!?]/g, "")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length < 3) return [];
+
+  return [{
+    era: theme.era,
+    parts,
+    sourceRef: theme.sourceRef,
+    historySourceRef: `${theme.sourceRef}::fact-summary`
+  }];
 }
 
 function buildFalseAnswer(question) {
@@ -4024,6 +4162,12 @@ function normalizeSpellingAnswer(value) {
 
 function buildQuizOptions(question, era, optionCount, sourcePool = quizBank) {
   const total = Math.max(2, Math.min(4, optionCount || 3));
+  if (Array.isArray(question.options) && question.options.length) {
+    const directOptions = uniqueList([question.answer].concat(question.options.filter((option) => option !== question.answer)));
+    if (directOptions.length >= 2) {
+      return shuffled(directOptions).slice(0, total);
+    }
+  }
   const options = [question.answer];
   const seen = new Set(options);
   const pool = Array.isArray(sourcePool) && sourcePool.length ? sourcePool : quizBank;
