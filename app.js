@@ -1387,7 +1387,7 @@ const spellingBank = [
 const mediumSpellingBank = [
   { era: "genesis", prompt: "Spell what God called the dry land.", answer: "Earth", sourceRef: "Genesis 1:10" },
   { era: "genesis", prompt: "Spell the garden where Adam and Eve first lived.", answer: "Eden", sourceRef: "Genesis 2:8" },
-  { era: "genesis", prompt: "Spell the place where God planted the garden in the east.", answer: "Eden", sourceRef: "Genesis 2:8" },
+  { era: "genesis", prompt: "Spell what Adam was formed from.", answer: "Dust", sourceRef: "Genesis 2:7" },
   { era: "genesis", prompt: "Spell what the ground would grow after the fall.", answer: "Thistles", sourceRef: "Genesis 3:18" },
   { era: "genesis", prompt: "Spell the mountain region where Noah's ark rested.", answer: "Ararat", sourceRef: "Genesis 8:4" },
   { era: "patriarchs", prompt: "Spell the place name Jacob gave after his dream of the ladder.", answer: "Bethel", sourceRef: "Genesis 28:19" },
@@ -3482,7 +3482,7 @@ function nextFallbackReferenceSet(theme, bucket, usedSources, count) {
 function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "quiz");
-  const quizPool = ALL_QUIZ_BANKS.concat(derivedQuizPoolForTheme(theme));
+  const quizPool = ALL_QUIZ_BANKS;
   const scopedQuizPool = quizPool.filter(themeFilter);
   const pick = pickWithoutRepeat(quizPool, theme.era, "quiz", {
     usedSources,
@@ -3529,7 +3529,7 @@ function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources) {
 function buildFallbackOrderActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "order");
-  const orderPool = ALL_ORDER_BANKS.concat(derivedOrderSetsForTheme(theme));
+  const orderPool = ALL_ORDER_BANKS;
   const pick = pickWithoutRepeat(orderPool, theme.era, "order", {
     usedSources,
     allowReuse: false,
@@ -3553,7 +3553,7 @@ function buildFallbackOrderActivity(meta, theme, difficulty, usedSources) {
 function buildFallbackFactActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "fact");
-  const factPool = ALL_FACT_BANKS.concat(derivedFactPoolForTheme(theme));
+  const factPool = ALL_FACT_BANKS;
   const pick = pickWithoutRepeat(factPool, theme.era, "fact", {
     usedSources,
     allowReuse: false,
@@ -3578,7 +3578,7 @@ function buildFallbackFactActivity(meta, theme, difficulty, usedSources) {
 function buildTrueFalseActivity(meta, theme, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "truefalse");
-  const quizPool = ALL_QUIZ_BANKS.concat(derivedQuizPoolForTheme(theme));
+  const quizPool = ALL_QUIZ_BANKS;
   const pick = pickWithoutRepeat(quizPool, theme.era, "truefalse", {
     usedSources,
     allowReuse: false,
@@ -3607,7 +3607,7 @@ function buildTrueFalseActivity(meta, theme, usedSources) {
 function buildMatchingActivity(meta, theme, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "matching");
-  const quizPool = ALL_QUIZ_BANKS.concat(derivedQuizPoolForTheme(theme));
+  const quizPool = ALL_QUIZ_BANKS;
   const pick = pickManyWithoutRepeat(quizPool, theme.era, "matching", 3, {
     usedSources,
     allowReuse: false,
@@ -3999,55 +3999,11 @@ function uniqueList(items) {
 }
 
 function derivedQuizPoolForTheme(theme) {
-  const eraThemes = themesInEra(theme.era);
-  const factOptions = uniqueList([theme.fact].concat(eraThemes.filter((entry) => entry.name !== theme.name).map((entry) => entry.fact))).slice(0, 4);
-  const periodOptions = uniqueList([theme.period].concat(eraThemes.filter((entry) => entry.name !== theme.name).map((entry) => entry.period))).slice(0, 4);
-  const keywordPool = uniqueList((THEME_KEYWORDS[theme.name] || []).slice(0, 1).concat(
-    eraThemes
-      .filter((entry) => entry.name !== theme.name)
-      .flatMap((entry) => (THEME_KEYWORDS[entry.name] || []).slice(0, 1))
-  )).slice(0, 4);
-
-  const out = [];
-
-  if (factOptions.length >= 2) {
-    out.push({
-      era: theme.era,
-      prompt: challengeCopy("Which Bible truth best matches this section?", "¿Qué verdad bíblica corresponde mejor a esta sección?"),
-      answer: theme.fact,
-      options: factOptions,
-      sourceRef: theme.sourceRef,
-      historySourceRef: `${theme.sourceRef}::summary`
-    });
-  }
-
-  if (periodOptions.length >= 2) {
-    out.push({
-      era: theme.era,
-      prompt: challengeCopy("Which Bible section matches this truth?", "¿Qué sección de la Biblia corresponde a esta verdad?"),
-      answer: theme.period,
-      options: periodOptions,
-      sourceRef: theme.sourceRef,
-      historySourceRef: `${theme.sourceRef}::period`
-    });
-  }
-
-  if (keywordPool.length >= 2 && THEME_KEYWORDS[theme.name] && THEME_KEYWORDS[theme.name].length) {
-    out.push({
-      era: theme.era,
-      prompt: challengeCopy("Which key Bible word fits this section?", "¿Qué palabra bíblica clave corresponde a esta sección?"),
-      answer: THEME_KEYWORDS[theme.name][0],
-      options: keywordPool,
-      sourceRef: theme.sourceRef,
-      historySourceRef: `${theme.sourceRef}::keyword`
-    });
-  }
-
-  return out;
+  return [];
 }
 
 function derivedSpellingPoolForTheme(theme) {
-  const oneWordAnswers = themeScopedQuizItems(theme)
+  return themeScopedQuizItems(theme)
     .filter((item) => /^[A-Za-zÀ-ÿ'-]+$/.test(String(item.answer || "")))
     .map((item) => ({
       era: theme.era,
@@ -4056,21 +4012,9 @@ function derivedSpellingPoolForTheme(theme) {
         `Escribe la respuesta bíblica de una sola palabra para esta pista: ${clueTextFromPrompt(item.prompt)}.`
       ),
       answer: item.answer,
-      sourceRef: item.sourceRef
+      sourceRef: item.sourceRef,
+      historySourceRef: item.historySourceRef || item.sourceRef
     }));
-
-  return oneWordAnswers.concat(
-    (THEME_KEYWORDS[theme.name] || []).map((word, index) => ({
-      era: theme.era,
-      prompt: challengeCopy(
-        `Type the one-word Bible term connected to this section: ${theme.fact}`,
-        `Escribe la palabra bíblica de una sola palabra conectada con esta sección: ${theme.fact}`
-      ),
-      answer: word,
-      sourceRef: theme.sourceRef,
-      historySourceRef: `${theme.sourceRef}::spell:${index + 1}`
-    }))
-  );
 }
 
 function derivedOrderSetsForTheme(theme) {
@@ -4113,19 +4057,7 @@ function derivedOrderSetsForTheme(theme) {
 }
 
 function derivedFactPoolForTheme(theme) {
-  const parts = String(theme.fact || "")
-    .replace(/[.,;:!?]/g, "")
-    .split(/\s+/)
-    .filter(Boolean);
-
-  if (parts.length < 3) return [];
-
-  return [{
-    era: theme.era,
-    parts,
-    sourceRef: theme.sourceRef,
-    historySourceRef: `${theme.sourceRef}::fact-summary`
-  }];
+  return [];
 }
 
 function buildFalseAnswer(question) {
@@ -4151,7 +4083,7 @@ function currentDifficulty() {
 }
 
 function shouldShowQuestionSource() {
-  return true;
+  return currentDifficulty().id !== "advanced";
 }
 
 function normalizeSpellingAnswer(value) {
