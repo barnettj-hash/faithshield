@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-13-stage5-skill-pass-v1";
+const CONTENT_VERSION = "2026-03-13-stage5-story-pass-v2";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -41,7 +41,9 @@ const difficultyProfiles = {
       dodge: { targetDelta: -4, spawnDelta: 90 },
       slingshot: { targetRadiusDelta: 7, maxPullDelta: 10, pullScale: 0.16 },
       pattern: { roundsDelta: -1, maxMissesDelta: 2, paceDelta: 120 },
-      balance: { targetDelta: -2, maxMissesDelta: 2, driftDelta: -0.004 }
+      balance: { targetDelta: -2, maxMissesDelta: 2, driftDelta: -0.004 },
+      route: { maxMissesDelta: 2 },
+      discern: { maxMissesDelta: 2 }
     }
   },
   medium: {
@@ -58,7 +60,9 @@ const difficultyProfiles = {
       dodge: { targetDelta: 0, spawnDelta: 0 },
       slingshot: { targetRadiusDelta: 0, maxPullDelta: 0, pullScale: 0.14 },
       pattern: { roundsDelta: 0, maxMissesDelta: 0, paceDelta: 0 },
-      balance: { targetDelta: 0, maxMissesDelta: 0, driftDelta: 0 }
+      balance: { targetDelta: 0, maxMissesDelta: 0, driftDelta: 0 },
+      route: { maxMissesDelta: 0 },
+      discern: { maxMissesDelta: 0 }
     }
   },
   advanced: {
@@ -75,7 +79,9 @@ const difficultyProfiles = {
       dodge: { targetDelta: 6, spawnDelta: -70 },
       slingshot: { targetRadiusDelta: -5, maxPullDelta: -8, pullScale: 0.13 },
       pattern: { roundsDelta: 1, maxMissesDelta: -1, paceDelta: -100 },
-      balance: { targetDelta: 2, maxMissesDelta: -1, driftDelta: 0.006 }
+      balance: { targetDelta: 2, maxMissesDelta: -1, driftDelta: 0.006 },
+      route: { maxMissesDelta: -1 },
+      discern: { maxMissesDelta: -1 }
     }
   }
 };
@@ -113,17 +119,526 @@ const THEME_KEYWORDS = {
   "Promise Family": ["Isaac", "Sarah", "promise"],
   "Jacob to Israel": ["Jacob", "Israel", "Bethel"],
   "Joseph in Egypt": ["Joseph", "Egypt", "brothers"],
+  "Call of Abram": [
+    {
+      id: "abram-leave-haran",
+      engine: "route",
+      label: "Leave Haran",
+      maxMisses: 4,
+      sourceRef: "Genesis 12:1-4",
+      storyPrompt: "Follow Abram's road as God calls him to leave his country and go to the land He will show.",
+      secondaryPrompt: "Move through each step of the journey in the right direction.",
+      keyboardHint: "Keyboard: use arrow keys or WASD to follow the route.",
+      routeSteps: [
+        { dir: "right", icon: "🏕️", label: "Leave" },
+        { dir: "up", icon: "🧭", label: "Go" },
+        { dir: "right", icon: "🌄", label: "Trust" },
+        { dir: "right", icon: "🌍", label: "Land" }
+      ]
+    },
+    {
+      id: "abram-promise-discern",
+      engine: "discern",
+      label: "Promise Under the Stars",
+      maxMisses: 3,
+      sourceRef: "Genesis 12:7-8; 15:5-6",
+      storyPrompt: "Discern the promise signs God used to strengthen Abram's faith.",
+      secondaryPrompt: "Choose the right sign or response each round.",
+      keyboardHint: "Keyboard: press 1-4 to choose the right promise sign.",
+      cards: [
+        { icon: "⭐", label: "Stars" },
+        { icon: "🔥", label: "Altar" },
+        { icon: "⛺", label: "Tent" },
+        { icon: "🌍", label: "Land" }
+      ],
+      targets: [
+        { prompt: "What did God tell Abram to count if he was able?", correctIndex: 0 },
+        { prompt: "What did Abram build to Yahweh in Canaan?", correctIndex: 1 },
+        { prompt: "What did Abram pitch between Bethel and Ai?", correctIndex: 2 },
+        { prompt: "What did God promise to show Abram?", correctIndex: 3 }
+      ]
+    },
+    {
+      id: "abram-altar-stand",
+      engine: "balance",
+      label: "Altar of Trust",
+      target: 7,
+      maxMisses: 4,
+      drift: 0.025,
+      sourceRef: "Genesis 12:7-8",
+      storyPrompt: "Stand steady in faith as Abram worships Yahweh in the land of promise.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to stay centered in the trust band."
+    }
+  ],
+  "Promise Family": [
+    {
+      id: "promise-moriah-ascent",
+      engine: "route",
+      label: "Moriah Ascent",
+      maxMisses: 4,
+      sourceRef: "Genesis 22:2-13",
+      storyPrompt: "Climb the path to Moriah as Abraham trusts God on the mountain.",
+      secondaryPrompt: "Follow the mountain path one step at a time.",
+      keyboardHint: "Keyboard: use arrow keys or WASD to follow the mountain route.",
+      routeSteps: [
+        { dir: "up", icon: "🪵", label: "Wood" },
+        { dir: "right", icon: "🔥", label: "Fire" },
+        { dir: "up", icon: "⛰️", label: "Climb" },
+        { dir: "right", icon: "🐏", label: "Ram" }
+      ]
+    },
+    {
+      id: "promise-household-discern",
+      engine: "discern",
+      label: "Promise Household",
+      maxMisses: 3,
+      sourceRef: "Genesis 18:12-14; 21:2-3; 21:19; 22:13",
+      storyPrompt: "Discern how God kept His promise through Abraham's family.",
+      secondaryPrompt: "Choose the right answer from the promise family story.",
+      keyboardHint: "Keyboard: press 1-4 to choose the right family answer.",
+      cards: [
+        { icon: "👶", label: "Isaac" },
+        { icon: "👵", label: "Sarah" },
+        { icon: "🐏", label: "Ram" },
+        { icon: "💧", label: "Well" }
+      ],
+      targets: [
+        { prompt: "Who gave birth to the promised son?", correctIndex: 1 },
+        { prompt: "What was the name of Abraham's promised son?", correctIndex: 0 },
+        { prompt: "What substitute did Abraham offer instead of Isaac?", correctIndex: 2 },
+        { prompt: "What did God show Hagar in the wilderness?", correctIndex: 3 }
+      ]
+    },
+    {
+      id: "promise-tent-provision",
+      engine: "collect",
+      label: "Tent Provision",
+      target: 12,
+      maxMisses: 5,
+      seconds: 24,
+      spawnMs: 430,
+      sourceRef: "Genesis 18:6-8",
+      storyPrompt: "Gather the meal Abraham prepared for his heavenly visitors.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the provisions."
+    }
+  ],
+  "Jacob to Israel": [
+    {
+      id: "jacob-bethel-route",
+      engine: "route",
+      label: "Bethel Return",
+      maxMisses: 4,
+      sourceRef: "Genesis 28:10-19; 35:1-3",
+      storyPrompt: "Follow Jacob's path back to Bethel where God confirmed His covenant.",
+      secondaryPrompt: "Trace the journey back to Bethel in the right order.",
+      keyboardHint: "Keyboard: use arrow keys or WASD to follow the Bethel route.",
+      routeSteps: [
+        { dir: "up", icon: "🪨", label: "Stone" },
+        { dir: "right", icon: "🪜", label: "Ladder" },
+        { dir: "up", icon: "🙏", label: "Vow" },
+        { dir: "right", icon: "🏕️", label: "Bethel" }
+      ]
+    },
+    {
+      id: "jacob-blessing-discern",
+      engine: "discern",
+      label: "Jacob's Turning Point",
+      maxMisses: 3,
+      sourceRef: "Genesis 27:35-36; 28:12; 32:28; 35:14",
+      storyPrompt: "Discern the key moments that shaped Jacob into Israel.",
+      secondaryPrompt: "Choose the right part of Jacob's story each round.",
+      keyboardHint: "Keyboard: press 1-4 to choose the right Jacob answer.",
+      cards: [
+        { icon: "🪜", label: "Ladder" },
+        { icon: "🪨", label: "Pillar" },
+        { icon: "🇮🇱", label: "Israel" },
+        { icon: "✨", label: "Blessing" }
+      ],
+      targets: [
+        { prompt: "What did Jacob see reaching toward heaven?", correctIndex: 0 },
+        { prompt: "What did Jacob set up and pour a drink offering on?", correctIndex: 1 },
+        { prompt: "What new name did God give Jacob?", correctIndex: 2 },
+        { prompt: "What did Jacob seek from his father in Genesis 27?", correctIndex: 3 }
+      ]
+    },
+    {
+      id: "jacob-jabbok-balance",
+      engine: "balance",
+      label: "Jabbok Hold",
+      target: 8,
+      maxMisses: 4,
+      drift: 0.028,
+      sourceRef: "Genesis 32:24-30",
+      storyPrompt: "Hold your ground through the night as Jacob wrestles and clings for blessing.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to stay in the blessing band."
+    }
+  ],
+  "Joseph in Egypt": [
+    {
+      id: "joseph-prison-palace-route",
+      engine: "route",
+      label: "Prison to Palace",
+      maxMisses: 4,
+      sourceRef: "Genesis 39:20; 41:14; 41:41",
+      storyPrompt: "Follow Joseph's path from prison to Pharaoh's court as God raises him up.",
+      secondaryPrompt: "Trace Joseph's rise one step at a time.",
+      keyboardHint: "Keyboard: use arrow keys or WASD to follow Joseph's route.",
+      routeSteps: [
+        { dir: "down", icon: "⛓️", label: "Prison" },
+        { dir: "up", icon: "🛁", label: "Prepare" },
+        { dir: "right", icon: "👑", label: "Pharaoh" },
+        { dir: "up", icon: "🏛️", label: "Rule" }
+      ]
+    },
+    {
+      id: "joseph-dreams-discern",
+      engine: "discern",
+      label: "Dreams and Grain",
+      maxMisses: 3,
+      sourceRef: "Genesis 37:3; 41:2-7; 41:48-49; 44:2",
+      storyPrompt: "Discern the signs and symbols God used in Joseph's story.",
+      secondaryPrompt: "Choose the right symbol from Joseph's life each round.",
+      keyboardHint: "Keyboard: press 1-4 to choose the right Joseph answer.",
+      cards: [
+        { icon: "🐄", label: "Cows" },
+        { icon: "🌾", label: "Grain" },
+        { icon: "🧥", label: "Coat" },
+        { icon: "🥈", label: "Silver Cup" }
+      ],
+      targets: [
+        { prompt: "What did Pharaoh see coming up from the Nile?", correctIndex: 0 },
+        { prompt: "What did Joseph gather during the years of plenty?", correctIndex: 1 },
+        { prompt: "What did Jacob make for Joseph?", correctIndex: 2 },
+        { prompt: "What was hidden in Benjamin's sack?", correctIndex: 3 }
+      ]
+    },
+    {
+      id: "joseph-granary-store",
+      engine: "collect",
+      label: "Granary Store",
+      target: 13,
+      maxMisses: 5,
+      seconds: 24,
+      spawnMs: 420,
+      sourceRef: "Genesis 41:48-49",
+      storyPrompt: "Gather grain through the years of plenty before the famine arrives.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the grain."
+    }
+  ],
   "Burning Bush": ["Moses", "bush", "Pharaoh"],
   "Plagues and Passover": ["plague", "blood", "lamb"],
   "Sea Crossing": ["sea", "Miriam", "dry"],
   "Sinai Covenant": ["Sinai", "law", "covenant"],
   "Wilderness Trust": ["manna", "quail", "wilderness"],
+  "Sinai Covenant": [
+    {
+      id: "sinai-mountain-route",
+      engine: "route",
+      label: "Mountain Ascent",
+      maxMisses: 4,
+      sourceRef: "Exodus 19:12-20",
+      storyPrompt: "Trace the careful ascent as Moses goes up the mountain to meet with God.",
+      secondaryPrompt: "Follow the mountain route in the right order.",
+      keyboardHint: "Keyboard: use arrow keys or WASD to follow the Sinai route.",
+      routeSteps: [
+        { dir: "up", icon: "⛰️", label: "Climb" },
+        { dir: "right", icon: "📯", label: "Trumpet" },
+        { dir: "up", icon: "☁️", label: "Cloud" },
+        { dir: "right", icon: "📜", label: "Words" }
+      ]
+    },
+    {
+      id: "sinai-commandment-discern",
+      engine: "discern",
+      label: "Covenant Discern",
+      maxMisses: 3,
+      sourceRef: "Exodus 19:19; 20:1-17; 24:8",
+      storyPrompt: "Discern the signs of covenant as Israel hears God's words at Sinai.",
+      secondaryPrompt: "Choose the right covenant sign each round.",
+      keyboardHint: "Keyboard: press 1-4 to choose the right Sinai answer.",
+      cards: [
+        { icon: "📯", label: "Trumpet" },
+        { icon: "🩸", label: "Blood" },
+        { icon: "🪨", label: "Tablets" },
+        { icon: "🔥", label: "Fire" }
+      ],
+      targets: [
+        { prompt: "What sound grew louder and louder at the mountain?", correctIndex: 0 },
+        { prompt: "What did Moses sprinkle on the people?", correctIndex: 1 },
+        { prompt: "What did God give Moses with the covenant words written on them?", correctIndex: 2 },
+        { prompt: "How did Yahweh descend on Mount Sinai?", correctIndex: 3 }
+      ]
+    },
+    {
+      id: "sinai-covenant-stand",
+      engine: "balance",
+      label: "Covenant Stand",
+      target: 8,
+      maxMisses: 4,
+      drift: 0.028,
+      sourceRef: "Exodus 24:7-8",
+      storyPrompt: "Stand firm as the covenant is confirmed before the people of Israel.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to stay inside the covenant band."
+    }
+  ],
+  "Wilderness Trust": [
+    {
+      id: "wilderness-cloud-route",
+      engine: "route",
+      label: "Follow the Cloud",
+      maxMisses: 4,
+      sourceRef: "Exodus 13:21-22; Numbers 9:17-18",
+      storyPrompt: "Follow the cloud's leading as Israel learns to trust God's guidance in the wilderness.",
+      secondaryPrompt: "Stay with the cloud and move in the right direction.",
+      keyboardHint: "Keyboard: use arrow keys or WASD to follow the cloud route.",
+      routeSteps: [
+        { dir: "up", icon: "☁️", label: "Cloud" },
+        { dir: "right", icon: "🏕️", label: "Camp" },
+        { dir: "up", icon: "🧭", label: "Move" },
+        { dir: "right", icon: "🔥", label: "Fire" }
+      ]
+    },
+    {
+      id: "wilderness-provision-discern",
+      engine: "discern",
+      label: "Daily Provision",
+      maxMisses: 3,
+      sourceRef: "Exodus 16:15; Numbers 11:31; Numbers 20:11; Deuteronomy 8:3",
+      storyPrompt: "Discern God's provision in the wilderness instead of grumbling at the journey.",
+      secondaryPrompt: "Choose the right provision each round.",
+      keyboardHint: "Keyboard: press 1-4 to choose the right wilderness answer.",
+      cards: [
+        { icon: "🍞", label: "Manna" },
+        { icon: "🐦", label: "Quail" },
+        { icon: "💧", label: "Water" },
+        { icon: "📜", label: "Word" }
+      ],
+      targets: [
+        { prompt: "What did the people call the bread from heaven?", correctIndex: 0 },
+        { prompt: "What birds covered the camp in Numbers 11?", correctIndex: 1 },
+        { prompt: "What came from the rock when Moses struck it?", correctIndex: 2 },
+        { prompt: "What does Deuteronomy 8:3 say man lives by besides bread?", correctIndex: 3 }
+      ]
+    },
+    {
+      id: "wilderness-tent-balance",
+      engine: "balance",
+      label: "Tent of Meeting",
+      target: 8,
+      maxMisses: 4,
+      drift: 0.027,
+      sourceRef: "Exodus 33:7-11",
+      storyPrompt: "Hold steady as Moses meets with Yahweh at the tent outside the camp.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to stay in the meeting band."
+    }
+  ],
   "Jordan Crossing": ["Jordan", "stones", "ark"],
   "Land and Legacy": ["Jericho", "Ai", "worship"],
   "Cycle of Judges": ["judge", "Gideon", "Samson"],
   "Ruth's Faithfulness": ["Ruth", "Boaz", "Naomi"],
   "Samuel's Calling": ["Samuel", "Eli", "Shiloh"],
   "Saul's Kingship": ["Saul", "king", "obey"],
+  "Cycle of Judges": [
+    {
+      id: "judges-gideon-route",
+      engine: "route",
+      label: "Gideon's Night Route",
+      maxMisses: 4,
+      sourceRef: "Judges 7:16-21",
+      storyPrompt: "Follow Gideon's night attack as the three companies move into place.",
+      secondaryPrompt: "Trace the night route one move at a time.",
+      keyboardHint: "Keyboard: use arrow keys or WASD to follow Gideon's route.",
+      routeSteps: [
+        { dir: "left", icon: "🏺", label: "Jar" },
+        { dir: "up", icon: "🔥", label: "Torch" },
+        { dir: "right", icon: "📯", label: "Trumpet" },
+        { dir: "up", icon: "⚔️", label: "Advance" }
+      ]
+    },
+    {
+      id: "judges-discern-deliverer",
+      engine: "discern",
+      label: "Raise the Judge",
+      maxMisses: 3,
+      sourceRef: "Judges 4:4; 6:34; 16:30; Ruth 1:16",
+      storyPrompt: "Discern the key people God used during the time of the judges.",
+      secondaryPrompt: "Choose the right person each round.",
+      keyboardHint: "Keyboard: press 1-4 to choose the right judge-era answer.",
+      cards: [
+        { icon: "👩‍⚖️", label: "Deborah" },
+        { icon: "📯", label: "Gideon" },
+        { icon: "🏛️", label: "Samson" },
+        { icon: "🌾", label: "Ruth" }
+      ],
+      targets: [
+        { prompt: "Who judged Israel as a prophetess?", correctIndex: 0 },
+        { prompt: "Who led with trumpets and three hundred men?", correctIndex: 1 },
+        { prompt: "Who pulled down the pillars of the Philistine house?", correctIndex: 2 },
+        { prompt: "Who stayed faithful to Naomi?", correctIndex: 3 }
+      ]
+    },
+    {
+      id: "judges-pillars-balance",
+      engine: "balance",
+      label: "Pillars of Strength",
+      target: 8,
+      maxMisses: 4,
+      drift: 0.029,
+      sourceRef: "Judges 16:29-30",
+      storyPrompt: "Hold the pressure point as Samson braces himself between the pillars.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to stay centered in the strength band."
+    }
+  ],
+  "Ruth's Faithfulness": [
+    {
+      id: "ruth-return-route",
+      engine: "route",
+      label: "Return to Bethlehem",
+      maxMisses: 4,
+      sourceRef: "Ruth 1:16-22",
+      storyPrompt: "Follow Ruth and Naomi's path back to Bethlehem in faithful love.",
+      secondaryPrompt: "Trace the return path one step at a time.",
+      keyboardHint: "Keyboard: use arrow keys or WASD to follow the Bethlehem route.",
+      routeSteps: [
+        { dir: "left", icon: "👣", label: "Go" },
+        { dir: "up", icon: "🧕", label: "Naomi" },
+        { dir: "right", icon: "🌾", label: "Fields" },
+        { dir: "up", icon: "🏠", label: "Bethlehem" }
+      ]
+    },
+    {
+      id: "ruth-redeemer-discern",
+      engine: "discern",
+      label: "Kinsman Redeemer",
+      maxMisses: 3,
+      sourceRef: "Ruth 1:16; 2:3; 2:12; 4:13",
+      storyPrompt: "Discern the signs of faithfulness and redemption in Ruth's story.",
+      secondaryPrompt: "Choose the right part of Ruth's story each round.",
+      keyboardHint: "Keyboard: press 1-4 to choose the right Ruth answer.",
+      cards: [
+        { icon: "🌾", label: "Field" },
+        { icon: "🫂", label: "Naomi" },
+        { icon: "🛡️", label: "Boaz" },
+        { icon: "👶", label: "Obed" }
+      ],
+      targets: [
+        { prompt: "Where did Ruth glean behind the reapers?", correctIndex: 0 },
+        { prompt: "Who did Ruth refuse to leave?", correctIndex: 1 },
+        { prompt: "Who spread his garment over Ruth in protection?", correctIndex: 2 },
+        { prompt: "Who was born at the end of Ruth's story?", correctIndex: 3 }
+      ]
+    },
+    {
+      id: "ruth-gleaning-grace",
+      engine: "collect",
+      label: "Gleaning Grace",
+      target: 12,
+      maxMisses: 5,
+      seconds: 24,
+      spawnMs: 425,
+      sourceRef: "Ruth 2:2-3,17",
+      storyPrompt: "Gather the barley as Ruth gleans faithfully in Boaz's field.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the grain."
+    }
+  ],
+  "Samuel's Calling": [
+    {
+      id: "samuel-night-pattern",
+      engine: "pattern",
+      label: "Night Call",
+      rounds: 4,
+      maxMisses: 4,
+      playbackMs: 510,
+      sourceRef: "1 Samuel 3:4-10",
+      storyPrompt: "Remember the night-call pattern as Samuel learns to answer Yahweh.",
+      keyboardHint: "Keyboard: press 1-4 to repeat the night-call pattern.",
+      pads: [
+        { icon: "🛏️", label: "Sleep" },
+        { icon: "👂", label: "Hear" },
+        { icon: "🏃", label: "Run" },
+        { icon: "🗣️", label: "Speak" }
+      ],
+      sequences: [[1, 2, 3], [1, 2, 1, 3], [1, 2, 3, 1], [1, 2, 1, 3, 1]]
+    },
+    {
+      id: "samuel-run-route",
+      engine: "route",
+      label: "Run to Eli",
+      maxMisses: 4,
+      sourceRef: "1 Samuel 3:4-8",
+      storyPrompt: "Follow Samuel's path as he runs again and again to Eli in the night.",
+      secondaryPrompt: "Trace the path between Samuel and Eli one step at a time.",
+      keyboardHint: "Keyboard: use arrow keys or WASD to follow Samuel's route.",
+      routeSteps: [
+        { dir: "right", icon: "🛏️", label: "Bed" },
+        { dir: "up", icon: "🏃", label: "Run" },
+        { dir: "right", icon: "👴", label: "Eli" },
+        { dir: "left", icon: "↩️", label: "Return" }
+      ]
+    },
+    {
+      id: "samuel-lamp-balance",
+      engine: "balance",
+      label: "Lamp Before Yahweh",
+      target: 8,
+      maxMisses: 4,
+      drift: 0.027,
+      sourceRef: "1 Samuel 3:3",
+      storyPrompt: "Keep the lamp steady before Yahweh as the word of God comes to Samuel.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to stay in the lamp band."
+    }
+  ],
+  "Saul's Kingship": [
+    {
+      id: "saul-donkey-route",
+      engine: "route",
+      label: "Donkey Search",
+      maxMisses: 4,
+      sourceRef: "1 Samuel 9:3-6",
+      storyPrompt: "Follow Saul's search as he looks for the lost donkeys before meeting Samuel.",
+      secondaryPrompt: "Trace the search route in the right order.",
+      keyboardHint: "Keyboard: use arrow keys or WASD to follow the search route.",
+      routeSteps: [
+        { dir: "right", icon: "🐴", label: "Search" },
+        { dir: "up", icon: "⛰️", label: "Hill" },
+        { dir: "right", icon: "🏙️", label: "City" },
+        { dir: "up", icon: "👴", label: "Samuel" }
+      ]
+    },
+    {
+      id: "saul-anointing-discern",
+      engine: "discern",
+      label: "Anointed King",
+      maxMisses: 3,
+      sourceRef: "1 Samuel 10:1,22,24; 15:22-23",
+      storyPrompt: "Discern the turning points in Saul's rise and fall as king.",
+      secondaryPrompt: "Choose the right sign from Saul's story each round.",
+      keyboardHint: "Keyboard: press 1-4 to choose the right Saul answer.",
+      cards: [
+        { icon: "🫒", label: "Oil" },
+        { icon: "🐴", label: "Donkeys" },
+        { icon: "🧳", label: "Baggage" },
+        { icon: "👑", label: "Kingdom" }
+      ],
+      targets: [
+        { prompt: "What did Samuel pour on Saul's head?", correctIndex: 0 },
+        { prompt: "What had Saul been searching for when the story began?", correctIndex: 1 },
+        { prompt: "Where was Saul hiding when he was presented to Israel?", correctIndex: 2 },
+        { prompt: "What did Yahweh say He had given Saul over Israel?", correctIndex: 3 }
+      ]
+    },
+    {
+      id: "saul-gilgal-balance",
+      engine: "balance",
+      label: "Wait at Gilgal",
+      target: 8,
+      maxMisses: 4,
+      drift: 0.029,
+      sourceRef: "1 Samuel 13:8-14",
+      storyPrompt: "Hold steady and wait as Saul faces the test of obedience at Gilgal.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to stay inside the waiting band."
+    }
+  ],
   "David and Courage": ["David", "Goliath", "sling"]
 };
 
@@ -814,6 +1329,28 @@ const THEMED_INTERACTIVE_MODE_SETS = {
       sourceRef: "Genesis 2:15",
       storyPrompt: "Keep your footing steady as Adam tends the garden God has given.",
       keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker inside the gold band."
+    },
+    {
+      id: "creation-image-discern",
+      engine: "discern",
+      label: "Image-Bearer Choice",
+      maxMisses: 3,
+      sourceRef: "Genesis 1:26-28; 2:7",
+      storyPrompt: "Discern the right parts of God's good creation as the story unfolds.",
+      secondaryPrompt: "Choose the right part of the creation story each round.",
+      keyboardHint: "Keyboard: press 1-4 to choose the right creation answer.",
+      cards: [
+        { icon: "☀️", label: "Light" },
+        { icon: "🌿", label: "Plants" },
+        { icon: "👤", label: "Man" },
+        { icon: "😴", label: "Rest" }
+      ],
+      targets: [
+        { prompt: "What did God create first when He said, 'Let there be' in Genesis 1?", correctIndex: 0 },
+        { prompt: "What did the earth bring forth on day three?", correctIndex: 1 },
+        { prompt: "What did God form from the dust of the ground?", correctIndex: 2 },
+        { prompt: "What did God do on the seventh day?", correctIndex: 3 }
+      ]
     }
   ],
   "Fall and Mercy": [
@@ -837,6 +1374,22 @@ const THEMED_INTERACTIVE_MODE_SETS = {
       sourceRef: "Genesis 3:24",
       storyPrompt: "Hold the path carefully as the flaming sword guards the way to the tree of life.",
       keyboardHint: "Keyboard: hold Left/A or Right/D to stay inside the guarded path."
+    },
+    {
+      id: "fall-garden-hiding",
+      engine: "route",
+      label: "Garden Hiding",
+      maxMisses: 4,
+      sourceRef: "Genesis 3:8-10",
+      storyPrompt: "Trace Adam and Eve's fearful path as they hide among the trees of the garden.",
+      secondaryPrompt: "Follow the hiding path one turn at a time.",
+      keyboardHint: "Keyboard: use arrow keys or WASD to follow the hiding path.",
+      routeSteps: [
+        { dir: "left", icon: "🌳", label: "Trees" },
+        { dir: "down", icon: "👣", label: "Hide" },
+        { dir: "right", icon: "🍃", label: "Cover" },
+        { dir: "up", icon: "👂", label: "Hear" }
+      ]
     }
   ],
   "Flood and Covenant": [
@@ -4403,6 +4956,10 @@ function materializeInteractiveMode(base, difficulty = currentDifficulty(), keyS
     } else if (base.engine === "balance") {
       mode.target = (base.target || 7) + cycle;
       mode.drift = Math.min(0.05, (base.drift || 0.026) + cycle * 0.0025);
+    } else if (base.engine === "route") {
+      mode.maxMisses = Math.max(2, (base.maxMisses || 4) - Math.min(cycle, 1));
+    } else if (base.engine === "discern") {
+      mode.maxMisses = Math.max(2, (base.maxMisses || 3) - Math.min(cycle, 1));
     }
   }
 
@@ -4432,6 +4989,10 @@ function materializeInteractiveMode(base, difficulty = currentDifficulty(), keyS
     mode.target = Math.max(5, (mode.target || 7) + (tune.targetDelta || 0));
     mode.maxMisses = Math.max(1, (mode.maxMisses || 3) + (tune.maxMissesDelta || 0));
     mode.drift = Math.max(0.014, (mode.drift || 0.026) + (tune.driftDelta || 0));
+  } else if (mode.engine === "route") {
+    mode.maxMisses = Math.max(1, (mode.maxMisses || 4) + (tune.maxMissesDelta || 0));
+  } else if (mode.engine === "discern") {
+    mode.maxMisses = Math.max(1, (mode.maxMisses || 3) + (tune.maxMissesDelta || 0));
   }
 
   return mode;
@@ -6744,6 +7305,10 @@ function renderInteractive(meta, mode, sourceRef) {
     activeCleanup = renderPattern(meta, mode, feedback);
   } else if (mode.engine === "balance") {
     activeCleanup = renderBalance(meta, mode, feedback);
+  } else if (mode.engine === "route") {
+    activeCleanup = renderRoute(meta, mode, feedback);
+  } else if (mode.engine === "discern") {
+    activeCleanup = renderDiscern(meta, mode, feedback);
   } else if (mode.engine === "timing") {
     activeCleanup = renderTiming(meta, mode, feedback);
   } else if (mode.engine === "collect") {
@@ -7181,6 +7746,351 @@ function renderBalance(meta, mode, feedback) {
     rightBtn.removeEventListener("pointerup", rightHandlers.end);
     rightBtn.removeEventListener("pointercancel", rightHandlers.end);
     rightBtn.removeEventListener("pointerleave", rightHandlers.end);
+  };
+}
+
+function renderRoute(meta, mode, feedback) {
+  const prompt = document.createElement("p");
+  prompt.textContent = mode.secondaryPrompt || "Follow the route one move at a time.";
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: use arrow keys or WASD to follow the route.");
+  const status = createSkillStatus("");
+  activityPanel.append(prompt, hint, status);
+
+  const stepMeta = Array.isArray(mode.routeSteps) && mode.routeSteps.length
+    ? mode.routeSteps.map((step) => ({
+      dir: step.dir,
+      icon: step.icon || routeIcon(step.dir),
+      label: step.label || routeLabel(step.dir)
+    }))
+    : [
+      { dir: "up", icon: "⬆️", label: "Up" },
+      { dir: "right", icon: "➡️", label: "Right" },
+      { dir: "down", icon: "⬇️", label: "Down" },
+      { dir: "left", icon: "⬅️", label: "Left" }
+    ];
+
+  const trail = document.createElement("div");
+  trail.style.display = "grid";
+  trail.style.gridTemplateColumns = `repeat(${Math.min(stepMeta.length, 4)}, minmax(110px, 1fr))`;
+  trail.style.gap = "0.75rem";
+  trail.style.marginTop = "0.8rem";
+  activityPanel.append(trail);
+
+  const stepCards = stepMeta.map((step, index) => {
+    const card = document.createElement("div");
+    card.style.borderRadius = "18px";
+    card.style.padding = "0.85rem 0.75rem";
+    card.style.border = "1px solid rgba(240, 207, 147, 0.18)";
+    card.style.background = "linear-gradient(180deg, rgba(20,27,38,0.98), rgba(11,16,24,0.96))";
+    card.style.boxShadow = "0 14px 30px rgba(4,8,12,0.24)";
+    card.style.textAlign = "center";
+    card.innerHTML = `<div style="font-size:1.45rem">${step.icon}</div><div style="margin-top:0.35rem;font-weight:700">${index + 1}. ${step.label}</div>`;
+    trail.append(card);
+    return card;
+  });
+
+  const controls = document.createElement("div");
+  controls.style.display = "grid";
+  controls.style.gridTemplateColumns = "repeat(3, minmax(90px, 120px))";
+  controls.style.gap = "0.7rem";
+  controls.style.justifyContent = "center";
+  controls.style.marginTop = "1rem";
+  activityPanel.append(controls);
+
+  const blankA = document.createElement("div");
+  const upBtn = routeButton("⬆️ Up");
+  const blankB = document.createElement("div");
+  const leftBtn = routeButton("⬅️ Left");
+  const downBtn = routeButton("⬇️ Down");
+  const rightBtn = routeButton("➡️ Right");
+  controls.append(blankA, upBtn, blankB, leftBtn, downBtn, rightBtn);
+
+  let index = 0;
+  let misses = 0;
+  let running = true;
+
+  const updateStatus = (lead = challengeCopy("Follow the path.", "Sigue el camino.")) => {
+    status.textContent = `${lead} ${challengeCopy("Step", "Paso")} ${Math.min(index + 1, stepMeta.length)}/${stepMeta.length} | ${t("missesLabel")}: ${misses}/${mode.maxMisses || 4}`;
+  };
+
+  const paintTrail = (activeIndex = index, state = "active") => {
+    stepCards.forEach((card, stepIndex) => {
+      card.style.transform = stepIndex < activeIndex ? "translateY(-2px)" : "";
+      card.style.boxShadow = stepIndex < activeIndex
+        ? "0 0 0 2px rgba(130,211,146,0.35), 0 14px 30px rgba(70,170,88,0.18)"
+        : "0 14px 30px rgba(4,8,12,0.24)";
+      card.style.background = stepIndex < activeIndex
+        ? "linear-gradient(180deg, rgba(72,148,88,0.2), rgba(11,16,24,0.96))"
+        : "linear-gradient(180deg, rgba(20,27,38,0.98), rgba(11,16,24,0.96))";
+      if (stepIndex === activeIndex && state === "active") {
+        card.style.boxShadow = "0 0 0 2px rgba(213,169,72,0.45), 0 14px 30px rgba(213,169,72,0.18)";
+        card.style.background = "linear-gradient(180deg, rgba(213,169,72,0.16), rgba(11,16,24,0.96))";
+      }
+      if (stepIndex === activeIndex && state === "bad") {
+        card.style.boxShadow = "0 0 0 2px rgba(230,132,132,0.45), 0 14px 30px rgba(170,70,70,0.2)";
+        card.style.background = "linear-gradient(180deg, rgba(145,52,52,0.24), rgba(11,16,24,0.96))";
+      }
+    });
+  };
+
+  const fail = () => {
+    misses += 1;
+    feedback.className = "feedback warn";
+    feedback.textContent = challengeCopy("Wrong turn. Start the route again.", "Giro incorrecto. Empieza la ruta otra vez.");
+    playSfx("fail");
+    index = 0;
+    paintTrail(0, "bad");
+    if (misses >= (mode.maxMisses || 4)) {
+      running = false;
+      const hasLives = loseLife();
+      feedback.textContent = hasLives ? t("challengeFailedReplay") : t("outOfLivesContinue");
+      queueStageAutoClose(meta.id);
+    }
+    updateStatus(challengeCopy("Recover the route.", "Recupera la ruta."));
+  };
+
+  const finish = () => {
+    running = false;
+    paintTrail(stepMeta.length, "done");
+    feedback.className = "feedback ok";
+    feedback.textContent = t("challengeComplete");
+    playSfx("success");
+    completeStage(meta, mode);
+  };
+
+  const press = (dir) => {
+    if (!running || !canPlayStage()) return;
+    const expected = stepMeta[index]?.dir;
+    if (dir !== expected) {
+      fail();
+      return;
+    }
+    index += 1;
+    playSfx("hit");
+    if (index >= stepMeta.length) {
+      finish();
+      return;
+    }
+    feedback.className = "feedback";
+    feedback.textContent = challengeCopy("Keep going.", "Sigue adelante.");
+    paintTrail(index, "active");
+    updateStatus();
+  };
+
+  const bindings = [
+    bindRouteButton(upBtn, "up", press),
+    bindRouteButton(leftBtn, "left", press),
+    bindRouteButton(downBtn, "down", press),
+    bindRouteButton(rightBtn, "right", press)
+  ];
+
+  const onKeyDown = (event) => {
+    if (state.activeStage !== meta.id) return;
+    const dir = routeDirectionFromKey(event.key);
+    if (!dir) return;
+    event.preventDefault();
+    press(dir);
+  };
+
+  window.addEventListener("keydown", onKeyDown);
+  paintTrail();
+  updateStatus();
+
+  return () => {
+    running = false;
+    window.removeEventListener("keydown", onKeyDown);
+    bindings.forEach(({ button, start, end }) => {
+      button.removeEventListener("pointerdown", start);
+      button.removeEventListener("pointerup", end);
+      button.removeEventListener("pointercancel", end);
+      button.removeEventListener("pointerleave", end);
+    });
+  };
+}
+
+function routeButton(label) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "ghost-btn";
+  button.textContent = label;
+  button.style.minHeight = "58px";
+  button.style.fontWeight = "700";
+  return button;
+}
+
+function routeDirectionFromKey(key) {
+  if (key === "ArrowUp" || key === "w" || key === "W") return "up";
+  if (key === "ArrowDown" || key === "s" || key === "S") return "down";
+  if (key === "ArrowLeft" || key === "a" || key === "A") return "left";
+  if (key === "ArrowRight" || key === "d" || key === "D") return "right";
+  return "";
+}
+
+function routeIcon(dir) {
+  return { up: "⬆️", down: "⬇️", left: "⬅️", right: "➡️" }[dir] || "➡️";
+}
+
+function routeLabel(dir) {
+  return { up: "Up", down: "Down", left: "Left", right: "Right" }[dir] || "Move";
+}
+
+function bindRouteButton(button, dir, press) {
+  const start = (event) => {
+    event.preventDefault();
+    button.style.transform = "translateY(-2px)";
+    button.style.boxShadow = "0 0 0 2px rgba(213,169,72,0.42), 0 12px 22px rgba(213,169,72,0.18)";
+    press(dir);
+  };
+  const end = (event) => {
+    event.preventDefault();
+    button.style.transform = "";
+    button.style.boxShadow = "";
+  };
+  button.addEventListener("pointerdown", start);
+  button.addEventListener("pointerup", end);
+  button.addEventListener("pointercancel", end);
+  button.addEventListener("pointerleave", end);
+  return { button, start, end };
+}
+
+function renderDiscern(meta, mode, feedback) {
+  const prompt = document.createElement("p");
+  prompt.textContent = mode.secondaryPrompt || "Choose the right answer each round.";
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: press 1-4 to choose the right answer.");
+  const status = createSkillStatus("");
+  const target = document.createElement("p");
+  target.style.fontWeight = "700";
+  target.style.marginTop = "0.45rem";
+  activityPanel.append(prompt, hint, status, target);
+
+  const cards = Array.isArray(mode.cards) && mode.cards.length >= 4
+    ? mode.cards.slice(0, 4)
+    : [
+      { icon: "1", label: "One" },
+      { icon: "2", label: "Two" },
+      { icon: "3", label: "Three" },
+      { icon: "4", label: "Four" }
+    ];
+  const rounds = Array.isArray(mode.targets) && mode.targets.length
+    ? mode.targets.slice()
+    : [{ prompt: "Choose the right answer.", correctIndex: 0 }];
+
+  const grid = document.createElement("div");
+  grid.style.display = "grid";
+  grid.style.gridTemplateColumns = "repeat(2, minmax(140px, 1fr))";
+  grid.style.gap = "0.85rem";
+  grid.style.marginTop = "0.8rem";
+  activityPanel.append(grid);
+
+  const buttons = cards.map((card, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "ghost-btn";
+    button.style.minHeight = "96px";
+    button.style.display = "flex";
+    button.style.flexDirection = "column";
+    button.style.alignItems = "center";
+    button.style.justifyContent = "center";
+    button.style.gap = "0.35rem";
+    button.style.fontWeight = "700";
+    button.innerHTML = `<span style="font-size:1.5rem">${card.icon}</span><span>${index + 1}. ${card.label}</span>`;
+    grid.append(button);
+    return button;
+  });
+
+  let round = 0;
+  let misses = 0;
+  let running = true;
+
+  const setState = (index, state) => {
+    const button = buttons[index];
+    if (!button) return;
+    if (state === "good") {
+      button.style.transform = "translateY(-2px)";
+      button.style.boxShadow = "0 0 0 2px rgba(130,211,146,0.45), 0 14px 30px rgba(70,170,88,0.18)";
+      button.style.background = "linear-gradient(180deg, rgba(72,148,88,0.22), rgba(18,27,40,0.96))";
+    } else if (state === "bad") {
+      button.style.transform = "translateY(-2px)";
+      button.style.boxShadow = "0 0 0 2px rgba(230,132,132,0.45), 0 14px 30px rgba(170,70,70,0.2)";
+      button.style.background = "linear-gradient(180deg, rgba(145,52,52,0.24), rgba(18,27,40,0.96))";
+    } else {
+      button.style.transform = "";
+      button.style.boxShadow = "";
+      button.style.background = "";
+    }
+  };
+
+  const updateStatus = () => {
+    status.textContent = `${challengeCopy("Round", "Ronda")} ${Math.min(round + 1, rounds.length)}/${rounds.length} | ${t("missesLabel")}: ${misses}/${mode.maxMisses || 3}`;
+    target.textContent = rounds[round] ? rounds[round].prompt : "";
+  };
+
+  const fail = (index) => {
+    misses += 1;
+    setState(index, "bad");
+    setTimeout(() => setState(index, "idle"), 220);
+    feedback.className = "feedback warn";
+    feedback.textContent = challengeCopy("Not that one. Try again.", "No es esa. Intentalo otra vez.");
+    playSfx("fail");
+    if (misses >= (mode.maxMisses || 3)) {
+      running = false;
+      const hasLives = loseLife();
+      feedback.textContent = hasLives ? t("challengeFailedReplay") : t("outOfLivesContinue");
+      queueStageAutoClose(meta.id);
+    }
+    updateStatus();
+  };
+
+  const finish = () => {
+    running = false;
+    feedback.className = "feedback ok";
+    feedback.textContent = t("challengeComplete");
+    playSfx("success");
+    completeStage(meta, mode);
+  };
+
+  const choose = (index) => {
+    if (!running || !canPlayStage()) return;
+    const current = rounds[round];
+    if (!current) return;
+    if (index !== current.correctIndex) {
+      fail(index);
+      return;
+    }
+    setState(index, "good");
+    setTimeout(() => setState(index, "idle"), 220);
+    playSfx("hit");
+    round += 1;
+    if (round >= rounds.length) {
+      finish();
+      return;
+    }
+    feedback.className = "feedback ok";
+    feedback.textContent = challengeCopy("Good choice. Keep going.", "Buena eleccion. Sigue adelante.");
+    updateStatus();
+  };
+
+  const clickHandlers = buttons.map((button, index) => {
+    const handler = () => choose(index);
+    button.addEventListener("click", handler);
+    return { button, handler };
+  });
+
+  const onKeyDown = (event) => {
+    if (state.activeStage !== meta.id) return;
+    const index = ["1", "2", "3", "4"].indexOf(event.key);
+    if (index === -1) return;
+    event.preventDefault();
+    choose(index);
+  };
+
+  window.addEventListener("keydown", onKeyDown);
+  updateStatus();
+
+  return () => {
+    running = false;
+    window.removeEventListener("keydown", onKeyDown);
+    clickHandlers.forEach(({ button, handler }) => button.removeEventListener("click", handler));
   };
 }
 
