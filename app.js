@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-12-desktop-progress-shield-v6";
+const CONTENT_VERSION = "2026-03-12-desktop-themed-stage5-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -702,6 +702,503 @@ const interactiveModes = [
   { id: "dodge-9", engine: "dodge", label: "Elah Footwork", target: 23, spawnMs: 325, sourceRef: "1 Samuel 17:19" },
   { id: "timing-10", engine: "timing", label: "Harp Rhythm", target: 9, maxMisses: 5, speed: 710, sourceRef: "1 Samuel 16:23" }
 ];
+
+const THEMED_INTERACTIVE_MODE_SETS = {
+  "Creation Dawn": [
+    {
+      id: "creation-light-gather",
+      engine: "collect",
+      label: "Gather the First Light",
+      target: 10,
+      maxMisses: 5,
+      seconds: 26,
+      spawnMs: 480,
+      sourceRef: "Genesis 1:3-4",
+      storyPrompt: "Gather the first light as God separates it from the darkness.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the light."
+    },
+    {
+      id: "creation-garden-keep",
+      engine: "timing",
+      label: "Garden Keep",
+      target: 6,
+      maxMisses: 4,
+      speed: 820,
+      sourceRef: "Genesis 2:15",
+      storyPrompt: "Keep the garden in faithful rhythm as Adam works what God has given.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker is inside the gold zone."
+    }
+  ],
+  "Fall and Mercy": [
+    {
+      id: "fall-serpent-evasion",
+      engine: "dodge",
+      label: "Serpent Evasion",
+      target: 16,
+      spawnMs: 360,
+      sourceRef: "Genesis 3:1-6",
+      storyPrompt: "Stay clear of the serpent's attack as temptation closes in.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to avoid the serpent's strikes."
+    },
+    {
+      id: "fall-cherubim-watch",
+      engine: "timing",
+      label: "Cherubim Watch",
+      target: 7,
+      maxMisses: 4,
+      speed: 780,
+      sourceRef: "Genesis 3:24",
+      storyPrompt: "Move in step with the guarded way as the flaming sword turns every direction.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker enters the guarded path."
+    }
+  ],
+  "Flood and Covenant": [
+    {
+      id: "flood-ark-hammer",
+      engine: "timing",
+      label: "Ark Hammer",
+      target: 6,
+      maxMisses: 4,
+      speed: 880,
+      sourceRef: "Genesis 6:14",
+      storyPrompt: "Build with steady rhythm as Noah follows God's design for the ark.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker is inside the build zone."
+    },
+    {
+      id: "flood-gather-pairs",
+      engine: "collect",
+      label: "Gather the Pairs",
+      target: 11,
+      maxMisses: 5,
+      seconds: 25,
+      spawnMs: 450,
+      sourceRef: "Genesis 7:2-3",
+      storyPrompt: "Gather the pairs in time before the rain begins.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the pairs."
+    },
+    {
+      id: "flood-rainline-run",
+      engine: "dodge",
+      label: "Rainline Run",
+      target: 18,
+      spawnMs: 350,
+      sourceRef: "Genesis 7:11-12",
+      storyPrompt: "Stay on course while the floodwaters crash around the ark.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to avoid the falling storm."
+    },
+    {
+      id: "flood-olive-leaf",
+      engine: "collect",
+      label: "Olive Leaf Search",
+      target: 12,
+      maxMisses: 6,
+      seconds: 24,
+      spawnMs: 430,
+      sourceRef: "Genesis 8:11",
+      storyPrompt: "Search for the olive leaf that signals dry land is near.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to catch the signs of hope."
+    },
+    {
+      id: "flood-rainbow-promise",
+      engine: "timing",
+      label: "Rainbow Promise",
+      target: 7,
+      maxMisses: 4,
+      speed: 760,
+      sourceRef: "Genesis 9:13-16",
+      storyPrompt: "Strike in time as the covenant rainbow shines over the earth.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker enters the promise band."
+    }
+  ],
+  "Nations and Babel": [
+    {
+      id: "babel-brick-rush",
+      engine: "collect",
+      label: "Brick Rush",
+      target: 11,
+      maxMisses: 5,
+      seconds: 25,
+      spawnMs: 460,
+      sourceRef: "Genesis 11:3",
+      storyPrompt: "Gather the bricks as the builders race to raise their tower.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the bricks."
+    },
+    {
+      id: "babel-tongue-tangle",
+      engine: "timing",
+      label: "Tongue Tangle",
+      target: 6,
+      maxMisses: 4,
+      speed: 800,
+      sourceRef: "Genesis 11:7",
+      storyPrompt: "Strike in rhythm before the languages scatter the work.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker lines up with the signal."
+    },
+    {
+      id: "babel-scatter-sprint",
+      engine: "dodge",
+      label: "Scatter Sprint",
+      target: 17,
+      spawnMs: 355,
+      sourceRef: "Genesis 11:8",
+      storyPrompt: "Keep moving as the nations scatter away from Babel.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to dodge the falling rubble."
+    },
+    {
+      id: "babel-humble-tower",
+      engine: "timing",
+      label: "Humble the Tower",
+      target: 7,
+      maxMisses: 4,
+      speed: 770,
+      sourceRef: "Genesis 11:9",
+      storyPrompt: "Stay on the beat as pride falls and God brings the tower low.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker reaches the gold zone."
+    }
+  ],
+  "Burning Bush": [
+    {
+      id: "bush-holy-ground",
+      engine: "timing",
+      label: "Holy Ground",
+      target: 6,
+      maxMisses: 4,
+      speed: 840,
+      sourceRef: "Exodus 3:5",
+      storyPrompt: "Step carefully on holy ground as God calls Moses from the bush.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker reaches the holy path."
+    },
+    {
+      id: "bush-shepherd-gather",
+      engine: "collect",
+      label: "Shepherd's Gather",
+      target: 10,
+      maxMisses: 5,
+      seconds: 25,
+      spawnMs: 470,
+      sourceRef: "Exodus 3:1",
+      storyPrompt: "Gather the flock before the call sends Moses back to Egypt.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the flock."
+    },
+    {
+      id: "bush-court-escape",
+      engine: "dodge",
+      label: "Court Escape",
+      target: 17,
+      spawnMs: 350,
+      sourceRef: "Exodus 2:15",
+      storyPrompt: "Stay ahead of danger as Moses flees toward Midian.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to avoid the pursuers."
+    },
+    {
+      id: "bush-staff-lift",
+      engine: "timing",
+      label: "Staff Lift",
+      target: 7,
+      maxMisses: 4,
+      speed: 790,
+      sourceRef: "Exodus 4:2-4",
+      storyPrompt: "Answer God's sign in rhythm as the staff becomes a witness.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker enters the sign zone."
+    },
+    {
+      id: "bush-let-my-people-go",
+      engine: "timing",
+      label: "Let My People Go",
+      target: 8,
+      maxMisses: 4,
+      speed: 760,
+      sourceRef: "Exodus 5:1",
+      storyPrompt: "Stand firm and deliver God's word with courage before Pharaoh.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker reaches the bold band."
+    }
+  ],
+  "Plagues and Passover": [
+    {
+      id: "plagues-nile-turn",
+      engine: "timing",
+      label: "Nile Turn",
+      target: 6,
+      maxMisses: 4,
+      speed: 840,
+      sourceRef: "Exodus 7:20",
+      storyPrompt: "Strike in time as the Nile turns and Egypt sees God's power.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker hits the judgment zone."
+    },
+    {
+      id: "plagues-hail-escape",
+      engine: "dodge",
+      label: "Hail Escape",
+      target: 18,
+      spawnMs: 340,
+      sourceRef: "Exodus 9:23-26",
+      storyPrompt: "Avoid the storm as hail falls across the land of Egypt.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to dodge the hail."
+    },
+    {
+      id: "plagues-unleavened-gather",
+      engine: "collect",
+      label: "Unleavened Gather",
+      target: 11,
+      maxMisses: 5,
+      seconds: 24,
+      spawnMs: 450,
+      sourceRef: "Exodus 12:17",
+      storyPrompt: "Gather the unleavened bread in haste before the night of deliverance.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather what is needed."
+    },
+    {
+      id: "plagues-doorpost-mark",
+      engine: "timing",
+      label: "Doorpost Mark",
+      target: 7,
+      maxMisses: 4,
+      speed: 780,
+      sourceRef: "Exodus 12:7",
+      storyPrompt: "Mark the doorposts in faithful rhythm for Passover night.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker lines up with the blood mark."
+    },
+    {
+      id: "plagues-midnight-rush",
+      engine: "collect",
+      label: "Midnight Rush",
+      target: 12,
+      maxMisses: 6,
+      seconds: 23,
+      spawnMs: 420,
+      sourceRef: "Exodus 12:31-33",
+      storyPrompt: "Gather what you need quickly as Egypt urges Israel to depart.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the supplies."
+    }
+  ],
+  "Sea Crossing": [
+    {
+      id: "sea-path-step",
+      engine: "timing",
+      label: "Sea Path Step",
+      target: 7,
+      maxMisses: 4,
+      speed: 790,
+      sourceRef: "Exodus 14:21-22",
+      storyPrompt: "Walk in step through the path God opens in the sea.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker enters the dry-ground lane."
+    },
+    {
+      id: "sea-chariot-escape",
+      engine: "dodge",
+      label: "Chariot Escape",
+      target: 19,
+      spawnMs: 330,
+      sourceRef: "Exodus 14:23-25",
+      storyPrompt: "Stay ahead of Pharaoh's chariots until the shore is secure.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to avoid the chariot charge."
+    },
+    {
+      id: "sea-shoreline-rescue",
+      engine: "collect",
+      label: "Shoreline Rescue",
+      target: 12,
+      maxMisses: 5,
+      seconds: 24,
+      spawnMs: 430,
+      sourceRef: "Exodus 14:29-31",
+      storyPrompt: "Gather your people safely as Israel reaches the far shore.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the survivors."
+    },
+    {
+      id: "sea-song-rhythm",
+      engine: "timing",
+      label: "Song of the Sea",
+      target: 8,
+      maxMisses: 4,
+      speed: 750,
+      sourceRef: "Exodus 15:1",
+      storyPrompt: "Keep the rhythm as Moses and Miriam sing of God's victory.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker hits the song line."
+    },
+    {
+      id: "sea-dry-ground-dash",
+      engine: "dodge",
+      label: "Dry Ground Dash",
+      target: 20,
+      spawnMs: 320,
+      sourceRef: "Exodus 14:29",
+      storyPrompt: "Keep your footing on the dry ground while the waters stand high.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to stay on the path."
+    }
+  ],
+  "Jordan Crossing": [
+    {
+      id: "jordan-memorial-stones",
+      engine: "collect",
+      label: "Memorial Stones",
+      target: 11,
+      maxMisses: 5,
+      seconds: 25,
+      spawnMs: 450,
+      sourceRef: "Joshua 4:5-7",
+      storyPrompt: "Gather the memorial stones from the Jordan before the waters return.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the stones."
+    },
+    {
+      id: "jordan-riverbed-step",
+      engine: "timing",
+      label: "Riverbed Step",
+      target: 7,
+      maxMisses: 4,
+      speed: 790,
+      sourceRef: "Joshua 3:17",
+      storyPrompt: "Cross the riverbed in step while the ark stands firm in the Jordan.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker reaches the safe crossing lane."
+    },
+    {
+      id: "jordan-ark-ahead",
+      engine: "collect",
+      label: "Ark Ahead",
+      target: 12,
+      maxMisses: 5,
+      seconds: 24,
+      spawnMs: 420,
+      sourceRef: "Joshua 3:3-4",
+      storyPrompt: "Keep your eyes on the ark and gather your line to follow it.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather behind the ark."
+    },
+    {
+      id: "jordan-jericho-arrow-watch",
+      engine: "dodge",
+      label: "Jericho Arrow Watch",
+      target: 19,
+      spawnMs: 325,
+      sourceRef: "Joshua 6:3-5",
+      storyPrompt: "March around Jericho and avoid the arrows while you hold the line.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to avoid the arrows during the march."
+    },
+    {
+      id: "jordan-trumpet-march",
+      engine: "timing",
+      label: "Trumpet March",
+      target: 8,
+      maxMisses: 4,
+      speed: 750,
+      sourceRef: "Joshua 6:16",
+      storyPrompt: "Keep the march and shout in time as Jericho's walls begin to fall.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker lines up with the trumpet call."
+    }
+  ],
+  "Land and Legacy": [
+    {
+      id: "legacy-covenant-stand",
+      engine: "timing",
+      label: "Covenant Stand",
+      target: 7,
+      maxMisses: 4,
+      speed: 780,
+      sourceRef: "Joshua 24:14-15",
+      storyPrompt: "Stand firm in rhythm as Joshua calls Israel to serve the Lord.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker enters the covenant band."
+    },
+    {
+      id: "legacy-ai-ambush",
+      engine: "dodge",
+      label: "Ai Ambush Run",
+      target: 19,
+      spawnMs: 330,
+      sourceRef: "Joshua 8:4-7",
+      storyPrompt: "Move quickly through the ambush as Joshua leads the turn at Ai.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to stay clear of the attack."
+    },
+    {
+      id: "legacy-gibeon-defense",
+      engine: "collect",
+      label: "Gibeon Defense",
+      target: 12,
+      maxMisses: 5,
+      seconds: 24,
+      spawnMs: 430,
+      sourceRef: "Joshua 10:6-8",
+      storyPrompt: "Gather strength for the march as Joshua moves to defend Gibeon.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the needed supplies."
+    },
+    {
+      id: "legacy-sun-stand",
+      engine: "timing",
+      label: "Sun-Stand Signal",
+      target: 8,
+      maxMisses: 4,
+      speed: 740,
+      sourceRef: "Joshua 10:12-14",
+      storyPrompt: "Hold the line in time as God lengthens the day for Israel's victory.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker reaches the signal line."
+    },
+    {
+      id: "legacy-farewell-stones",
+      engine: "collect",
+      label: "Farewell Stones",
+      target: 13,
+      maxMisses: 6,
+      seconds: 23,
+      spawnMs: 410,
+      sourceRef: "Joshua 24:26-27",
+      storyPrompt: "Gather the witness stones as Joshua seals the covenant before Israel.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the witness stones."
+    }
+  ],
+  "David and Courage": [
+    {
+      id: "david-brook-stone-count",
+      engine: "timing",
+      label: "Brook Stone Count",
+      target: 7,
+      maxMisses: 4,
+      speed: 780,
+      sourceRef: "1 Samuel 17:40",
+      storyPrompt: "Keep the rhythm as David chooses the smooth stones from the brook.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker reaches the stone line."
+    },
+    {
+      id: "david-shepherd-run",
+      engine: "collect",
+      label: "Shepherd's Run",
+      target: 12,
+      maxMisses: 5,
+      seconds: 24,
+      spawnMs: 430,
+      sourceRef: "1 Samuel 17:15-18",
+      storyPrompt: "Gather the provisions David carries to the battle line.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the provisions."
+    },
+    {
+      id: "david-elah-footwork",
+      engine: "dodge",
+      label: "Elah Footwork",
+      target: 19,
+      spawnMs: 325,
+      sourceRef: "1 Samuel 17:48",
+      storyPrompt: "Stay light on your feet as David runs toward the giant in faith.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to dodge the giant's attack."
+    },
+    {
+      id: "david-giant-duel",
+      engine: "slingshot",
+      label: "Giant Duel",
+      sourceRef: "1 Samuel 17:49-50",
+      storyPrompt: "Pull back the sling and strike true against the champion of Gath.",
+      secondaryPrompt: "Aim for the giant's forehead and let the stone fly in faith.",
+      keyboardHint: "Keyboard: arrows adjust your pull, Space or Enter launches, and R resets the shot."
+    },
+    {
+      id: "david-armor-refusal",
+      engine: "timing",
+      label: "Armor Refusal",
+      target: 8,
+      maxMisses: 4,
+      speed: 740,
+      sourceRef: "1 Samuel 17:39",
+      storyPrompt: "Move in step as David refuses Saul's armor and trusts the Lord instead.",
+      keyboardHint: "Keyboard: press Space or Enter when the marker enters the trust band."
+    }
+  ]
+};
 
 const badgeSymbolThemes = [
   { icon: "🌳", name: "Tree of Life" },
@@ -3483,7 +3980,7 @@ function activityFor(meta) {
       if (activity) break;
     }
   } else {
-    const mode = modeForLevel(meta.level, difficulty);
+    const mode = modeForStage(meta, difficulty);
     activity = {
       type: "interactive",
       mode,
@@ -3502,10 +3999,8 @@ function activityFor(meta) {
   return activity;
 }
 
-function modeForLevel(level, difficulty = currentDifficulty()) {
-  const base = interactiveModes[(level - 1) % interactiveModes.length];
-  const cycle = Math.floor((level - 1) / interactiveModes.length);
-  const mode = { ...base, id: `${base.id}-l${level}` };
+function materializeInteractiveMode(base, difficulty = currentDifficulty(), keySeed = "generic", cycle = 0) {
+  const mode = { ...base, id: `${base.id}-${keySeed}` };
 
   if (cycle > 0) {
     mode.label = `${base.label} ${cycle + 1}`;
@@ -3544,6 +4039,32 @@ function modeForLevel(level, difficulty = currentDifficulty()) {
   }
 
   return mode;
+}
+
+function themeLevelOrdinal(meta) {
+  let ordinal = 0;
+  for (let index = 0; index < meta.level - 1 && index < levelThemeSequence.length; index += 1) {
+    if ((levelThemeSequence[index] || {}).name === meta.theme.name) ordinal += 1;
+  }
+  return ordinal;
+}
+
+function modeForStage(meta, difficulty = currentDifficulty()) {
+  const themedModes = THEMED_INTERACTIVE_MODE_SETS[meta.theme.name];
+  if (!Array.isArray(themedModes) || !themedModes.length) {
+    return modeForLevel(meta.level, difficulty);
+  }
+
+  const ordinal = themeLevelOrdinal(meta);
+  const base = themedModes[ordinal % themedModes.length];
+  const cycle = Math.floor(ordinal / themedModes.length);
+  return materializeInteractiveMode(base, difficulty, `${meta.theme.era}-l${meta.level}-s${meta.stage}`, cycle);
+}
+
+function modeForLevel(level, difficulty = currentDifficulty()) {
+  const base = interactiveModes[(level - 1) % interactiveModes.length];
+  const cycle = Math.floor((level - 1) / interactiveModes.length);
+  return materializeInteractiveMode(base, difficulty, `l${level}`, cycle);
 }
 
 function focusStageCard(stageId) {
@@ -5555,7 +6076,8 @@ function renderInteractive(meta, mode, sourceRef) {
   activityPanel.innerHTML = "";
   const header = renderHeader(meta);
   const prompt = document.createElement("p");
-  prompt.textContent = `${mode.label} (${currentDifficulty().label}): ${t("challengePrompt")}`;
+  const promptText = mode.storyPrompt || t("challengePrompt");
+  prompt.textContent = `${mode.label} (${currentDifficulty().label}): ${promptText}`;
   const source = sourceRef ? renderSourceVerse(sourceRef) : null;
   const feedback = document.createElement("p");
   feedback.className = "feedback";
@@ -5591,7 +6113,7 @@ function renderTiming(meta, mode, feedback) {
   const wrap = document.createElement("div");
   wrap.className = "activity-panel";
   wrap.style.marginTop = "0.75rem";
-  const hint = createChallengeHint("Keyboard: press Space or Enter when the marker is inside the gold zone.");
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: press Space or Enter when the marker is inside the gold zone.");
 
   const status = createSkillStatus(`${t("hitsLabel")}: 0/${mode.target} | ${t("missesLabel")}: 0/${mode.maxMisses}`);
 
@@ -5710,7 +6232,7 @@ function renderTiming(meta, mode, feedback) {
 }
 
 function renderCollect(meta, mode, feedback) {
-  const hint = createChallengeHint("Keyboard: move with Left/Right or A/D. Mouse and trackpad movement still work too.");
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: move with Left/Right or A/D. Mouse and trackpad movement still work too.");
   activityPanel.append(hint);
   const canvas = document.createElement("canvas");
   canvas.className = "skill-canvas";
@@ -5847,7 +6369,7 @@ function renderCollect(meta, mode, feedback) {
 }
 
 function renderDodge(meta, mode, feedback) {
-  const hint = createChallengeHint("Keyboard: move with Left/Right or A/D. Stay alive until the timer ends.");
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: move with Left/Right or A/D. Stay alive until the timer ends.");
   activityPanel.append(hint);
   const canvas = document.createElement("canvas");
   canvas.className = "skill-canvas";
@@ -5971,8 +6493,8 @@ function renderDodge(meta, mode, feedback) {
 
 function renderSlingshot(meta, mode, feedback) {
   const prompt = document.createElement("p");
-  prompt.textContent = t("slingshotPrompt");
-  const hint = createChallengeHint("Keyboard: arrows adjust your pull, Space or Enter launches, and R resets the shot.");
+  prompt.textContent = mode.secondaryPrompt || t("slingshotPrompt");
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: arrows adjust your pull, Space or Enter launches, and R resets the shot.");
   const status = createSkillStatus("Aim low and pull back before you release.");
   activityPanel.append(prompt, hint, status);
 
