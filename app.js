@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-13-stage5-story-challenges-v1";
+const CONTENT_VERSION = "2026-03-13-question-variety-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -2219,6 +2219,8 @@ const quizBank = [
   { era: "conquest", prompt: "Who led Israel after Moses?", options: ["Joshua", "Saul", "David", "Aaron"], answer: "Joshua", sourceRef: "Joshua 1:1-2" },
   { era: "conquest", prompt: "How many days did Israel march around Jericho before the final shout?", options: ["7", "3", "12", "6"], answer: "7", sourceRef: "Joshua 6:3-4,15-16" },
   { era: "conquest", prompt: "What river did Israel cross into Canaan?", options: ["Jordan", "Nile", "Euphrates", "Jabbok"], answer: "Jordan", sourceRef: "Joshua 3:14-17" },
+  { era: "conquest", prompt: "Which people are named among the nations God would drive out before Israel?", options: ["Hivites", "Philistines", "Persians", "Romans"], answer: "Hivites", sourceRef: "Joshua 3:10" },
+  { era: "conquest", prompt: "Which people made peace with Israel by pretending to come from far away?", options: ["Gibeonites", "Moabites", "Philistines", "Midianites"], answer: "Gibeonites", sourceRef: "Joshua 9:3-15" },
   { era: "judges", prompt: "Which judge led with 300 men?", options: ["Gideon", "Samson", "Jephthah", "Deborah"], answer: "Gideon", sourceRef: "Judges 7:7" },
   { era: "judges", prompt: "Who was a prophetess and judge?", options: ["Deborah", "Ruth", "Hannah", "Jael"], answer: "Deborah", sourceRef: "Judges 4:4" },
   { era: "judges", prompt: "Ruth stayed loyal to whom?", options: ["Naomi", "Miriam", "Abigail", "Orpah"], answer: "Naomi", sourceRef: "Ruth 1:16-17" },
@@ -2263,6 +2265,8 @@ const mediumQuizBank = [
   { era: "conquest", prompt: "Who hid the Israelite spies in Jericho?", options: ["Rahab", "Deborah", "Naomi", "Hannah"], answer: "Rahab", sourceRef: "Joshua 2:4" },
   { era: "conquest", prompt: "What happened to the Jordan waters when the priests stepped in?", options: ["They stood up in a heap", "They turned to blood", "They dried after seven days", "They flooded the camp"], answer: "They stood up in a heap", sourceRef: "Joshua 3:13-16" },
   { era: "conquest", prompt: "What sign was Rahab told to tie in her window?", options: ["Scarlet cord", "Golden ribbon", "White cloth", "Blue thread"], answer: "Scarlet cord", sourceRef: "Joshua 2:18" },
+  { era: "conquest", prompt: "Which kings gathered to fight Gibeon after it made peace with Israel?", options: ["Amorites", "Hivites", "Perizzites", "Kenites"], answer: "Amorites", sourceRef: "Joshua 10:5" },
+  { era: "conquest", prompt: "Which people are listed first among the nations God would drive out in Joshua 3:10?", options: ["Canaanites", "Hivites", "Jebusites", "Girgashites"], answer: "Canaanites", sourceRef: "Joshua 3:10" },
   { era: "judges", prompt: "What weapon did Shamgar use to strike the Philistines?", options: ["Oxgoad", "Sword", "Sling", "Bow"], answer: "Oxgoad", sourceRef: "Judges 3:31" },
   { era: "judges", prompt: "What did Jael drive through Sisera while he slept?", options: ["Tent peg", "Spear", "Arrow", "Stone"], answer: "Tent peg", sourceRef: "Judges 4:21" },
   { era: "judges", prompt: "What happened to Samson after his hair was cut?", options: ["His strength left him", "He became king", "He escaped immediately", "He defeated more enemies"], answer: "His strength left him", sourceRef: "Judges 16:19-20" },
@@ -2303,6 +2307,8 @@ const advancedQuizBank = [
   { era: "conquest", prompt: "How many priests carried trumpets before the ark around Jericho?", options: ["7", "12", "3", "40"], answer: "7", sourceRef: "Joshua 6:4" },
   { era: "conquest", prompt: "What did Joshua command the people before crossing Jordan?", options: ["Consecrate yourselves", "Build your homes", "Count your flocks", "Return to Egypt"], answer: "Consecrate yourselves", sourceRef: "Joshua 3:5" },
   { era: "conquest", prompt: "What memorial was set up after crossing the Jordan?", options: ["Twelve stones", "Bronze altar", "Golden lampstand", "Royal throne"], answer: "Twelve stones", sourceRef: "Joshua 4:20" },
+  { era: "conquest", prompt: "Which people are named right after the Canaanites in Joshua 3:10?", options: ["Hittites", "Philistines", "Moabites", "Edomites"], answer: "Hittites", sourceRef: "Joshua 3:10" },
+  { era: "conquest", prompt: "Which people secured peace with Israel through deception and a treaty?", options: ["Gibeonites", "Jebusites", "Amalekites", "Amorites"], answer: "Gibeonites", sourceRef: "Joshua 9:6-15" },
   { era: "judges", prompt: "What first sign did Gideon request with the fleece?", options: ["Dew on fleece only, ground dry", "Ground wet, fleece dry", "Fire from heaven", "A rainbow"], answer: "Dew on fleece only, ground dry", sourceRef: "Judges 6:37-38" },
   { era: "judges", prompt: "In Judges' cycle, what usually happened after Israel cried out?", options: ["The Lord raised a deliverer", "They were exiled to Babylon", "The temple was rebuilt", "A prophet became king"], answer: "The Lord raised a deliverer", sourceRef: "Judges 2:18" },
   { era: "judges", prompt: "What phrase summarizes the spiritual condition in the days of Judges?", options: ["Everyone did what was right in his own eyes", "All Israel followed David", "The law was forgotten forever", "No sacrifices were offered"], answer: "Everyone did what was right in his own eyes", sourceRef: "Judges 21:25" },
@@ -4474,7 +4480,9 @@ function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
 function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "spelling");
-  const pool = ALL_SPELLING_BANKS.concat(derivedSpellingPoolForTheme(theme));
+  const verseFillPool = derivedSpellingPoolForTheme(theme);
+  const authoredPool = ALL_SPELLING_BANKS.filter(themeFilter);
+  const pool = verseFillPool.length ? verseFillPool.concat(authoredPool) : authoredPool;
   const pick = pickWithoutRepeat(pool, theme.era, "spelling", {
     usedSources,
     allowReuse: false,
@@ -4487,6 +4495,7 @@ function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources) {
   return {
     type: "spelling",
     prompt: stagePrompt(meta, pick.item.prompt, pick.reuseCount),
+    clue: pick.item.clue || "",
     answer: pick.item.answer,
     sourceRef: pick.item.sourceRef,
     historySourceRef: pick.item.historySourceRef || pick.item.sourceRef
@@ -4575,14 +4584,16 @@ function buildMatchingActivity(meta, theme, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "matching");
   const quizPool = ALL_QUIZ_BANKS;
-  const pick = pickManyWithoutRepeat(quizPool, theme.era, "matching", 3, {
+  const scopedPool = quizPool.filter(themeFilter);
+  const desiredCount = scopedPool.length >= 3 ? 3 : 2;
+  const pick = pickManyWithoutRepeat(quizPool, theme.era, "matching", desiredCount, {
     usedSources,
     allowReuse: false,
     filter: themeFilter,
     scopeKey,
     requireScoped: true
   });
-  if (!pick.items || pick.items.length < 3) return null;
+  if (!pick.items || pick.items.length < 2) return null;
 
   const pairs = pick.items.map((item, index) => ({
     id: `${meta.id}-match-${index + 1}`,
@@ -4626,7 +4637,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
   }
 
   if (kind === "spelling") {
-    const spellingSource = difficulty.id === "advanced" ? advancedSpellingBank : difficulty.id === "medium" ? mediumSpellingBank : spellingBank;
+    const authoredSpellingSource = difficulty.id === "advanced" ? advancedSpellingBank : difficulty.id === "medium" ? mediumSpellingBank : spellingBank;
+    const spellingSource = derivedSpellingPoolForTheme(theme).concat(authoredSpellingSource.filter(themeFilter));
     const pick = pickWithoutRepeat(spellingSource, theme.era, "spelling", {
       usedSources,
       allowReuse: false,
@@ -4639,8 +4651,10 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
     return {
       type: "spelling",
       prompt: stagePrompt(meta, s.prompt, pick.reuseCount),
+      clue: s.clue || "",
       answer: s.answer,
-      sourceRef: s.sourceRef
+      sourceRef: s.sourceRef,
+      historySourceRef: s.historySourceRef || s.sourceRef
     };
   }
 
@@ -4714,7 +4728,7 @@ function stageKindPlan(meta, difficulty) {
 function buildQuestionPoolExhaustedActivity(meta, activityKind = "question") {
   const kindLabel = {
     quiz: "quiz questions",
-    spelling: "spelling questions",
+    spelling: "fill-in-the-blank verse questions",
     order: "order challenges",
     fact: "fact builder challenges",
     truefalse: "true or false questions",
@@ -4965,22 +4979,73 @@ function uniqueList(items) {
   return Array.from(new Set((items || []).filter(Boolean)));
 }
 
+const VERSE_FILL_STOP_WORDS = new Set([
+  "a", "an", "and", "are", "as", "at", "be", "been", "by", "for", "from", "he", "her", "his",
+  "i", "in", "into", "is", "it", "its", "me", "my", "of", "on", "or", "our", "that", "the",
+  "their", "them", "they", "to", "us", "was", "we", "were", "will", "with", "yahweh", "god"
+]);
+
+function normalizeVerseFillWord(word) {
+  return normalizeSpellingAnswer(String(word || "").replace(/[.,;:!?()\[\]"“”]/g, " "));
+}
+
+function verseFillWordCandidates(parts = []) {
+  return uniqueList(
+    parts
+      .map((part) => String(part || "").trim())
+      .map((part) => normalizeVerseFillWord(part))
+      .filter((part) => part && /^[a-zà-ÿ'-]+$/i.test(part))
+      .filter((part) => part.length >= 4)
+      .filter((part) => !VERSE_FILL_STOP_WORDS.has(part.toLowerCase()))
+  );
+}
+
+function buildVerseFillPoolFromFactItem(item) {
+  const parts = Array.isArray(item.parts) ? item.parts.map((part) => String(part || "").trim()) : [];
+  if (parts.length < 3) return [];
+
+  const candidates = verseFillWordCandidates(parts).slice(0, 3);
+  return candidates.map((answer, index) => {
+    const blankIndex = parts.findIndex((part) => normalizeVerseFillWord(part) === answer);
+    if (blankIndex === -1) return null;
+    const clueParts = parts.slice();
+    clueParts[blankIndex] = "____";
+    return {
+      era: item.era,
+      prompt: challengeCopy(
+        "Fill in the missing Bible word from this verse.",
+        "Completa la palabra bíblica que falta en este versículo."
+      ),
+      clue: clueParts.join(" "),
+      answer: parts[blankIndex],
+      sourceRef: item.sourceRef,
+      historySourceRef: `${item.sourceRef}::versefill::${answer}::${index + 1}`
+    };
+  }).filter(Boolean);
+}
+
 function derivedQuizPoolForTheme(theme) {
   return [];
 }
 
 function derivedSpellingPoolForTheme(theme) {
+  const factVersePool = ALL_FACT_BANKS
+    .filter((item) => itemMatchesTheme(item, theme))
+    .flatMap((item) => buildVerseFillPoolFromFactItem(item));
+  if (factVersePool.length) return factVersePool;
+
   return themeScopedQuizItems(theme)
     .filter((item) => /^[A-Za-zÀ-ÿ'-]+$/.test(String(item.answer || "")))
-    .map((item) => ({
+    .map((item, index) => ({
       era: theme.era,
       prompt: challengeCopy(
-        `Type the one-word Bible answer for this clue: ${clueTextFromPrompt(item.prompt)}.`,
-        `Escribe la respuesta bíblica de una sola palabra para esta pista: ${clueTextFromPrompt(item.prompt)}.`
+        "Fill in the missing Bible word from this clue.",
+        "Completa la palabra bíblica que falta en esta pista."
       ),
+      clue: `${clueTextFromPrompt(item.prompt)}: ____`,
       answer: item.answer,
       sourceRef: item.sourceRef,
-      historySourceRef: item.historySourceRef || item.sourceRef
+      historySourceRef: `${item.historySourceRef || item.sourceRef}::versefill::fallback::${index + 1}`
     }));
 }
 
@@ -7183,7 +7248,9 @@ function renderSpelling(meta, activity) {
   const header = renderHeader(meta);
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
-  const hint = createChallengeHint("Keyboard: type your answer and press Enter.");
+  const clue = activity.clue ? createSkillStatus(activity.clue) : null;
+  if (clue) clue.className = "fact-build";
+  const hint = createChallengeHint(activity.clue ? "Keyboard: type the missing Bible word and press Enter." : "Keyboard: type your answer and press Enter.");
   const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
 
   const input = document.createElement("input");
@@ -7245,9 +7312,9 @@ function renderSpelling(meta, activity) {
   activeCleanup = null;
 
   if (shouldShowQuestionSource() && source) {
-    activityPanel.append(header, prompt, hint, source, input, submit, feedback);
+    activityPanel.append(header, prompt, ...(clue ? [clue] : []), hint, source, input, submit, feedback);
   } else {
-    activityPanel.append(header, prompt, hint, input, submit, feedback);
+    activityPanel.append(header, prompt, ...(clue ? [clue] : []), hint, input, submit, feedback);
   }
 }
 
