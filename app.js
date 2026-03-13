@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-12-desktop-creation-pool-v5";
+const CONTENT_VERSION = "2026-03-12-desktop-progress-shield-v6";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -1424,7 +1424,7 @@ function buildBadgeCatalog() {
     name: "Shield of Faith",
     icon: "🛡️",
     accomplishment: "Completed the full Genesis-to-David quest and earned the Shield of Faith.",
-    check: (s) => s.stats.levelsCompleted >= TOTAL_LEVELS && s.badges.length >= MAX_BADGES - 1
+    check: (s) => s.stats.levelsCompleted >= TOTAL_LEVELS && s.badges.length >= MAX_BADGES - 1 && hasAllDifficultyPasses(s)
   });
 
   return baseBadges;
@@ -2123,6 +2123,12 @@ function getBadgeById(id) {
   return badgeById.get(id) || getDifficultyBadgeById(id) || null;
 }
 
+function hasAllDifficultyPasses(sourceState = state) {
+  return DIFFICULTY_LEVELS.every(
+    (difficultyId) => Boolean(sourceState.stats && sourceState.stats.difficultyPass && sourceState.stats.difficultyPass[difficultyId])
+  );
+}
+
 function markDifficultyPassForCurrentRun() {
   const difficultyId = normalizeDifficulty(state.difficulty);
   if (!DIFFICULTY_LEVELS.includes(difficultyId)) return false;
@@ -2224,7 +2230,13 @@ function renderBadgeShield() {
 
   if (badgeShieldProgress) {
     const difficultyEarned = DIFFICULTY_LEVELS.filter((difficultyId) => state.stats.difficultyPass && state.stats.difficultyPass[difficultyId]).length;
-    badgeShieldProgress.textContent = `${state.badges.length}/${MAX_BADGES} badges earned | Difficulty badges ${difficultyEarned}/3`;
+    const baseBadgeCount = Math.max(0, state.badges.filter((badgeId) => badgeId !== "final-shield-of-faith").length);
+    const finalShieldUnlocked = state.badges.includes("final-shield-of-faith");
+    const finalShieldStatus = finalShieldUnlocked
+      ? "Final Shield earned"
+      : "Final Shield unlocks after 39 badges and all 3 difficulty seals";
+    badgeShieldProgress.textContent =
+      `${baseBadgeCount}/${MAX_BADGES - 1} core badges earned | Difficulty seals ${difficultyEarned}/3 | ${finalShieldStatus}`;
   }
 
   renderDifficultyBadgeRow();
@@ -2253,6 +2265,7 @@ function openBadgeShield() {
   if (!badgeShieldOverlay) return;
   renderBadgeShield();
   badgeShieldOverlay.classList.remove("hidden");
+  if (badgeShieldOverlay.scrollTo) badgeShieldOverlay.scrollTo({ top: 0, behavior: "auto" });
   updateOverlayLock();
 }
 
@@ -2371,9 +2384,13 @@ function displayPlayerName() {
 
 function updateFinalCertificate() {
   const name = displayPlayerName();
+  const difficultyEarned = DIFFICULTY_LEVELS.filter((difficultyId) => state.stats.difficultyPass && state.stats.difficultyPass[difficultyId]).length;
+  const completedAllDifficulties = hasAllDifficultyPasses();
   if (finalHeading) finalHeading.textContent = `Congratulations, ${name}!`;
   if (finalMessage) {
-    finalMessage.textContent = `Your time was not wasted in building your faith, ${name}. The quest is not over. You have built only one-fourth of your shield. The story continues, and the journey awaits.`;
+    finalMessage.textContent = completedAllDifficulties
+      ? `Your time was not wasted in building your faith, ${name}. You completed the full Genesis-to-David journey and finished the Shield of Progress across Easy, Medium, and Advanced.`
+      : `Your progress is strong, ${name}. Complete Easy, Medium, and Advanced to finish the full Shield of Progress and unlock the final certificate. Difficulty seals earned: ${difficultyEarned}/3.`;
   }
   if (certificateName) certificateName.textContent = name;
   if (certificateDate) {
@@ -2406,15 +2423,16 @@ function hideFinalOverlay() {
 
 function maybeShowCompletionFinale() {
   const completedAll = state.completed.length >= TOTAL_STAGES;
+  const completedAllDifficulties = hasAllDifficultyPasses();
 
-  if (completedAll && !state.finalSeen) {
+  if (completedAll && completedAllDifficulties && !state.finalSeen) {
     state.finalSeen = true;
     persist();
     showFinalOverlay();
     return;
   }
 
-  if (completedAll && state.finalSeen && isFinalOpen()) {
+  if (completedAll && completedAllDifficulties && state.finalSeen && isFinalOpen()) {
     playFinaleMusic();
   }
 }
