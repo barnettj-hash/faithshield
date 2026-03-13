@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-13-question-variety-v1";
+const CONTENT_VERSION = "2026-03-13-names-of-god-v2";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -2205,6 +2205,9 @@ const quizBank = [
   { era: "patriarchs", prompt: "Which son of Jacob was sold into Egypt?", options: ["Joseph", "Benjamin", "Levi", "Judah"], answer: "Joseph", sourceRef: "Genesis 37:28" },
   { era: "patriarchs", prompt: "Jacob was also called what?", options: ["Israel", "Ishmael", "Edom", "Judah"], answer: "Israel", sourceRef: "Genesis 32:28" },
   { era: "patriarchs", prompt: "What name did Abraham call the place where God provided the ram?", options: ["Yahweh Yireh", "El Roi", "Yahweh Nissi", "Yahweh Shalom"], answer: "Yahweh Yireh", sourceRef: "Genesis 22:14" },
+  { era: "patriarchs", prompt: "Which title for God did Melchizedek use when he blessed Abram?", options: ["God Most High", "God Almighty", "Yahweh of Armies", "Yahweh is peace"], answer: "God Most High", sourceRef: "Genesis 14:18-20" },
+  { era: "patriarchs", prompt: "Which name did God use for Himself when He appeared to Abram at ninety-nine years old?", options: ["El Shaddai", "El Elyon", "El Roi", "Yahweh Nissi"], answer: "El Shaddai", sourceRef: "Genesis 17:1" },
+  { era: "patriarchs", prompt: "In Genesis 15:2, how does Abram address God in the WEB text?", options: ["Lord Yahweh", "God Most High", "El Roi", "Yahweh Nissi"], answer: "Lord Yahweh", sourceRef: "Genesis 15:2" },
   { era: "exodus", prompt: "Who confronted Pharaoh and led Israel out of Egypt?", options: ["Joshua", "Moses", "Aaron", "Samuel"], answer: "Moses", sourceRef: "Exodus 5:1; 12:31" },
   { era: "exodus", prompt: "What event protected Israelite homes in Egypt?", options: ["Passover", "Pentecost", "Exile", "Day of Atonement"], answer: "Passover", sourceRef: "Exodus 12:13-14" },
   { era: "exodus", prompt: "What sea did Israel cross on dry ground?", options: ["Red Sea", "Dead Sea", "Galilee", "Mediterranean Sea"], answer: "Red Sea", sourceRef: "Exodus 14:21-22" },
@@ -2251,6 +2254,8 @@ const mediumQuizBank = [
   { era: "patriarchs", prompt: "What did Joseph store during the years of plenty in Egypt?", options: ["Grain", "Gold", "Oil", "Livestock"], answer: "Grain", sourceRef: "Genesis 41:48-49" },
   { era: "patriarchs", prompt: "What does Yahweh Yireh mean?", options: ["Yahweh will provide", "Yahweh is peace", "Yahweh our Banner", "God Almighty"], answer: "Yahweh will provide", sourceRef: "Genesis 22:14" },
   { era: "patriarchs", prompt: "What does El Shaddai mean in Genesis 17:1?", options: ["God Almighty", "God who sees me", "Yahweh will provide", "Yahweh of Armies"], answer: "God Almighty", sourceRef: "Genesis 17:1" },
+  { era: "patriarchs", prompt: "What does El Elyon mean in Genesis 14:18-20?", options: ["God Most High", "God Almighty", "Yahweh will provide", "The Lord of armies"], answer: "God Most High", sourceRef: "Genesis 14:18-20" },
+  { era: "patriarchs", prompt: "Which title does Abram use for God in Genesis 15:2 in the WEB text?", options: ["Lord Yahweh", "God Most High", "El Roi", "Yahweh Shalom"], answer: "Lord Yahweh", sourceRef: "Genesis 15:2" },
   { era: "exodus", prompt: "What did Moses' staff become before Pharaoh as a sign?", options: ["A serpent", "A branch", "A torch", "A plow"], answer: "A serpent", sourceRef: "Exodus 7:10" },
   { era: "exodus", prompt: "What was placed on the doorposts and lintel at Passover?", options: ["Lamb's blood", "Oil", "Water", "Ashes"], answer: "Lamb's blood", sourceRef: "Exodus 12:7" },
   { era: "exodus", prompt: "What led Israel by night after leaving Egypt?", options: ["Pillar of fire", "Morning star", "Trumpet blast", "Cloud of smoke"], answer: "Pillar of fire", sourceRef: "Exodus 13:21" },
