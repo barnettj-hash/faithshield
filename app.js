@@ -1266,13 +1266,13 @@ const badgeSymbolThemes = [
 ];
 
 const quizBank = [
-  { era: "genesis", prompt: "What did God create in the beginning?", options: ["The heavens and the earth", "The ark", "A city"], answer: "The heavens and the earth", sourceRef: "Genesis 1:1" },
-  { era: "genesis", prompt: "How many days are in the creation week, including God's rest?", options: ["7", "6", "10"], answer: "7", sourceRef: "Genesis 2:2-3" },
-  { era: "genesis", prompt: "Who did God place in the garden to work and keep it?", options: ["Adam", "Noah", "Abel"], answer: "Adam", sourceRef: "Genesis 2:15" },
-  { era: "genesis", prompt: "Who spoke to the woman in the garden?", options: ["Serpent", "Noah", "Abel"], answer: "Serpent", sourceRef: "Genesis 3:1-4" },
-  { era: "genesis", prompt: "What did God make for Adam and Eve after the fall?", options: ["Garments of skin", "A boat", "A crown"], answer: "Garments of skin", sourceRef: "Genesis 3:21" },
-  { era: "genesis", prompt: "What sign did God place in the sky after the flood?", options: ["Rainbow", "Comet", "Trumpet"], answer: "Rainbow", sourceRef: "Genesis 9:12-13" },
-  { era: "genesis", prompt: "Who built the ark?", options: ["Moses", "Noah", "Abraham"], answer: "Noah", sourceRef: "Genesis 6:13-14" },
+  { era: "genesis", prompt: "What did God create in the beginning?", options: ["The heavens and the earth", "The ark", "A city", "The sun and the moon"], answer: "The heavens and the earth", sourceRef: "Genesis 1:1" },
+  { era: "genesis", prompt: "How many days are in the creation week, including God's rest?", options: ["7", "6", "10", "8"], answer: "7", sourceRef: "Genesis 2:2-3" },
+  { era: "genesis", prompt: "Who did God place in the garden to work and keep it?", options: ["Adam", "Noah", "Abel", "Eve"], answer: "Adam", sourceRef: "Genesis 2:15" },
+  { era: "genesis", prompt: "Who spoke to the woman in the garden?", options: ["Serpent", "Noah", "Abel", "An angel"], answer: "Serpent", sourceRef: "Genesis 3:1-4" },
+  { era: "genesis", prompt: "What did God make for Adam and Eve after the fall?", options: ["Garments of skin", "A boat", "A crown", "Stone houses"], answer: "Garments of skin", sourceRef: "Genesis 3:21" },
+  { era: "genesis", prompt: "What sign did God place in the sky after the flood?", options: ["Rainbow", "Comet", "Trumpet", "Lightning"], answer: "Rainbow", sourceRef: "Genesis 9:12-13" },
+  { era: "genesis", prompt: "Who built the ark?", options: ["Moses", "Noah", "Abraham", "Cain"], answer: "Noah", sourceRef: "Genesis 6:13-14" },
   { era: "patriarchs", prompt: "God changed Abram's name to what?", options: ["Abraham", "Absalom", "Aaron"], answer: "Abraham", sourceRef: "Genesis 17:5" },
   { era: "patriarchs", prompt: "Which son was sold into Egypt?", options: ["Joseph", "Benjamin", "Levi"], answer: "Joseph", sourceRef: "Genesis 37:28" },
   { era: "patriarchs", prompt: "Jacob was also called what?", options: ["Israel", "Ishmael", "Edom"], answer: "Israel", sourceRef: "Genesis 32:28" },
@@ -1303,9 +1303,9 @@ const mediumQuizBank = [
   { era: "genesis", prompt: "What did God call the expanse in Genesis 1?", options: ["Sky", "Earth", "Sea", "Eden"], answer: "Sky", sourceRef: "Genesis 1:8" },
   { era: "genesis", prompt: "Who named the livestock, birds, and animals God brought to him?", options: ["Adam", "Noah", "Cain", "Seth"], answer: "Adam", sourceRef: "Genesis 2:19-20" },
   { era: "genesis", prompt: "What part of Adam did God use to make the woman?", options: ["One of his ribs", "His hand", "Dust", "His foot"], answer: "One of his ribs", sourceRef: "Genesis 2:21-22" },
-  { era: "genesis", prompt: "Besides the tree of life, what other tree was in the middle of the garden?", options: ["The tree of the knowledge of good and evil", "The cedar of Lebanon", "The tamarisk", "The olive tree"], answer: "The tree of the knowledge of good and evil", sourceRef: "Genesis 2:9" },
+  { era: "genesis", prompt: "Which tree, besides the tree of life, was in the middle of the garden?", options: ["The tree of the knowledge of good and evil", "The cedar of Lebanon", "The tamarisk", "The olive tree"], answer: "The tree of the knowledge of good and evil", sourceRef: "Genesis 2:9" },
   { era: "genesis", prompt: "What opened after Adam and Eve ate?", options: ["Their eyes", "The ark door", "The heavens", "The sea"], answer: "Their eyes", sourceRef: "Genesis 3:7" },
-  { era: "genesis", prompt: "What did Adam name his wife in Genesis 3?", options: ["Eve", "Naomi", "Sarah", "Hagar"], answer: "Eve", sourceRef: "Genesis 3:20" },
+  { era: "genesis", prompt: "What did Adam name his wife after the fall?", options: ["Eve", "Naomi", "Sarah", "Hagar"], answer: "Eve", sourceRef: "Genesis 3:20" },
   { era: "genesis", prompt: "What bird returned to Noah with a freshly plucked olive leaf?", options: ["Dove", "Raven", "Eagle", "Sparrow"], answer: "Dove", sourceRef: "Genesis 8:11" },
   { era: "patriarchs", prompt: "What did God compare Abraham's descendants to when He made His promise?", options: ["Stars", "Trees", "Rivers", "Mountains"], answer: "Stars", sourceRef: "Genesis 15:5" },
   { era: "patriarchs", prompt: "What did Jacob see in his dream reaching toward heaven?", options: ["A ladder", "A chariot", "A throne", "A rainbow"], answer: "A ladder", sourceRef: "Genesis 28:12" },
@@ -1338,7 +1338,7 @@ const advancedQuizBank = [
   { era: "genesis", prompt: "What name did Adam give the woman because she was taken out of man?", options: ["Woman", "Eve", "Sarah", "Helper"], answer: "Woman", sourceRef: "Genesis 2:23" },
   { era: "genesis", prompt: "What would the ground grow for Adam after the fall?", options: ["Thorns and thistles", "Cedars and olives", "Wheat and barley", "Lilies and myrrh"], answer: "Thorns and thistles", sourceRef: "Genesis 3:17-18" },
   { era: "genesis", prompt: "What did God place east of the garden to guard the way to the tree of life?", options: ["Cherubim", "Prophets", "Twelve stones", "Angelic singers"], answer: "Cherubim", sourceRef: "Genesis 3:24" },
-  { era: "genesis", prompt: "How old was Abram when God appeared and established circumcision as covenant sign?", options: ["99", "75", "86", "120"], answer: "99", sourceRef: "Genesis 17:1,11" },
+  { era: "patriarchs", prompt: "How old was Abram when God appeared and established circumcision as covenant sign?", options: ["99", "75", "86", "120"], answer: "99", sourceRef: "Genesis 17:1,11" },
   { era: "genesis", prompt: "How many clean animals of each kind did Noah take onto the ark?", options: ["Seven pairs", "One pair", "Two pairs", "Seven total"], answer: "Seven pairs", sourceRef: "Genesis 7:2" },
   { era: "patriarchs", prompt: "What did Joseph name his firstborn son, saying God made him forget his trouble?", options: ["Manasseh", "Ephraim", "Benjamin", "Reuben"], answer: "Manasseh", sourceRef: "Genesis 41:51" },
   { era: "patriarchs", prompt: "After wrestling with the man, what new name did Jacob receive?", options: ["Israel", "Jeshurun", "Edom", "Zion"], answer: "Israel", sourceRef: "Genesis 32:28" },
@@ -1367,7 +1367,7 @@ const advancedQuizBank = [
 
 const spellingBank = [
   { era: "genesis", prompt: "Spell the garden God planted in the east.", answer: "Eden", sourceRef: "Genesis 2:8" },
-  { era: "genesis", prompt: "Spell the name God gave the first man.", answer: "Adam", sourceRef: "Genesis 2:19-20" },
+  { era: "genesis", prompt: "Spell the first man's name.", answer: "Adam", sourceRef: "Genesis 3:17" },
   { era: "genesis", prompt: "Spell the name Adam gave the woman in Genesis 3.", answer: "Eve", sourceRef: "Genesis 3:20" },
   { era: "genesis", prompt: "Spell the name of the man who built the ark.", answer: "Noah", sourceRef: "Genesis 6:13-14" },
   { era: "genesis", prompt: "Spell the covenant sign God set in the sky after the flood.", answer: "Rainbow", sourceRef: "Genesis 9:13" },
@@ -1424,7 +1424,7 @@ const mediumOrderBank = [
   { era: "genesis", items: ["Light created", "Sky formed", "Dry land appears"], sourceRef: "Genesis 1:3; 1:6-7; 1:9-10" },
   { era: "genesis", items: ["Man formed from dust", "Garden planted in Eden", "Woman brought to Adam"], sourceRef: "Genesis 2:7; 2:8; 2:22" },
   { era: "genesis", items: ["Serpent speaks", "Eyes opened", "Adam and Eve hide"], sourceRef: "Genesis 3:1-7" },
-  { era: "genesis", items: ["Ark built", "Flood begins", "Rainbow covenant"], sourceRef: "Genesis 6:14; 7:17; 9:13" },
+  { era: "genesis", items: ["Noah obeys God", "Flood begins", "Rainbow covenant"], sourceRef: "Genesis 6:22; 7:17; 9:13" },
   { era: "patriarchs", items: ["Jacob dreams at Bethel", "Jacob serves Laban", "Jacob returns toward Canaan"], sourceRef: "Genesis 28:12; 29:20; 31:3" },
   { era: "patriarchs", items: ["Joseph sold", "Joseph imprisoned", "Joseph raised in Egypt"], sourceRef: "Genesis 37:28; 39:20; 41:41" },
   { era: "exodus", items: ["Burning bush call", "Passover night", "Sea crossing"], sourceRef: "Exodus 3:4; 12:29-31; 14:21-22" },
@@ -1477,7 +1477,7 @@ const orderBank = [
 
 const mediumFactBank = [
   { era: "genesis", parts: ["God", "formed", "man", "from", "dust"], sourceRef: "Genesis 2:7" },
-  { era: "genesis", parts: ["The", "serpent", "deceived", "Eve"], sourceRef: "Genesis 3:13" },
+  { era: "genesis", parts: ["The", "serpent", "deceived", "me"], sourceRef: "Genesis 3:13" },
   { era: "genesis", parts: ["Noah", "found", "favor", "in", "Yahweh's", "eyes"], sourceRef: "Genesis 6:8" },
   { era: "genesis", parts: ["God", "shut", "Noah", "in", "the", "ark"], sourceRef: "Genesis 7:16" },
   { era: "patriarchs", parts: ["God", "counted", "Abraham's", "faith", "as", "righteousness"], sourceRef: "Genesis 15:6" },
@@ -1497,7 +1497,7 @@ const advancedFactBank = [
   { era: "genesis", parts: ["In", "the", "beginning", "God", "created", "the", "heavens", "and", "the", "earth"], sourceRef: "Genesis 1:1" },
   { era: "genesis", parts: ["God", "blessed", "the", "seventh", "day"], sourceRef: "Genesis 2:3" },
   { era: "genesis", parts: ["He", "will", "bruise", "your", "head"], sourceRef: "Genesis 3:15" },
-  { era: "genesis", parts: ["God", "remembered", "Noah", "and", "the", "waters", "receded"], sourceRef: "Genesis 8:1" },
+  { era: "genesis", parts: ["God", "remembered", "Noah"], sourceRef: "Genesis 8:1" },
   { era: "patriarchs", parts: ["Look", "now", "toward", "the", "sky", "and", "count", "the", "stars"], sourceRef: "Genesis 15:5" },
   { era: "patriarchs", parts: ["God", "sent", "me", "before", "you", "to", "preserve", "life"], sourceRef: "Genesis 45:5" },
   { era: "exodus", parts: ["When", "I", "see", "the", "blood", "I", "will", "pass", "over", "you"], sourceRef: "Exodus 12:13" },
@@ -1511,10 +1511,10 @@ const advancedFactBank = [
 ];
 
 const factBank = [
-  { era: "genesis", parts: ["God", "made", "the", "world", "good"], sourceRef: "Genesis 1:31" },
+  { era: "genesis", parts: ["It", "was", "very", "good"], sourceRef: "Genesis 1:31" },
   { era: "genesis", parts: ["God", "rested", "on", "the", "seventh", "day"], sourceRef: "Genesis 2:2-3" },
-  { era: "genesis", parts: ["God", "clothed", "them", "with", "skins"], sourceRef: "Genesis 3:21" },
-  { era: "genesis", parts: ["God", "saved", "Noah", "through", "the", "ark"], sourceRef: "Genesis 7:23" },
+  { era: "genesis", parts: ["Yahweh", "God", "made", "garments", "of", "skin"], sourceRef: "Genesis 3:21" },
+  { era: "genesis", parts: ["Only", "Noah", "was", "left", "alive"], sourceRef: "Genesis 7:23" },
   { era: "patriarchs", parts: ["God", "blessed", "nations", "through", "Abraham"], sourceRef: "Genesis 12:3" },
   { era: "patriarchs", parts: ["God", "turned", "Joseph's", "pain", "to", "good"], sourceRef: "Genesis 50:20" },
   { era: "exodus", parts: ["The", "Lord", "brought", "Israel", "out", "of", "Egypt"], sourceRef: "Exodus 20:2" },
