@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-12-unified-question-variety-v1";
+const CONTENT_VERSION = "2026-03-13-bible-accuracy-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -30,7 +30,7 @@ const difficultyProfiles = {
   easy: {
     id: "easy",
     label: "Easy",
-    quizOptions: 2,
+    quizOptions: 4,
     orderMaxMoves: 14,
     orderNearShuffle: true,
     factPrefill: 1,
@@ -45,7 +45,7 @@ const difficultyProfiles = {
   medium: {
     id: "medium",
     label: "Medium",
-    quizOptions: 3,
+    quizOptions: 4,
     orderMaxMoves: 10,
     orderNearShuffle: false,
     factPrefill: 0,
@@ -498,7 +498,7 @@ const UI_TEXT_BY_LANGUAGE = {
     startLabel: "Start",
     challengeLabel: "Challenge",
     closeLabel: "Close",
-    sourceLabel: "Source",
+    sourceLabel: "Find it in the Bible",
     watchPreview: "Watch Preview",
     storyIntroTitle: "Story Intro",
     keyVerseLabel: "Key Verse",
@@ -560,7 +560,7 @@ const UI_TEXT_BY_LANGUAGE = {
     volumeMedium: "Medium",
     volumeHigh: "High",
     watchPreview: "Watch Preview",
-    sourceVerseWeb: "Source Verse (WEB)",
+    sourceVerseWeb: "Open in Bible (WEB)",
     dailyThoughtHeading: "Bible Thought For Today",
     dailyStrikeLabel: "Daily Strike",
     dailyStrikeButton: "Claim Daily Strike",
@@ -592,7 +592,7 @@ const UI_TEXT_BY_LANGUAGE = {
     startLabel: "Comenzar",
     challengeLabel: "Reto",
     closeLabel: "Cerrar",
-    sourceLabel: "Fuente",
+    sourceLabel: "Encuentralo en la Biblia",
     watchPreview: "Ver Vista",
     storyIntroTitle: "Introduccion",
     keyVerseLabel: "Versiculo clave",
@@ -654,7 +654,7 @@ const UI_TEXT_BY_LANGUAGE = {
     volumeMedium: "Medio",
     volumeHigh: "Alto",
     watchPreview: "Ver Vista",
-    sourceVerseWeb: "Verso Fuente (WEB)",
+    sourceVerseWeb: "Abrir en la Biblia (WEB)",
     dailyThoughtHeading: "Pensamiento Biblico Del Dia",
     dailyStrikeLabel: "Racha Diaria",
     dailyStrikeButton: "Reclamar Racha",
@@ -1270,7 +1270,7 @@ const quizBank = [
   { era: "genesis", prompt: "How many days are in the creation week, including God's rest?", options: ["7", "6", "10"], answer: "7", sourceRef: "Genesis 2:2-3" },
   { era: "genesis", prompt: "Who did God place in the garden to work and keep it?", options: ["Adam", "Noah", "Abel"], answer: "Adam", sourceRef: "Genesis 2:15" },
   { era: "genesis", prompt: "Who spoke to the woman in the garden?", options: ["Serpent", "Noah", "Abel"], answer: "Serpent", sourceRef: "Genesis 3:1-4" },
-  { era: "genesis", prompt: "What did God make for Adam and Eve after the fall?", options: ["Garments", "A boat", "A crown"], answer: "Garments", sourceRef: "Genesis 3:21" },
+  { era: "genesis", prompt: "What did God make for Adam and Eve after the fall?", options: ["Garments of skin", "A boat", "A crown"], answer: "Garments of skin", sourceRef: "Genesis 3:21" },
   { era: "genesis", prompt: "What sign did God place in the sky after the flood?", options: ["Rainbow", "Comet", "Trumpet"], answer: "Rainbow", sourceRef: "Genesis 9:12-13" },
   { era: "genesis", prompt: "Who built the ark?", options: ["Moses", "Noah", "Abraham"], answer: "Noah", sourceRef: "Genesis 6:13-14" },
   { era: "patriarchs", prompt: "God changed Abram's name to what?", options: ["Abraham", "Absalom", "Aaron"], answer: "Abraham", sourceRef: "Genesis 17:5" },
@@ -1300,10 +1300,10 @@ const quizBank = [
 
 
 const mediumQuizBank = [
-  { era: "genesis", prompt: "What did God call the expanse in Genesis 1?", options: ["Heaven", "Earth", "Sea", "Eden"], answer: "Heaven", sourceRef: "Genesis 1:8" },
-  { era: "genesis", prompt: "Who named the livestock, birds, and animals in the garden?", options: ["Adam", "Noah", "Cain", "Seth"], answer: "Adam", sourceRef: "Genesis 2:19-20" },
+  { era: "genesis", prompt: "What did God call the expanse in Genesis 1?", options: ["Sky", "Earth", "Sea", "Eden"], answer: "Sky", sourceRef: "Genesis 1:8" },
+  { era: "genesis", prompt: "Who named the livestock, birds, and animals God brought to him?", options: ["Adam", "Noah", "Cain", "Seth"], answer: "Adam", sourceRef: "Genesis 2:19-20" },
   { era: "genesis", prompt: "What part of Adam did God use to make the woman?", options: ["One of his ribs", "His hand", "Dust", "His foot"], answer: "One of his ribs", sourceRef: "Genesis 2:21-22" },
-  { era: "genesis", prompt: "Which tree stood in the middle of the garden beside the tree of life?", options: ["The tree of the knowledge of good and evil", "The cedar of Lebanon", "The tamarisk", "The olive tree"], answer: "The tree of the knowledge of good and evil", sourceRef: "Genesis 2:9" },
+  { era: "genesis", prompt: "Besides the tree of life, what other tree was in the middle of the garden?", options: ["The tree of the knowledge of good and evil", "The cedar of Lebanon", "The tamarisk", "The olive tree"], answer: "The tree of the knowledge of good and evil", sourceRef: "Genesis 2:9" },
   { era: "genesis", prompt: "What opened after Adam and Eve ate?", options: ["Their eyes", "The ark door", "The heavens", "The sea"], answer: "Their eyes", sourceRef: "Genesis 3:7" },
   { era: "genesis", prompt: "What did Adam name his wife in Genesis 3?", options: ["Eve", "Naomi", "Sarah", "Hagar"], answer: "Eve", sourceRef: "Genesis 3:20" },
   { era: "genesis", prompt: "What bird returned to Noah with a freshly plucked olive leaf?", options: ["Dove", "Raven", "Eagle", "Sparrow"], answer: "Dove", sourceRef: "Genesis 8:11" },
@@ -1349,7 +1349,7 @@ const advancedQuizBank = [
   { era: "wilderness", prompt: "How long was that unbelieving generation to bear consequences in the wilderness?", options: ["40 years", "14 years", "7 years", "70 years"], answer: "40 years", sourceRef: "Numbers 14:33-34" },
   { era: "sinai", prompt: "According to Exodus 24:1-2, who alone was to come near the Lord?", options: ["Moses alone", "Aaron", "Nadab", "All elders"], answer: "Moses alone", sourceRef: "Exodus 24:1-2" },
   { era: "sinai", prompt: "What did God write on the stone tablets?", options: ["Words of the covenant", "Genealogies", "Kings' decrees", "Battle plans"], answer: "Words of the covenant", sourceRef: "Exodus 34:28" },
-  { era: "wilderness", prompt: "What was inside the ark of the covenant according to Hebrews?", options: ["Gold jar of manna, Aaron's staff, and tablets", "Only the tablets", "Only Aaron's staff", "Manna and priestly garments"], answer: "Gold jar of manna, Aaron's staff, and tablets", sourceRef: "Hebrews 9:4; Exodus 16:33; Deuteronomy 10:5" },
+  { era: "wilderness", prompt: "What stood over the tabernacle by day during Israel's wilderness journey?", options: ["A cloud", "A rainbow", "A pillar of stone", "A curtain of fire"], answer: "A cloud", sourceRef: "Numbers 9:15-16" },
   { era: "conquest", prompt: "How many priests carried trumpets before the ark around Jericho?", options: ["7", "12", "3", "40"], answer: "7", sourceRef: "Joshua 6:4" },
   { era: "conquest", prompt: "What did Joshua command the people before crossing Jordan?", options: ["Consecrate yourselves", "Build your homes", "Count your flocks", "Return to Egypt"], answer: "Consecrate yourselves", sourceRef: "Joshua 3:5" },
   { era: "conquest", prompt: "What memorial was set up after crossing the Jordan?", options: ["Twelve stones", "Bronze altar", "Golden lampstand", "Royal throne"], answer: "Twelve stones", sourceRef: "Joshua 4:20" },
@@ -3483,6 +3483,7 @@ function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "quiz");
   const quizPool = ALL_QUIZ_BANKS.concat(derivedQuizPoolForTheme(theme));
+  const scopedQuizPool = quizPool.filter(themeFilter);
   const pick = pickWithoutRepeat(quizPool, theme.era, "quiz", {
     usedSources,
     allowReuse: false,
@@ -3496,7 +3497,7 @@ function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
   return {
     type: "quiz",
     prompt: stagePrompt(meta, question.prompt, pick.reuseCount),
-    options: buildQuizOptions(question, theme.era, difficulty.quizOptions, quizPool),
+    options: buildQuizOptions(question, theme.era, difficulty.quizOptions, scopedQuizPool.length ? scopedQuizPool : quizPool),
     answer: question.answer,
     sourceRef: question.sourceRef,
     historySourceRef: question.historySourceRef || question.sourceRef
@@ -3638,6 +3639,7 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
 
   if (kind === "quiz") {
     const quizSource = difficulty.id === "advanced" ? advancedQuizBank : difficulty.id === "medium" ? mediumQuizBank : quizBank;
+    const scopedQuizSource = quizSource.filter(themeFilter);
     const pick = pickWithoutRepeat(quizSource, theme.era, "quiz", {
       usedSources,
       allowReuse: false,
@@ -3650,7 +3652,7 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
     return {
       type: "quiz",
       prompt: stagePrompt(meta, q.prompt, pick.reuseCount),
-      options: buildQuizOptions(q, theme.era, difficulty.quizOptions, quizSource),
+      options: buildQuizOptions(q, theme.era, difficulty.quizOptions, scopedQuizSource.length ? scopedQuizSource : quizSource),
       answer: q.answer,
       sourceRef: q.sourceRef
     };
@@ -4149,7 +4151,7 @@ function currentDifficulty() {
 }
 
 function shouldShowQuestionSource() {
-  return currentDifficulty().id === "easy";
+  return true;
 }
 
 function normalizeSpellingAnswer(value) {
@@ -4161,23 +4163,26 @@ function normalizeSpellingAnswer(value) {
 }
 
 function buildQuizOptions(question, era, optionCount, sourcePool = quizBank) {
-  const total = Math.max(2, Math.min(4, optionCount || 3));
-  if (Array.isArray(question.options) && question.options.length) {
-    const directOptions = uniqueList([question.answer].concat(question.options.filter((option) => option !== question.answer)));
-    if (directOptions.length >= 2) {
-      return shuffled(directOptions).slice(0, total);
-    }
-  }
-  const options = [question.answer];
-  const seen = new Set(options);
+  const total = 4;
+  const options = [];
+  const seen = new Set();
   const pool = Array.isArray(sourcePool) && sourcePool.length ? sourcePool : quizBank;
   const combinedPool = [].concat(quizBank, mediumQuizBank, advancedQuizBank);
 
+  const addOption = (answer) => {
+    if (!answer || seen.has(answer)) return;
+    seen.add(answer);
+    options.push(answer);
+  };
+
+  addOption(question.answer);
+  if (Array.isArray(question.options) && question.options.length) {
+    uniqueList(question.options).forEach(addOption);
+  }
+
   const addDistractors = (answers) => {
     for (const answer of shuffled(answers)) {
-      if (seen.has(answer)) continue;
-      seen.add(answer);
-      options.push(answer);
+      addOption(answer);
       if (options.length >= total) return;
     }
   };
