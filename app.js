@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-12-desktop-fall-mercy-v4";
+const CONTENT_VERSION = "2026-03-12-desktop-creation-pool-v5";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -746,7 +746,9 @@ const badgeSymbolThemes = [
 ];
 
 const quizBank = [
+  { era: "genesis", prompt: "What did God create in the beginning?", options: ["The heavens and the earth", "The ark", "A city"], answer: "The heavens and the earth", sourceRef: "Genesis 1:1" },
   { era: "genesis", prompt: "How many days are in the creation week, including God's rest?", options: ["7", "6", "10"], answer: "7", sourceRef: "Genesis 2:2-3" },
+  { era: "genesis", prompt: "Who did God place in the garden to work and keep it?", options: ["Adam", "Noah", "Abel"], answer: "Adam", sourceRef: "Genesis 2:15" },
   { era: "genesis", prompt: "Who spoke to the woman in the garden?", options: ["Serpent", "Noah", "Abel"], answer: "Serpent", sourceRef: "Genesis 3:1-4" },
   { era: "genesis", prompt: "What did God make for Adam and Eve after the fall?", options: ["Garments", "A boat", "A crown"], answer: "Garments", sourceRef: "Genesis 3:21" },
   { era: "genesis", prompt: "What sign did God place in the sky after the flood?", options: ["Rainbow", "Comet", "Trumpet"], answer: "Rainbow", sourceRef: "Genesis 9:12-13" },
@@ -778,8 +780,10 @@ const quizBank = [
 
 
 const mediumQuizBank = [
+  { era: "genesis", prompt: "What did God call the expanse in Genesis 1?", options: ["Heaven", "Earth", "Sea", "Eden"], answer: "Heaven", sourceRef: "Genesis 1:8" },
   { era: "genesis", prompt: "Who named the livestock, birds, and animals in the garden?", options: ["Adam", "Noah", "Cain", "Seth"], answer: "Adam", sourceRef: "Genesis 2:19-20" },
   { era: "genesis", prompt: "What part of Adam did God use to make the woman?", options: ["One of his ribs", "His hand", "Dust", "His foot"], answer: "One of his ribs", sourceRef: "Genesis 2:21-22" },
+  { era: "genesis", prompt: "Which tree stood in the middle of the garden beside the tree of life?", options: ["The tree of the knowledge of good and evil", "The cedar of Lebanon", "The tamarisk", "The olive tree"], answer: "The tree of the knowledge of good and evil", sourceRef: "Genesis 2:9" },
   { era: "genesis", prompt: "What opened after Adam and Eve ate?", options: ["Their eyes", "The ark door", "The heavens", "The sea"], answer: "Their eyes", sourceRef: "Genesis 3:7" },
   { era: "genesis", prompt: "What did Adam name his wife in Genesis 3?", options: ["Eve", "Naomi", "Sarah", "Hagar"], answer: "Eve", sourceRef: "Genesis 3:20" },
   { era: "genesis", prompt: "What bird returned to Noah with a freshly plucked olive leaf?", options: ["Dove", "Raven", "Eagle", "Sparrow"], answer: "Dove", sourceRef: "Genesis 8:11" },
@@ -810,6 +814,8 @@ const mediumQuizBank = [
 
 const advancedQuizBank = [
   { era: "genesis", prompt: "Before God said 'Let there be light,' how does Scripture describe the earth?", options: ["Formless and empty", "Covered with mountains", "Filled with people", "Already full of light"], answer: "Formless and empty", sourceRef: "Genesis 1:2" },
+  { era: "genesis", prompt: "What was the first food God gave humanity in Genesis 1?", options: ["Seed-bearing plants and fruit trees", "Meat from every animal", "Manna from heaven", "Fish from the sea"], answer: "Seed-bearing plants and fruit trees", sourceRef: "Genesis 1:29" },
+  { era: "genesis", prompt: "What name did Adam give the woman because she was taken out of man?", options: ["Woman", "Eve", "Sarah", "Helper"], answer: "Woman", sourceRef: "Genesis 2:23" },
   { era: "genesis", prompt: "What would the ground grow for Adam after the fall?", options: ["Thorns and thistles", "Cedars and olives", "Wheat and barley", "Lilies and myrrh"], answer: "Thorns and thistles", sourceRef: "Genesis 3:17-18" },
   { era: "genesis", prompt: "What did God place east of the garden to guard the way to the tree of life?", options: ["Cherubim", "Prophets", "Twelve stones", "Angelic singers"], answer: "Cherubim", sourceRef: "Genesis 3:24" },
   { era: "genesis", prompt: "How old was Abram when God appeared and established circumcision as covenant sign?", options: ["99", "75", "86", "120"], answer: "99", sourceRef: "Genesis 17:1,11" },
@@ -840,6 +846,8 @@ const advancedQuizBank = [
 ];
 
 const spellingBank = [
+  { era: "genesis", prompt: "Spell the garden God planted in the east.", answer: "Eden", sourceRef: "Genesis 2:8" },
+  { era: "genesis", prompt: "Spell the name God gave the first man.", answer: "Adam", sourceRef: "Genesis 2:19-20" },
   { era: "genesis", prompt: "Spell the name Adam gave the woman in Genesis 3.", answer: "Eve", sourceRef: "Genesis 3:20" },
   { era: "genesis", prompt: "Spell the name of the man who built the ark.", answer: "Noah", sourceRef: "Genesis 6:13-14" },
   { era: "genesis", prompt: "Spell the covenant sign God set in the sky after the flood.", answer: "Rainbow", sourceRef: "Genesis 9:13" },
@@ -857,7 +865,9 @@ const spellingBank = [
 
 
 const mediumSpellingBank = [
+  { era: "genesis", prompt: "Spell what God called the dry land.", answer: "Earth", sourceRef: "Genesis 1:10" },
   { era: "genesis", prompt: "Spell the garden where Adam and Eve first lived.", answer: "Eden", sourceRef: "Genesis 2:8" },
+  { era: "genesis", prompt: "Spell the place where God planted the garden in the east.", answer: "Eden", sourceRef: "Genesis 2:8" },
   { era: "genesis", prompt: "Spell what the ground would grow after the fall.", answer: "Thistles", sourceRef: "Genesis 3:18" },
   { era: "genesis", prompt: "Spell the mountain region where Noah's ark rested.", answer: "Ararat", sourceRef: "Genesis 8:4" },
   { era: "patriarchs", prompt: "Spell the place name Jacob gave after his dream of the ladder.", answer: "Bethel", sourceRef: "Genesis 28:19" },
@@ -874,6 +884,8 @@ const mediumSpellingBank = [
 
 const advancedSpellingBank = [
   { era: "genesis", prompt: "Type the first word that describes the earth in Genesis 1:2.", answer: "formless", sourceRef: "Genesis 1:2" },
+  { era: "genesis", prompt: "Type the realm the greater light was made to rule in Genesis 1.", answer: "day", sourceRef: "Genesis 1:16-18" },
+  { era: "genesis", prompt: "Type the word that describes the man and woman in Genesis 2:25.", answer: "naked", sourceRef: "Genesis 2:25" },
   { era: "genesis", prompt: "Type the beings God placed east of Eden.", answer: "cherubim", sourceRef: "Genesis 3:24" },
   { era: "patriarchs", prompt: "Spell Joseph's firstborn son's name.", answer: "Manasseh", sourceRef: "Genesis 41:51" },
   { era: "exodus", prompt: "Spell the word describing bread made without yeast.", answer: "unleavened", sourceRef: "Exodus 12:34" },
@@ -890,6 +902,7 @@ const advancedSpellingBank = [
 
 const mediumOrderBank = [
   { era: "genesis", items: ["Light created", "Sky formed", "Dry land appears"], sourceRef: "Genesis 1:3; 1:6-7; 1:9-10" },
+  { era: "genesis", items: ["Man formed from dust", "Garden planted in Eden", "Woman brought to Adam"], sourceRef: "Genesis 2:7; 2:8; 2:22" },
   { era: "genesis", items: ["Serpent speaks", "Eyes opened", "Adam and Eve hide"], sourceRef: "Genesis 3:1-7" },
   { era: "genesis", items: ["Ark built", "Flood begins", "Rainbow covenant"], sourceRef: "Genesis 6:14; 7:17; 9:13" },
   { era: "patriarchs", items: ["Jacob dreams at Bethel", "Jacob serves Laban", "Jacob returns toward Canaan"], sourceRef: "Genesis 28:12; 29:20; 31:3" },
@@ -907,6 +920,7 @@ const mediumOrderBank = [
 
 const advancedOrderBank = [
   { era: "genesis", items: ["Earth formless and empty", "Light shines", "Lights set in the heavens"], sourceRef: "Genesis 1:2; 1:3; 1:14-16" },
+  { era: "genesis", items: ["Adam placed in the garden", "Animals brought to Adam", "Woman built from the rib"], sourceRef: "Genesis 2:15; 2:19-20; 2:21-22" },
   { era: "genesis", items: ["Adam and Eve hide", "God declares the curse", "Cherubim guard Eden"], sourceRef: "Genesis 3:8; 3:14-19; 3:24" },
   { era: "genesis", items: ["Noah enters ark", "Waters prevail", "Ark rests on Ararat"], sourceRef: "Genesis 7:7; 7:24; 8:4" },
   { era: "patriarchs", items: ["Abram leaves Haran", "Covenant promise under the stars", "Isaac offered"], sourceRef: "Genesis 12:4; 15:5-6; 22:10-12" },
@@ -925,6 +939,7 @@ const orderBank = [
 
 
   { era: "genesis", items: ["Creation", "Fall", "Flood"], sourceRef: "Genesis 1:1; 3:6-7; 7:17" },
+  { era: "genesis", items: ["Light", "People created", "God rested"], sourceRef: "Genesis 1:3; 1:27; 2:2-3" },
   { era: "genesis", items: ["Serpent tempts", "Sin enters", "God sends them out"], sourceRef: "Genesis 3:1-6; 3:23" },
   { era: "genesis", items: ["Flood ends", "Nations spread", "Tower of Babel"], sourceRef: "Genesis 8:13; 10:32; 11:1-9" },
   { era: "patriarchs", items: ["Abram called", "Isaac born", "Jacob renamed Israel"], sourceRef: "Genesis 12:1; 21:1-3; 32:28" },
@@ -941,6 +956,7 @@ const orderBank = [
 
 
 const mediumFactBank = [
+  { era: "genesis", parts: ["God", "formed", "man", "from", "dust"], sourceRef: "Genesis 2:7" },
   { era: "genesis", parts: ["The", "serpent", "deceived", "Eve"], sourceRef: "Genesis 3:13" },
   { era: "genesis", parts: ["Noah", "found", "favor", "in", "Yahweh's", "eyes"], sourceRef: "Genesis 6:8" },
   { era: "genesis", parts: ["God", "shut", "Noah", "in", "the", "ark"], sourceRef: "Genesis 7:16" },
@@ -959,6 +975,7 @@ const mediumFactBank = [
 
 const advancedFactBank = [
   { era: "genesis", parts: ["In", "the", "beginning", "God", "created", "the", "heavens", "and", "the", "earth"], sourceRef: "Genesis 1:1" },
+  { era: "genesis", parts: ["God", "blessed", "the", "seventh", "day"], sourceRef: "Genesis 2:3" },
   { era: "genesis", parts: ["He", "will", "bruise", "your", "head"], sourceRef: "Genesis 3:15" },
   { era: "genesis", parts: ["God", "remembered", "Noah", "and", "the", "waters", "receded"], sourceRef: "Genesis 8:1" },
   { era: "patriarchs", parts: ["Look", "now", "toward", "the", "sky", "and", "count", "the", "stars"], sourceRef: "Genesis 15:5" },
@@ -975,6 +992,7 @@ const advancedFactBank = [
 
 const factBank = [
   { era: "genesis", parts: ["God", "made", "the", "world", "good"], sourceRef: "Genesis 1:31" },
+  { era: "genesis", parts: ["God", "rested", "on", "the", "seventh", "day"], sourceRef: "Genesis 2:2-3" },
   { era: "genesis", parts: ["God", "clothed", "them", "with", "skins"], sourceRef: "Genesis 3:21" },
   { era: "genesis", parts: ["God", "saved", "Noah", "through", "the", "ark"], sourceRef: "Genesis 7:23" },
   { era: "patriarchs", parts: ["God", "blessed", "nations", "through", "Abraham"], sourceRef: "Genesis 12:3" },
@@ -2699,6 +2717,37 @@ function parseSourceRefSegments(sourceRef) {
   return entries;
 }
 
+function referenceEntriesFromSourceRef(sourceRef) {
+  const clauses = normalizeSourceRef(sourceRef).split(";").map((part) => part.trim()).filter(Boolean);
+  const entries = [];
+  let activeBook = "";
+
+  clauses.forEach((clause) => {
+    let book = activeBook;
+    let remainder = clause;
+    const explicitBook = SORTED_CANONICAL_BOOKS.find((candidate) => clause.startsWith(candidate + " "));
+    if (explicitBook) {
+      book = explicitBook;
+      activeBook = explicitBook;
+      remainder = clause.slice(explicitBook.length).trim();
+    }
+
+    const match = remainder.match(/^(\d+):(\d+)/);
+    if (!book || !match) return;
+
+    const chapter = Number(match[1]);
+    const verse = Number(match[2]);
+    entries.push({
+      book,
+      chapter,
+      verse,
+      ref: `${book} ${chapter}:${verse}`
+    });
+  });
+
+  return entries;
+}
+
 function entryMatchesPlan(entry, plan) {
   return plan.some((segment) => segment.book === entry.book && entry.chapter >= segment.start && entry.chapter <= segment.end);
 }
@@ -2796,26 +2845,62 @@ function buildFallbackReferencePools() {
 
 const themeFallbackReferencePoolCache = {};
 
+function authoredReferenceEntriesForTheme(theme) {
+  const seen = new Set();
+  const entries = [];
+  const pools = [
+    quizBank,
+    mediumQuizBank,
+    advancedQuizBank,
+    spellingBank,
+    mediumSpellingBank,
+    advancedSpellingBank,
+    orderBank,
+    mediumOrderBank,
+    advancedOrderBank,
+    factBank,
+    mediumFactBank,
+    advancedFactBank
+  ];
+
+  pools.forEach((pool) => {
+    pool.forEach((item) => {
+      if (!itemMatchesTheme(item, theme)) return;
+      referenceEntriesFromSourceRef(item.sourceRef).forEach((entry) => {
+        if (seen.has(entry.ref)) return;
+        seen.add(entry.ref);
+        entries.push(entry);
+      });
+    });
+  });
+
+  return sortReferencesByCanon(entries);
+}
+
 function fallbackReferencePoolForTheme(theme, bucket) {
   const key = `${theme.name}:${bucket}`;
   if (themeFallbackReferencePoolCache[key]) return themeFallbackReferencePoolCache[key];
 
-  const verses = REFERENCE_VERSES_BY_BUCKET[bucket] || REFERENCE_VERSES_BY_BUCKET.quiz;
-  const pool = [];
-  themeReferencePlan(theme).forEach((segment) => {
-    for (let chapter = segment.start; chapter <= segment.end; chapter += 1) {
-      verses.forEach((verse) => {
-        pool.push({
-          era: theme.era,
-          theme: theme.name,
-          book: segment.book,
-          chapter,
-          verse,
-          ref: `${segment.book} ${chapter}:${verse}`
+  let pool = authoredReferenceEntriesForTheme(theme);
+
+  if (!pool.length) {
+    const verses = REFERENCE_VERSES_BY_BUCKET[bucket] || REFERENCE_VERSES_BY_BUCKET.quiz;
+    pool = [];
+    themeReferencePlan(theme).forEach((segment) => {
+      for (let chapter = segment.start; chapter <= segment.end; chapter += 1) {
+        verses.forEach((verse) => {
+          pool.push({
+            era: theme.era,
+            theme: theme.name,
+            book: segment.book,
+            chapter,
+            verse,
+            ref: `${segment.book} ${chapter}:${verse}`
+          });
         });
-      });
-    }
-  });
+      }
+    });
+  }
 
   themeFallbackReferencePoolCache[key] = pool;
   return pool;
@@ -2833,9 +2918,9 @@ function nextFallbackReference(theme, bucket, usedSources) {
 
 function nextFallbackReferenceSet(theme, bucket, usedSources, count) {
   const pool = FALLBACK_REFERENCE_POOLS[bucket] || FALLBACK_REFERENCE_POOLS.order;
-  let candidates = fallbackReferencePoolForTheme(theme, bucket).slice();
-  if (candidates.length < count) candidates = (pool.byEra[theme.era] || []).slice();
-  if (candidates.length < count) candidates = pool.all.slice();
+  let candidates = fallbackReferencePoolForTheme(theme, bucket).filter((entry) => !usedSources.has(entry.ref));
+  if (candidates.length < count) candidates = (pool.byEra[theme.era] || []).filter((entry) => !usedSources.has(entry.ref));
+  if (candidates.length < count) candidates = pool.all.filter((entry) => !usedSources.has(entry.ref));
   if (candidates.length < count) return null;
 
   for (let attempt = 0; attempt < 80; attempt += 1) {
