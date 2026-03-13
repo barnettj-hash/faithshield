@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-12-desktop-stage5-variety-v1";
+const CONTENT_VERSION = "2026-03-12-desktop-question-variety-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -99,7 +99,7 @@ const timelineThemes = [
 ];
 
 
-const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "spelling", "order", "fact"]);
+const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "spelling", "order", "fact", "truefalse", "matching"]);
 const USE_LEGACY_CUTSCENE_VIDEO_FALLBACK = false;
 const FORCE_STILL_CUTSCENE_MODE = true;
 const PREFER_SYSTEM_NARRATION_VOICE = false;
@@ -1504,6 +1504,11 @@ const factBank = [
   { era: "david", parts: ["The", "battle", "belongs", "to", "the", "Lord"], sourceRef: "1 Samuel 17:47" }
 ];
 
+const ALL_QUIZ_BANKS = [].concat(quizBank, mediumQuizBank, advancedQuizBank);
+const ALL_SPELLING_BANKS = [].concat(spellingBank, mediumSpellingBank, advancedSpellingBank);
+const ALL_ORDER_BANKS = [].concat(orderBank, mediumOrderBank, advancedOrderBank);
+const ALL_FACT_BANKS = [].concat(factBank, mediumFactBank, advancedFactBank);
+
 function themeLevelCount(theme) {
   return Math.max(1, Number(THEME_LEVELS_BY_NAME[theme.name] || 5));
 }
@@ -1651,6 +1656,10 @@ function dayStartFromKey(key) {
 function t(key) {
   const langTable = UI_TEXT_BY_LANGUAGE[state.language] || UI_TEXT_BY_LANGUAGE.en;
   return langTable[key] || UI_TEXT_BY_LANGUAGE.en[key] || key;
+}
+
+function challengeCopy(enText, esText) {
+  return state.language === "es" ? esText : enText;
 }
 
 function volumeLabelFor(level) {
@@ -3447,129 +3456,152 @@ function nextFallbackReferenceSet(theme, bucket, usedSources, count) {
   return null;
 }
 
-function buildFallbackQuizOptionsForTheme(correctEntry, theme, optionCount) {
-  const total = Math.max(2, Math.min(4, optionCount || 3));
-  const optionPool = [];
-  const themePlan = themeReferencePlan(theme);
-  const seen = new Set([correctEntry.ref]);
-
-  FALLBACK_REFERENCE_POOLS.quiz.all.forEach((entry) => {
-    if (seen.has(entry.ref) || entryMatchesPlan(entry, themePlan)) return;
-    seen.add(entry.ref);
-    optionPool.push(entry.ref);
-  });
-
-  return shuffled([correctEntry.ref].concat(shuffled(optionPool).slice(0, total - 1)));
-}
-
 function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
-  const variantSeed = (meta.level + meta.stage) % 3;
-  const themeLabel = theme.name;
+  const themeFilter = (item) => itemMatchesTheme(item, theme);
+  const scopeKey = themeScopeKey(theme, "quiz");
+  const pick = pickWithoutRepeat(ALL_QUIZ_BANKS, theme.era, "quiz", {
+    usedSources,
+    allowReuse: false,
+    filter: themeFilter,
+    scopeKey,
+    requireScoped: true
+  });
+  if (!pick.item) return null;
 
-  if (variantSeed === 1 || variantSeed === 2) {
-    const refSet = nextFallbackReferenceSet(theme, "quiz", usedSources, Math.max(3, Math.min(4, difficulty.quizOptions || 3)));
-    if (refSet && refSet.length >= 3) {
-      const answerEntry = variantSeed === 1 ? refSet[0] : refSet[refSet.length - 1];
-      return {
-        type: "quiz",
-        prompt: stagePrompt(meta, variantSeed === 1
-          ? `Which reference comes earliest in ${themeLabel}?`
-          : `Which reference comes latest in ${themeLabel}?`),
-        options: shuffled(refSet.map((entry) => entry.ref)),
-        answer: answerEntry.ref,
-        sourceRef: "",
-        historySourceRef: refSet.map((entry) => entry.ref).join("; ")
-      };
-    }
-  }
-
-  const ref = nextFallbackReference(theme, "quiz", usedSources);
-  if (!ref) return null;
-
+  const question = pick.item;
   return {
     type: "quiz",
-    prompt: stagePrompt(meta, `Which reference belongs to ${themeLabel}?`),
-    options: buildFallbackQuizOptionsForTheme(ref, theme, difficulty.quizOptions),
-    answer: ref.ref,
-    sourceRef: "",
-    historySourceRef: ref.ref
+    prompt: stagePrompt(meta, question.prompt, pick.reuseCount),
+    options: buildQuizOptions(question, theme.era, difficulty.quizOptions, ALL_QUIZ_BANKS),
+    answer: question.answer,
+    sourceRef: question.sourceRef,
+    historySourceRef: question.sourceRef
   };
 }
 
-function singleWordBookAnswer(book) {
-  const parts = String(book || "").trim().split(/\s+/).filter(Boolean);
-  return parts.length ? parts[parts.length - 1] : String(book || "").trim();
-}
-
 function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources) {
-  const plan = themeReferencePlan(theme);
-  const anchor = plan[0];
-  if (!anchor) return null;
-
-  if (difficulty.id === "advanced") {
-    return {
-      type: "spelling",
-      prompt: stagePrompt(meta, `Advanced story checkpoint from ${theme.name}: type the Bible book word where this story happens.`),
-      answer: singleWordBookAnswer(anchor.book),
-      sourceRef: "",
-      historySourceRef: meta.theme.sourceRef
-    };
-  }
-
-  if (difficulty.id === "medium") {
-    return {
-      type: "spelling",
-      prompt: stagePrompt(meta, `From ${theme.name}, type the Bible book word where this story appears.`),
-      answer: singleWordBookAnswer(anchor.book),
-      sourceRef: "",
-      historySourceRef: meta.theme.sourceRef
-    };
-  }
+  const themeFilter = (item) => itemMatchesTheme(item, theme);
+  const scopeKey = themeScopeKey(theme, "spelling");
+  const pool = ALL_SPELLING_BANKS.concat(derivedSpellingPoolForTheme(theme));
+  const pick = pickWithoutRepeat(pool, theme.era, "spelling", {
+    usedSources,
+    allowReuse: false,
+    filter: themeFilter,
+    scopeKey,
+    requireScoped: true
+  });
+  if (!pick.item) return null;
 
   return {
     type: "spelling",
-    prompt: stagePrompt(meta, `From ${theme.name}, type the chapter number where this story begins.`),
-    answer: String(anchor.start),
-    sourceRef: "",
-    historySourceRef: meta.theme.sourceRef
+    prompt: stagePrompt(meta, pick.item.prompt, pick.reuseCount),
+    answer: pick.item.answer,
+    sourceRef: pick.item.sourceRef,
+    historySourceRef: pick.item.sourceRef
   };
 }
 
 function buildFallbackOrderActivity(meta, theme, difficulty, usedSources) {
-  const refs = nextFallbackReferenceSet(theme, "order", usedSources, 3);
-  if (!refs) return null;
+  const themeFilter = (item) => itemMatchesTheme(item, theme);
+  const scopeKey = themeScopeKey(theme, "order");
+  const orderPool = ALL_ORDER_BANKS.concat(derivedOrderSetsForTheme(theme));
+  const pick = pickWithoutRepeat(orderPool, theme.era, "order", {
+    usedSources,
+    allowReuse: false,
+    filter: themeFilter,
+    scopeKey,
+    requireScoped: true
+  });
+  if (!pick.item) return null;
 
-  const ordered = refs.map((entry) => entry.ref);
   return {
     type: "order",
-    prompt: stagePrompt(meta, `Put these ${theme.name} references into Bible order:`),
-    items: ordered,
+    prompt: stagePrompt(meta, challengeCopy("Put these Bible events in order.", "Pon estos eventos bíblicos en orden."), pick.reuseCount),
+    items: pick.item.items.slice(),
     maxMoves: difficulty.orderMaxMoves,
     nearShuffle: difficulty.orderNearShuffle,
-    sourceRef: "",
-    historySourceRef: ordered.join("; ")
+    sourceRef: pick.item.sourceRef,
+    historySourceRef: pick.item.sourceRef
   };
 }
 
 function buildFallbackFactActivity(meta, theme, difficulty, usedSources) {
-  const ref = nextFallbackReference(theme, "fact", usedSources);
-  if (!ref) return null;
+  const themeFilter = (item) => itemMatchesTheme(item, theme);
+  const scopeKey = themeScopeKey(theme, "fact");
+  const pick = pickWithoutRepeat(ALL_FACT_BANKS, theme.era, "fact", {
+    usedSources,
+    allowReuse: false,
+    filter: themeFilter,
+    scopeKey,
+    requireScoped: true
+  });
+  if (!pick.item) return null;
 
-  const fact = {
-    era: theme.era,
-    parts: [ref.book, String(ref.chapter), String(ref.verse), theme.name.split(/\s+/)[0], "checkpoint"],
-    sourceRef: ref.ref
-  };
-  const factMode = buildFactActivity(fact, theme.era, difficulty);
-
+  const factMode = buildFactActivity(pick.item, theme.era, difficulty);
   return {
     type: "fact",
-    prompt: stagePrompt(meta, `Build this ${theme.name} reference phrase in the right order:`),
+    prompt: stagePrompt(meta, challengeCopy("Build this Bible truth in the right order.", "Construye esta verdad bíblica en el orden correcto."), pick.reuseCount),
     answerParts: factMode.answerParts,
     prefilled: factMode.prefilled,
     parts: factMode.pool,
-    sourceRef: "",
-    historySourceRef: fact.sourceRef
+    sourceRef: pick.item.sourceRef,
+    historySourceRef: pick.item.sourceRef
+  };
+}
+
+function buildTrueFalseActivity(meta, theme, usedSources) {
+  const themeFilter = (item) => itemMatchesTheme(item, theme);
+  const scopeKey = themeScopeKey(theme, "truefalse");
+  const pick = pickWithoutRepeat(ALL_QUIZ_BANKS, theme.era, "truefalse", {
+    usedSources,
+    allowReuse: false,
+    filter: themeFilter,
+    scopeKey,
+    requireScoped: true
+  });
+  if (!pick.item) return null;
+
+  const question = pick.item;
+  const falseAnswer = buildFalseAnswer(question);
+  if (!falseAnswer) return null;
+
+  const answerIsTrue = (meta.level + meta.stage + question.answer.length) % 2 === 0;
+  return {
+    type: "truefalse",
+    prompt: stagePrompt(meta, challengeCopy("True or false: test the claim against the clue.", "Verdadero o falso: prueba la afirmación con la pista."), pick.reuseCount),
+    statement: clueTextFromPrompt(question.prompt),
+    claim: answerIsTrue ? question.answer : falseAnswer,
+    answer: answerIsTrue,
+    sourceRef: question.sourceRef,
+    historySourceRef: question.sourceRef
+  };
+}
+
+function buildMatchingActivity(meta, theme, usedSources) {
+  const themeFilter = (item) => itemMatchesTheme(item, theme);
+  const scopeKey = themeScopeKey(theme, "matching");
+  const pick = pickManyWithoutRepeat(ALL_QUIZ_BANKS, theme.era, "matching", 3, {
+    usedSources,
+    allowReuse: false,
+    filter: themeFilter,
+    scopeKey,
+    requireScoped: true
+  });
+  if (!pick.items || pick.items.length < 3) return null;
+
+  const pairs = pick.items.map((item, index) => ({
+    id: `${meta.id}-match-${index + 1}`,
+    left: clueTextFromPrompt(item.prompt),
+    right: item.answer
+  }));
+
+  return {
+    type: "matching",
+    prompt: stagePrompt(meta, challengeCopy("Match each Bible clue to the correct answer.", "Relaciona cada pista bíblica con la respuesta correcta."), pick.reuseCount),
+    pairs,
+    options: shuffled(pairs.map((pair) => pair.right)),
+    sourceRef: pick.items.map((item) => item.sourceRef).join("; "),
+    historySourceRef: pick.items.map((item) => item.sourceRef).join("; ")
   };
 }
 
@@ -3669,25 +3701,18 @@ function rotateKinds(list, steps = 0) {
 }
 
 function stageKindPlan(meta, difficulty) {
-  const baseKinds = meta.stage === 1
-    ? ["quiz", "fact", "order", "spelling"]
-    : meta.stage === 2
-      ? ["order", "fact", "quiz", "spelling"]
-      : meta.stage === 3
-        ? ["fact", "quiz", "spelling", "order"]
-        : meta.stage === 4
-          ? ["spelling", "quiz", "fact", "order"]
-          : [];
-
+  const stageRings = {
+    1: ["quiz", "truefalse", "matching", "order", "fact", "spelling"],
+    2: ["order", "matching", "quiz", "fact", "spelling", "truefalse"],
+    3: ["fact", "spelling", "matching", "quiz", "order", "truefalse"],
+    4: ["spelling", "truefalse", "order", "matching", "quiz", "fact"]
+  };
+  const baseKinds = stageRings[meta.stage] || [];
   if (!baseKinds.length) return [];
 
   const difficultyShift = difficulty.id === "advanced" ? 2 : difficulty.id === "medium" ? 1 : 0;
-  const rotation = (meta.level - 1 + difficultyShift) % baseKinds.length;
-  const fallbackKinds = meta.stage === 4
-    ? ["fallback-order", "fallback-quiz", "fallback-spelling"]
-    : ["fallback-order", "fallback-quiz", "fallback-spelling"];
-
-  return rotateKinds(baseKinds, rotation).concat(fallbackKinds);
+  const rotation = (meta.level - 1 + difficultyShift + (meta.stage - 1)) % baseKinds.length;
+  return rotateKinds(baseKinds, rotation);
 }
 
 function buildQuestionPoolExhaustedActivity(meta, activityKind = "question") {
@@ -3696,6 +3721,8 @@ function buildQuestionPoolExhaustedActivity(meta, activityKind = "question") {
     spelling: "spelling questions",
     order: "order challenges",
     fact: "fact builder challenges",
+    truefalse: "true or false questions",
+    matching: "matching challenges",
     question: "questions"
   }[activityKind] || "questions";
 
@@ -3828,6 +3855,142 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   state.questionHistory[historyKey] = record;
 
   return { item: choice, reuseCount };
+}
+
+function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
+  const matcher = typeof options.filter === "function"
+    ? options.filter
+    : ((item) => item.era === era);
+  const scopedPool = pool.filter(matcher);
+  const requireScoped = options.requireScoped === true;
+  if (requireScoped && scopedPool.length < count) {
+    return { items: null, reuseCount: 0 };
+  }
+
+  const source = scopedPool.length ? scopedPool : pool;
+  if (source.length < count) return { items: null, reuseCount: 0 };
+
+  const usedSources = options.usedSources instanceof Set ? options.usedSources : null;
+  const allowReuse = options.allowReuse !== false;
+  const historyScope = options.scopeKey || (scopedPool.length ? era : "all");
+  const historyKey = "global:" + bucket + ":" + historyScope;
+  const record = historyRecordFor(historyKey);
+  const counts = {};
+
+  record.uses.forEach((signature) => {
+    counts[signature] = (counts[signature] || 0) + 1;
+  });
+
+  const filterBySource = (items) => (usedSources
+    ? items.filter((item) => {
+      const sourceRef = normalizeSourceRef(item.sourceRef);
+      return !sourceRef || !usedSources.has(sourceRef);
+    })
+    : items);
+
+  const buildSelection = (items) => {
+    const ranked = shuffled(items).sort((a, b) => {
+      const aCount = counts[itemSignature(a)] || 0;
+      const bCount = counts[itemSignature(b)] || 0;
+      return aCount - bCount;
+    });
+    const picked = [];
+    const seen = new Set();
+
+    ranked.forEach((item) => {
+      const signature = itemSignature(item);
+      if (seen.has(signature)) return;
+      seen.add(signature);
+      picked.push(item);
+    });
+
+    return picked.slice(0, count);
+  };
+
+  let candidates = buildSelection(filterBySource(source));
+  if (candidates.length < count && allowReuse) {
+    candidates = buildSelection(source);
+  }
+
+  if (candidates.length < count) return { items: null, reuseCount: 0 };
+
+  let reuseCount = 0;
+  candidates.forEach((item) => {
+    reuseCount = Math.max(reuseCount, counts[itemSignature(item)] || 0);
+    record.uses.push(itemSignature(item));
+  });
+
+  if (record.uses.length > 5000) {
+    record.uses.splice(0, record.uses.length - 5000);
+  }
+
+  state.questionHistory[historyKey] = record;
+  return { items: candidates, reuseCount };
+}
+
+function compareReferenceEntries(a, b) {
+  const aBook = CANONICAL_BOOK_ORDER[a.book] || 999;
+  const bBook = CANONICAL_BOOK_ORDER[b.book] || 999;
+  if (aBook !== bBook) return aBook - bBook;
+  if (a.chapter !== b.chapter) return a.chapter - b.chapter;
+  return a.verse - b.verse;
+}
+
+function clueTextFromPrompt(prompt) {
+  return String(prompt || "")
+    .replace(/\?+$/, "")
+    .replace(/^True or False:\s*/i, "")
+    .trim();
+}
+
+function themeScopedQuizItems(theme) {
+  return ALL_QUIZ_BANKS
+    .filter((item) => itemMatchesTheme(item, theme))
+    .map((item) => {
+      const entry = referenceEntriesFromSourceRef(item.sourceRef || "")[0];
+      return entry ? { item, entry } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => compareReferenceEntries(a.entry, b.entry))
+    .map(({ item }) => item);
+}
+
+function derivedSpellingPoolForTheme(theme) {
+  const oneWordAnswers = themeScopedQuizItems(theme)
+    .filter((item) => /^[A-Za-zÀ-ÿ'-]+$/.test(String(item.answer || "")))
+    .map((item) => ({
+      era: theme.era,
+      prompt: challengeCopy(
+        `Type the one-word Bible answer for this clue: ${clueTextFromPrompt(item.prompt)}.`,
+        `Escribe la respuesta bíblica de una sola palabra para esta pista: ${clueTextFromPrompt(item.prompt)}.`
+      ),
+      answer: item.answer,
+      sourceRef: item.sourceRef
+    }));
+
+  return oneWordAnswers;
+}
+
+function derivedOrderSetsForTheme(theme) {
+  const themeItems = themeScopedQuizItems(theme);
+  if (themeItems.length < 3) return [];
+
+  const labels = themeItems.map((item) => clueTextFromPrompt(item.prompt));
+  const sets = [];
+  for (let index = 0; index <= labels.length - 3; index += 1) {
+    sets.push({
+      era: theme.era,
+      items: labels.slice(index, index + 3),
+      sourceRef: themeItems.slice(index, index + 3).map((item) => item.sourceRef).join("; ")
+    });
+  }
+
+  return sets;
+}
+
+function buildFalseAnswer(question) {
+  const options = shuffled((question.options || []).filter((option) => option !== question.answer));
+  return options[0] || null;
 }
 
 function stagePrompt(meta, text, reuseCount = 0) {
@@ -3976,14 +4139,22 @@ function activityFor(meta) {
 
   if (meta.stage >= 1 && meta.stage <= 4) {
     for (const kind of stageKindPlan(meta, difficulty)) {
-      if (kind === "fallback-quiz") {
-        activity = buildFallbackQuizActivity(meta, meta.theme, difficulty, usedSources);
-      } else if (kind === "fallback-order") {
-        activity = buildFallbackOrderActivity(meta, meta.theme, difficulty, usedSources);
-      } else if (kind === "fallback-spelling") {
-        activity = buildFallbackSpellingActivity(meta, meta.theme, difficulty, usedSources);
+      if (kind === "truefalse") {
+        activity = buildTrueFalseActivity(meta, meta.theme, usedSources);
+      } else if (kind === "matching") {
+        activity = buildMatchingActivity(meta, meta.theme, usedSources);
+      } else if (kind === "quiz") {
+        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind)
+          || buildFallbackQuizActivity(meta, meta.theme, difficulty, usedSources);
+      } else if (kind === "order") {
+        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind)
+          || buildFallbackOrderActivity(meta, meta.theme, difficulty, usedSources);
+      } else if (kind === "spelling") {
+        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind)
+          || buildFallbackSpellingActivity(meta, meta.theme, difficulty, usedSources);
       } else {
-        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind);
+        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind)
+          || buildFallbackFactActivity(meta, meta.theme, difficulty, usedSources);
       }
       if (activity) break;
     }
@@ -3997,9 +4168,7 @@ function activityFor(meta) {
   }
 
   if (!activity) {
-    const exhaustedType = meta.stage === 2
-      ? "order"
-      : (meta.stage === 3 ? "fact" : (meta.stage === 4 ? "spelling" : "quiz"));
+    const exhaustedType = stageKindPlan(meta, difficulty)[0] || "question";
     activity = buildQuestionPoolExhaustedActivity(meta, exhaustedType);
   }
 
@@ -5342,6 +5511,10 @@ function renderStageActivity(meta, activity) {
 
   if (activity.type === "quiz") {
     renderQuiz(meta, activity);
+  } else if (activity.type === "truefalse") {
+    renderTrueFalse(meta, activity);
+  } else if (activity.type === "matching") {
+    renderMatching(meta, activity);
   } else if (activity.type === "spelling") {
     renderSpelling(meta, activity);
   } else if (activity.type === "order") {
@@ -5691,6 +5864,231 @@ function renderQuiz(meta, activity) {
   }
 }
 
+function renderTrueFalse(meta, activity) {
+  activityPanel.innerHTML = "";
+  const header = renderHeader(meta);
+  const prompt = document.createElement("p");
+  prompt.textContent = activity.prompt;
+  const clue = document.createElement("p");
+  clue.className = "fact";
+  clue.textContent = `${challengeCopy("Clue", "Pista")}: ${activity.statement}`;
+  const claim = document.createElement("p");
+  claim.className = "fact";
+  claim.textContent = `${challengeCopy("Claim", "Afirmación")}: ${activity.claim}`;
+  const hint = createChallengeHint(challengeCopy(
+    "Keyboard: press T or F, then Enter to submit.",
+    "Teclado: presiona V o F, luego Enter para enviar."
+  ));
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
+  const optionsWrap = document.createElement("div");
+  optionsWrap.className = "quiz-options";
+  const feedback = document.createElement("p");
+  feedback.className = "feedback";
+  const optionButtons = [];
+  let selected = null;
+
+  const options = [
+    { label: challengeCopy("True", "Verdadero"), value: true },
+    { label: challengeCopy("False", "Falso"), value: false }
+  ];
+
+  const selectOption = (value) => {
+    selected = value;
+    optionButtons.forEach((button, index) => {
+      button.classList.toggle("selected", options[index].value === value);
+    });
+  };
+
+  options.forEach((option) => {
+    const btn = document.createElement("button");
+    btn.className = "option-btn";
+    btn.type = "button";
+    btn.textContent = option.label;
+    btn.addEventListener("click", () => {
+      selectOption(option.value);
+    });
+    optionButtons.push(btn);
+    optionsWrap.appendChild(btn);
+  });
+
+  const submit = document.createElement("button");
+  submit.className = "cta-btn";
+  submit.type = "button";
+  submit.textContent = t("checkAnswer");
+  submit.addEventListener("click", () => {
+    if (!canPlayStage()) {
+      feedback.className = "feedback warn";
+      feedback.textContent = t("noLivesShort");
+      return;
+    }
+
+    if (selected === null) {
+      feedback.className = "feedback warn";
+      feedback.textContent = challengeCopy("Choose true or false first.", "Elige verdadero o falso primero.");
+      return;
+    }
+
+    const isCorrect = selected === activity.answer;
+    optionButtons.forEach((node, index) => {
+      node.classList.remove("selected", "correct", "wrong");
+      if (options[index].value === activity.answer) node.classList.add("correct");
+      if (options[index].value === selected && !isCorrect) node.classList.add("wrong");
+    });
+
+    if (isCorrect) {
+      feedback.className = "feedback ok";
+      feedback.textContent = challengeCopy("Correct. Stage complete.", "Correcto. Etapa completada.");
+      playSfx("success");
+      completeStage(meta);
+    } else {
+      const hasLives = loseLife();
+      feedback.className = "feedback warn";
+      feedback.textContent = hasLives ? t("notYetTryAgain") : t("outOfLivesContinue");
+      playSfx("fail");
+      queueStageAutoClose(meta.id);
+    }
+  });
+
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+    if (["t", "T", "v", "V", "1"].includes(event.key)) {
+      event.preventDefault();
+      selectOption(true);
+      return;
+    }
+    if (["f", "F", "2"].includes(event.key)) {
+      event.preventDefault();
+      selectOption(false);
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submit.click();
+    }
+  };
+
+  window.addEventListener("keydown", onKey);
+  activeCleanup = () => {
+    window.removeEventListener("keydown", onKey);
+  };
+
+  if (shouldShowQuestionSource() && source) {
+    activityPanel.append(header, prompt, clue, claim, hint, source, optionsWrap, submit, feedback);
+  } else {
+    activityPanel.append(header, prompt, clue, claim, hint, optionsWrap, submit, feedback);
+  }
+}
+
+function renderMatching(meta, activity) {
+  activityPanel.innerHTML = "";
+  const header = renderHeader(meta);
+  const prompt = document.createElement("p");
+  prompt.textContent = activity.prompt;
+  const hint = createChallengeHint(challengeCopy(
+    "Keyboard: use Tab to move between clues, arrow keys to choose, then Enter to submit.",
+    "Teclado: usa Tab para moverte entre pistas, flechas para elegir y Enter para enviar."
+  ));
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
+  const feedback = document.createElement("p");
+  feedback.className = "feedback";
+  const wrap = document.createElement("div");
+  wrap.className = "toggle-list";
+  const selects = [];
+
+  activity.pairs.forEach((pair, index) => {
+    const row = document.createElement("div");
+    row.className = "order-item";
+    const label = document.createElement("label");
+    label.className = "toggle-row";
+    label.style.display = "grid";
+    label.style.gap = "0.45rem";
+
+    const clue = document.createElement("span");
+    clue.textContent = `${index + 1}. ${pair.left}`;
+
+    const select = document.createElement("select");
+    select.className = "language-select";
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = challengeCopy("Choose the match", "Elige la pareja");
+    select.appendChild(blank);
+
+    activity.options.forEach((option) => {
+      const opt = document.createElement("option");
+      opt.value = option;
+      opt.textContent = option;
+      select.appendChild(opt);
+    });
+
+    label.append(clue, select);
+    row.appendChild(label);
+    wrap.appendChild(row);
+    selects.push({ pair, select });
+  });
+
+  const submit = document.createElement("button");
+  submit.className = "cta-btn";
+  submit.type = "button";
+  submit.textContent = challengeCopy("Check Matches", "Revisar parejas");
+  submit.addEventListener("click", () => {
+    if (!canPlayStage()) {
+      feedback.className = "feedback warn";
+      feedback.textContent = t("noLivesShort");
+      return;
+    }
+
+    if (selects.some(({ select }) => !select.value)) {
+      feedback.className = "feedback warn";
+      feedback.textContent = challengeCopy("Finish every match first.", "Completa cada pareja primero.");
+      return;
+    }
+
+    const chosenValues = selects.map(({ select }) => select.value);
+    const uniqueChoices = new Set(chosenValues);
+    if (uniqueChoices.size !== chosenValues.length) {
+      feedback.className = "feedback warn";
+      feedback.textContent = challengeCopy("Use each answer only once.", "Usa cada respuesta solo una vez.");
+      return;
+    }
+
+    const isCorrect = selects.every(({ pair, select }) => select.value === pair.right);
+    if (isCorrect) {
+      feedback.className = "feedback ok";
+      feedback.textContent = challengeCopy("Great matching. Stage complete.", "Buen trabajo relacionando. Etapa completada.");
+      playSfx("success");
+      completeStage(meta);
+    } else {
+      const hasLives = loseLife();
+      feedback.className = "feedback warn";
+      feedback.textContent = hasLives ? challengeCopy("Not quite. Try the matches again.", "Aún no. Intenta relacionarlas otra vez.") : t("outOfLivesContinue");
+      playSfx("fail");
+      queueStageAutoClose(meta.id);
+    }
+  });
+
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.key === "Enter" && document.activeElement && document.activeElement.tagName !== "SELECT") {
+      event.preventDefault();
+      submit.click();
+    }
+  };
+
+  window.addEventListener("keydown", onKey);
+  activeCleanup = () => {
+    window.removeEventListener("keydown", onKey);
+  };
+
+  if (shouldShowQuestionSource() && source) {
+    activityPanel.append(header, prompt, hint, source, wrap, submit, feedback);
+  } else {
+    activityPanel.append(header, prompt, hint, wrap, submit, feedback);
+  }
+}
+
 function renderSpelling(meta, activity) {
   activityPanel.innerHTML = "";
   const header = renderHeader(meta);
@@ -5738,6 +6136,7 @@ function renderSpelling(meta, activity) {
       feedback.className = "feedback ok";
       feedback.textContent = t("correctSpellingComplete");
       playSfx("success");
+      input.blur();
       completeStage(meta, null);
     } else {
       const hasLives = loseLife();
