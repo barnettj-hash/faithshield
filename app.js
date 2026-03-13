@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-12-desktop-language-trim-v1";
+const CONTENT_VERSION = "2026-03-12-desktop-stage5-variety-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -4057,22 +4057,48 @@ function themeLevelOrdinal(meta) {
   return ordinal;
 }
 
-function modeForStage(meta, difficulty = currentDifficulty()) {
-  const themedModes = THEMED_INTERACTIVE_MODE_SETS[meta.theme.name];
-  if (!Array.isArray(themedModes) || !themedModes.length) {
-    return modeForLevel(meta.level, difficulty);
+const stageFiveSelectionCache = new Map();
+
+function stageFiveBaseSelection(level) {
+  if (stageFiveSelectionCache.has(level)) {
+    return stageFiveSelectionCache.get(level);
   }
 
-  const ordinal = themeLevelOrdinal(meta);
-  const base = themedModes[ordinal % themedModes.length];
-  const cycle = Math.floor(ordinal / themedModes.length);
-  return materializeInteractiveMode(base, difficulty, `${meta.theme.era}-l${meta.level}-s${meta.stage}`, cycle);
+  const theme = levelThemeSequence[level - 1] || timelineThemes[timelineThemes.length - 1];
+  const themedModes = THEMED_INTERACTIVE_MODE_SETS[theme.name];
+  const useThemedModes = Array.isArray(themedModes) && themedModes.length;
+  const pool = useThemedModes ? themedModes : interactiveModes;
+  const ordinal = useThemedModes
+    ? levelThemeSequence.slice(0, Math.max(0, level - 1)).filter((entry) => (entry || {}).name === theme.name).length
+    : (level - 1);
+  const startIndex = (ordinal + (level - 1)) % pool.length;
+  const candidates = Array.from({ length: pool.length }, (_, offset) => pool[(startIndex + offset) % pool.length]);
+  const previous = level > 1 ? stageFiveBaseSelection(level - 1).base : null;
+
+  let base = candidates[0];
+  if (previous) {
+    base = candidates.find((candidate) => candidate.id !== previous.id && candidate.engine !== previous.engine)
+      || candidates.find((candidate) => candidate.id !== previous.id)
+      || candidates.find((candidate) => candidate.engine !== previous.engine)
+      || base;
+  }
+
+  const cycle = useThemedModes
+    ? Math.floor(ordinal / pool.length)
+    : Math.floor((level - 1) / pool.length);
+  const selection = { base, cycle };
+  stageFiveSelectionCache.set(level, selection);
+  return selection;
+}
+
+function modeForStage(meta, difficulty = currentDifficulty()) {
+  const selection = stageFiveBaseSelection(meta.level);
+  return materializeInteractiveMode(selection.base, difficulty, `${meta.theme.era}-l${meta.level}-s${meta.stage}`, selection.cycle);
 }
 
 function modeForLevel(level, difficulty = currentDifficulty()) {
-  const base = interactiveModes[(level - 1) % interactiveModes.length];
-  const cycle = Math.floor((level - 1) / interactiveModes.length);
-  return materializeInteractiveMode(base, difficulty, `l${level}`, cycle);
+  const selection = stageFiveBaseSelection(level);
+  return materializeInteractiveMode(selection.base, difficulty, `l${level}`, selection.cycle);
 }
 
 function focusStageCard(stageId) {
