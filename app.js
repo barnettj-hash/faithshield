@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-13-bible-accuracy-v1";
+const CONTENT_VERSION = "2026-03-13-stage5-skill-pass-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -39,7 +39,9 @@ const difficultyProfiles = {
       timing: { targetDelta: -1, maxMissesDelta: 2, speedDelta: 120 },
       collect: { targetDelta: -2, maxMissesDelta: 2, secondsDelta: 5, spawnDelta: 90 },
       dodge: { targetDelta: -4, spawnDelta: 90 },
-      slingshot: { targetRadiusDelta: 7, maxPullDelta: 10, pullScale: 0.16 }
+      slingshot: { targetRadiusDelta: 7, maxPullDelta: 10, pullScale: 0.16 },
+      pattern: { roundsDelta: -1, maxMissesDelta: 2, paceDelta: 120 },
+      balance: { targetDelta: -2, maxMissesDelta: 2, driftDelta: -0.004 }
     }
   },
   medium: {
@@ -54,7 +56,9 @@ const difficultyProfiles = {
       timing: { targetDelta: 0, maxMissesDelta: 0, speedDelta: 0 },
       collect: { targetDelta: 0, maxMissesDelta: 0, secondsDelta: 0, spawnDelta: 0 },
       dodge: { targetDelta: 0, spawnDelta: 0 },
-      slingshot: { targetRadiusDelta: 0, maxPullDelta: 0, pullScale: 0.14 }
+      slingshot: { targetRadiusDelta: 0, maxPullDelta: 0, pullScale: 0.14 },
+      pattern: { roundsDelta: 0, maxMissesDelta: 0, paceDelta: 0 },
+      balance: { targetDelta: 0, maxMissesDelta: 0, driftDelta: 0 }
     }
   },
   advanced: {
@@ -69,7 +73,9 @@ const difficultyProfiles = {
       timing: { targetDelta: 2, maxMissesDelta: -1, speedDelta: -90 },
       collect: { targetDelta: 2, maxMissesDelta: -1, secondsDelta: -4, spawnDelta: -80 },
       dodge: { targetDelta: 6, spawnDelta: -70 },
-      slingshot: { targetRadiusDelta: -5, maxPullDelta: -8, pullScale: 0.13 }
+      slingshot: { targetRadiusDelta: -5, maxPullDelta: -8, pullScale: 0.13 },
+      pattern: { roundsDelta: 1, maxMissesDelta: -1, paceDelta: -100 },
+      balance: { targetDelta: 2, maxMissesDelta: -1, driftDelta: 0.006 }
     }
   }
 };
@@ -714,11 +720,61 @@ const interactiveModes = [
   { id: "timing-6", engine: "timing", label: "Psalm Pulse", target: 8, maxMisses: 5, speed: 720, sourceRef: "1 Samuel 16:23" },
   { id: "collect-6", engine: "collect", label: "Field Sweep", target: 14, maxMisses: 8, seconds: 22, spawnMs: 400, sourceRef: "Ruth 2:2" },
   { id: "dodge-6", engine: "dodge", label: "Champion Run", target: 24, spawnMs: 315, sourceRef: "1 Samuel 17:48" },
+  {
+    id: "pattern-1",
+    engine: "pattern",
+    label: "Trumpet Pattern",
+    rounds: 4,
+    maxMisses: 3,
+    playbackMs: 520,
+    sourceRef: "Joshua 6:4-5",
+    pads: [
+      { icon: "📯", label: "Call" },
+      { icon: "👣", label: "March" },
+      { icon: "🛡️", label: "Hold" },
+      { icon: "📢", label: "Shout" }
+    ],
+    sequences: [[0, 1, 1], [0, 1, 2, 1], [0, 1, 1, 2, 1], [0, 1, 1, 2, 3]]
+  },
+  {
+    id: "balance-1",
+    engine: "balance",
+    label: "Steady the Ark",
+    target: 7,
+    maxMisses: 4,
+    drift: 0.025,
+    sourceRef: "Joshua 3:17"
+  },
   { id: "slingshot-1", engine: "slingshot", label: "Giant Duel", target: 1, sourceRef: "1 Samuel 17:45-50" },
   { id: "slingshot-2", engine: "slingshot", label: "Valley Finale", target: 1, sourceRef: "1 Samuel 17:48-50" },
   { id: "timing-7", engine: "timing", label: "Brook Stone Count", target: 6, maxMisses: 4, speed: 780, sourceRef: "1 Samuel 17:40" },
   { id: "collect-7", engine: "collect", label: "Gleaning Field Run", target: 12, maxMisses: 7, seconds: 24, spawnMs: 430, sourceRef: "Ruth 2:2-3" },
   { id: "dodge-7", engine: "dodge", label: "Cave Refuge Sprint", target: 20, spawnMs: 340, sourceRef: "1 Samuel 22:1" },
+  {
+    id: "pattern-2",
+    engine: "pattern",
+    label: "Creation Sequence",
+    rounds: 4,
+    maxMisses: 3,
+    playbackMs: 500,
+    sourceRef: "Genesis 1:3-18",
+    pads: [
+      { icon: "☀️", label: "Light" },
+      { icon: "🌊", label: "Waters" },
+      { icon: "🌿", label: "Land" },
+      { icon: "⭐", label: "Lights" }
+    ],
+    sequences: [[0, 1, 2], [0, 1, 2, 3], [0, 2, 3, 1], [0, 1, 2, 3, 0]]
+  },
+  {
+    id: "balance-2",
+    engine: "balance",
+    label: "Staff Steady",
+    target: 8,
+    maxMisses: 4,
+    drift: 0.028,
+    sourceRef: "Exodus 14:21"
+  },
   { id: "timing-8", engine: "timing", label: "Shout at Jericho", target: 7, maxMisses: 4, speed: 760, sourceRef: "Joshua 6:16" },
   { id: "collect-8", engine: "collect", label: "Manna Morning Rush", target: 13, maxMisses: 7, seconds: 23, spawnMs: 410, sourceRef: "Exodus 16:21" },
   { id: "dodge-8", engine: "dodge", label: "Chariot Escape", target: 21, spawnMs: 335, sourceRef: "Exodus 14:25" },
@@ -731,27 +787,33 @@ const interactiveModes = [
 const THEMED_INTERACTIVE_MODE_SETS = {
   "Creation Dawn": [
     {
-      id: "creation-light-gather",
-      engine: "collect",
-      label: "Gather the First Light",
-      target: 10,
-      maxMisses: 5,
-      seconds: 26,
-      spawnMs: 480,
-      sourceRef: "Genesis 1:3-4",
-      storyPrompt: "Gather the first light as God separates it from the darkness.",
-      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the light."
+      id: "creation-days-pattern",
+      engine: "pattern",
+      label: "Days of Creation",
+      rounds: 4,
+      maxMisses: 3,
+      playbackMs: 500,
+      sourceRef: "Genesis 1:3-18",
+      storyPrompt: "Remember the unfolding order as God forms light, sky, land, and lights.",
+      keyboardHint: "Keyboard: press 1-4 to repeat the creation pattern after it appears.",
+      pads: [
+        { icon: "☀️", label: "Light" },
+        { icon: "🌊", label: "Sea" },
+        { icon: "🌿", label: "Land" },
+        { icon: "⭐", label: "Lights" }
+      ],
+      sequences: [[0, 1, 2], [0, 1, 2, 3], [0, 2, 1, 3], [0, 1, 2, 3, 0]]
     },
     {
-      id: "creation-garden-keep",
-      engine: "timing",
+      id: "creation-garden-steady",
+      engine: "balance",
       label: "Garden Keep",
-      target: 6,
+      target: 7,
       maxMisses: 4,
-      speed: 820,
+      drift: 0.024,
       sourceRef: "Genesis 2:15",
-      storyPrompt: "Keep the garden in faithful rhythm as Adam works what God has given.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker is inside the gold zone."
+      storyPrompt: "Keep your footing steady as Adam tends the garden God has given.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker inside the gold band."
     }
   ],
   "Fall and Mercy": [
@@ -767,14 +829,14 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     },
     {
       id: "fall-cherubim-watch",
-      engine: "timing",
+      engine: "balance",
       label: "Cherubim Watch",
-      target: 7,
+      target: 8,
       maxMisses: 4,
-      speed: 780,
+      drift: 0.03,
       sourceRef: "Genesis 3:24",
-      storyPrompt: "Move in step with the guarded way as the flaming sword turns every direction.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker enters the guarded path."
+      storyPrompt: "Hold the path carefully as the flaming sword guards the way to the tree of life.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to stay inside the guarded path."
     }
   ],
   "Flood and Covenant": [
@@ -884,14 +946,21 @@ const THEMED_INTERACTIVE_MODE_SETS = {
   "Burning Bush": [
     {
       id: "bush-holy-ground",
-      engine: "timing",
+      engine: "pattern",
       label: "Holy Ground",
-      target: 6,
+      rounds: 4,
       maxMisses: 4,
-      speed: 840,
+      playbackMs: 520,
       sourceRef: "Exodus 3:5",
-      storyPrompt: "Step carefully on holy ground as God calls Moses from the bush.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker reaches the holy path."
+      storyPrompt: "Watch the holy-ground steps as God calls Moses from the burning bush.",
+      keyboardHint: "Keyboard: press 1-4 to repeat the holy-ground pattern.",
+      pads: [
+        { icon: "🔥", label: "Fire" },
+        { icon: "👣", label: "Step" },
+        { icon: "🪵", label: "Staff" },
+        { icon: "🏔️", label: "Mount" }
+      ],
+      sequences: [[0, 1, 2], [0, 1, 0, 2], [0, 1, 2, 3], [0, 1, 0, 2, 3]]
     },
     {
       id: "bush-shepherd-gather",
@@ -917,14 +986,14 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     },
     {
       id: "bush-staff-lift",
-      engine: "timing",
+      engine: "balance",
       label: "Staff Lift",
-      target: 7,
+      target: 8,
       maxMisses: 4,
-      speed: 790,
+      drift: 0.028,
       sourceRef: "Exodus 4:2-4",
-      storyPrompt: "Answer God's sign in rhythm as the staff becomes a witness.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker enters the sign zone."
+      storyPrompt: "Keep the staff steady as God turns it into a sign before Moses.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker inside the sign zone."
     },
     {
       id: "bush-let-my-people-go",
@@ -974,14 +1043,21 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     },
     {
       id: "plagues-doorpost-mark",
-      engine: "timing",
+      engine: "pattern",
       label: "Doorpost Mark",
-      target: 7,
+      rounds: 4,
       maxMisses: 4,
-      speed: 780,
+      playbackMs: 500,
       sourceRef: "Exodus 12:7",
-      storyPrompt: "Mark the doorposts in faithful rhythm for Passover night.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker lines up with the blood mark."
+      storyPrompt: "Remember the pattern of faithful obedience on Passover night.",
+      keyboardHint: "Keyboard: press 1-4 to repeat the Passover marking pattern.",
+      pads: [
+        { icon: "🩸", label: "Blood" },
+        { icon: "🚪", label: "Door" },
+        { icon: "🐑", label: "Lamb" },
+        { icon: "🍞", label: "Bread" }
+      ],
+      sequences: [[2, 0, 1], [2, 0, 1, 3], [2, 0, 1, 0], [2, 0, 1, 3, 1]]
     },
     {
       id: "plagues-midnight-rush",
@@ -1032,24 +1108,32 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     },
     {
       id: "sea-song-rhythm",
-      engine: "timing",
+      engine: "pattern",
       label: "Song of the Sea",
-      target: 8,
+      rounds: 4,
       maxMisses: 4,
-      speed: 750,
+      playbackMs: 500,
       sourceRef: "Exodus 15:1",
-      storyPrompt: "Keep the rhythm as Moses and Miriam sing of God's victory.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker hits the song line."
+      storyPrompt: "Repeat the song pattern as Moses and Miriam praise God's victory.",
+      keyboardHint: "Keyboard: press 1-4 to repeat the song pattern.",
+      pads: [
+        { icon: "🌊", label: "Sea" },
+        { icon: "🎶", label: "Song" },
+        { icon: "🥁", label: "Tambourine" },
+        { icon: "🙌", label: "Praise" }
+      ],
+      sequences: [[0, 1, 2], [0, 1, 2, 3], [1, 2, 3, 1], [0, 1, 2, 3, 1]]
     },
     {
-      id: "sea-dry-ground-dash",
-      engine: "dodge",
-      label: "Dry Ground Dash",
-      target: 20,
-      spawnMs: 320,
+      id: "sea-staff-steady",
+      engine: "balance",
+      label: "Staff Steady",
+      target: 8,
+      maxMisses: 4,
+      drift: 0.03,
       sourceRef: "Exodus 14:29",
-      storyPrompt: "Keep your footing on the dry ground while the waters stand high.",
-      keyboardHint: "Keyboard: move with Left/Right or A/D to stay on the path."
+      storyPrompt: "Hold the path steady while the waters stand like walls on each side.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker inside the dry path."
     }
   ],
   "Jordan Crossing": [
@@ -1067,14 +1151,14 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     },
     {
       id: "jordan-riverbed-step",
-      engine: "timing",
+      engine: "balance",
       label: "Riverbed Step",
-      target: 7,
+      target: 8,
       maxMisses: 4,
-      speed: 790,
+      drift: 0.028,
       sourceRef: "Joshua 3:17",
-      storyPrompt: "Cross the riverbed in step while the ark stands firm in the Jordan.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker reaches the safe crossing lane."
+      storyPrompt: "Stay steady on the riverbed while the ark stands firm in the Jordan.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker inside the safe crossing lane."
     },
     {
       id: "jordan-ark-ahead",
@@ -1100,27 +1184,34 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     },
     {
       id: "jordan-trumpet-march",
-      engine: "timing",
+      engine: "pattern",
       label: "Trumpet March",
-      target: 8,
+      rounds: 4,
       maxMisses: 4,
-      speed: 750,
+      playbackMs: 510,
       sourceRef: "Joshua 6:16",
-      storyPrompt: "Keep the march and shout in time as Jericho's walls begin to fall.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker lines up with the trumpet call."
+      storyPrompt: "Remember the march, trumpet, and shout pattern before Jericho falls.",
+      keyboardHint: "Keyboard: press 1-4 to repeat the Jericho march pattern.",
+      pads: [
+        { icon: "👣", label: "March" },
+        { icon: "📯", label: "Trumpet" },
+        { icon: "🛡️", label: "Hold" },
+        { icon: "📢", label: "Shout" }
+      ],
+      sequences: [[0, 1, 0], [0, 1, 0, 2], [0, 1, 0, 2, 0], [0, 1, 0, 2, 3]]
     }
   ],
   "Land and Legacy": [
     {
       id: "legacy-covenant-stand",
-      engine: "timing",
+      engine: "balance",
       label: "Covenant Stand",
-      target: 7,
+      target: 8,
       maxMisses: 4,
-      speed: 780,
+      drift: 0.027,
       sourceRef: "Joshua 24:14-15",
-      storyPrompt: "Stand firm in rhythm as Joshua calls Israel to serve the Lord.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker enters the covenant band."
+      storyPrompt: "Stand firm and steady as Joshua calls Israel to serve the Lord alone.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker inside the covenant band."
     },
     {
       id: "legacy-ai-ambush",
@@ -1146,14 +1237,21 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     },
     {
       id: "legacy-sun-stand",
-      engine: "timing",
+      engine: "pattern",
       label: "Sun-Stand Signal",
-      target: 8,
+      rounds: 4,
       maxMisses: 4,
-      speed: 740,
+      playbackMs: 510,
       sourceRef: "Joshua 10:12-14",
-      storyPrompt: "Hold the line in time as God lengthens the day for Israel's victory.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker reaches the signal line."
+      storyPrompt: "Repeat the battle signal as God lengthens the day for Israel's victory.",
+      keyboardHint: "Keyboard: press 1-4 to repeat the signal pattern.",
+      pads: [
+        { icon: "☀️", label: "Sun" },
+        { icon: "🌙", label: "Moon" },
+        { icon: "⚔️", label: "Battle" },
+        { icon: "🛡️", label: "Stand" }
+      ],
+      sequences: [[0, 1, 2], [0, 1, 2, 3], [2, 3, 0, 1], [0, 1, 2, 3, 2]]
     },
     {
       id: "legacy-farewell-stones",
@@ -1171,14 +1269,21 @@ const THEMED_INTERACTIVE_MODE_SETS = {
   "David and Courage": [
     {
       id: "david-brook-stone-count",
-      engine: "timing",
+      engine: "pattern",
       label: "Brook Stone Count",
-      target: 7,
+      rounds: 4,
       maxMisses: 4,
-      speed: 780,
+      playbackMs: 500,
       sourceRef: "1 Samuel 17:40",
-      storyPrompt: "Keep the rhythm as David chooses the smooth stones from the brook.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker reaches the stone line."
+      storyPrompt: "Remember the stone-picking pattern as David chooses smooth stones from the brook.",
+      keyboardHint: "Keyboard: press 1-4 to repeat the stone pattern.",
+      pads: [
+        { icon: "🪨", label: "Stone" },
+        { icon: "🌊", label: "Brook" },
+        { icon: "🧺", label: "Bag" },
+        { icon: "🎯", label: "Aim" }
+      ],
+      sequences: [[0, 1, 0], [0, 1, 0, 2], [0, 1, 0, 2, 0], [0, 1, 0, 2, 3]]
     },
     {
       id: "david-shepherd-run",
@@ -1213,14 +1318,14 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     },
     {
       id: "david-armor-refusal",
-      engine: "timing",
+      engine: "balance",
       label: "Armor Refusal",
       target: 8,
       maxMisses: 4,
-      speed: 740,
+      drift: 0.028,
       sourceRef: "1 Samuel 17:39",
-      storyPrompt: "Move in step as David refuses Saul's armor and trusts the Lord instead.",
-      keyboardHint: "Keyboard: press Space or Enter when the marker enters the trust band."
+      storyPrompt: "Hold steady in trust as David sets aside Saul's armor and walks in faith.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker inside the trust band."
     }
   ]
 };
@@ -4292,6 +4397,12 @@ function materializeInteractiveMode(base, difficulty = currentDifficulty(), keyS
     } else if (base.engine === "dodge") {
       mode.target = base.target + cycle * 2;
       mode.spawnMs = Math.max(240, base.spawnMs - cycle * 10);
+    } else if (base.engine === "pattern") {
+      mode.rounds = Math.max(3, (base.rounds || 4) + cycle);
+      mode.playbackMs = Math.max(320, (base.playbackMs || 500) - cycle * 20);
+    } else if (base.engine === "balance") {
+      mode.target = (base.target || 7) + cycle;
+      mode.drift = Math.min(0.05, (base.drift || 0.026) + cycle * 0.0025);
     }
   }
 
@@ -4313,6 +4424,14 @@ function materializeInteractiveMode(base, difficulty = currentDifficulty(), keyS
     mode.targetRadius = Math.max(12, 20 + (tune.targetRadiusDelta || 0));
     mode.maxPull = Math.max(62, 82 + (tune.maxPullDelta || 0));
     mode.pullPowerScale = tune.pullScale || 0.14;
+  } else if (mode.engine === "pattern") {
+    mode.rounds = Math.max(3, (mode.rounds || 4) + (tune.roundsDelta || 0));
+    mode.maxMisses = Math.max(1, (mode.maxMisses || 3) + (tune.maxMissesDelta || 0));
+    mode.playbackMs = Math.max(300, (mode.playbackMs || 500) + (tune.paceDelta || 0));
+  } else if (mode.engine === "balance") {
+    mode.target = Math.max(5, (mode.target || 7) + (tune.targetDelta || 0));
+    mode.maxMisses = Math.max(1, (mode.maxMisses || 3) + (tune.maxMissesDelta || 0));
+    mode.drift = Math.max(0.014, (mode.drift || 0.026) + (tune.driftDelta || 0));
   }
 
   return mode;
@@ -6621,7 +6740,11 @@ function renderInteractive(meta, mode, sourceRef) {
     activityPanel.append(header, prompt);
   }
 
-  if (mode.engine === "timing") {
+  if (mode.engine === "pattern") {
+    activeCleanup = renderPattern(meta, mode, feedback);
+  } else if (mode.engine === "balance") {
+    activeCleanup = renderBalance(meta, mode, feedback);
+  } else if (mode.engine === "timing") {
     activeCleanup = renderTiming(meta, mode, feedback);
   } else if (mode.engine === "collect") {
     activeCleanup = renderCollect(meta, mode, feedback);
@@ -6643,6 +6766,421 @@ function canvasPointerPosition(canvas, event) {
   return {
     x: ((event.clientX - rect.left) * canvas.width) / rect.width,
     y: ((event.clientY - rect.top) * canvas.height) / rect.height
+  };
+}
+
+function renderPattern(meta, mode, feedback) {
+  const prompt = document.createElement("p");
+  prompt.textContent = mode.secondaryPrompt || "Watch the sequence, then repeat it from memory.";
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: press 1-4 to repeat the sequence after it plays.");
+  const status = createSkillStatus("");
+  activityPanel.append(prompt, hint, status);
+
+  const pads = Array.isArray(mode.pads) && mode.pads.length >= 4
+    ? mode.pads.slice(0, 4)
+    : [
+      { icon: "1", label: "One" },
+      { icon: "2", label: "Two" },
+      { icon: "3", label: "Three" },
+      { icon: "4", label: "Four" }
+    ];
+
+  const padWrap = document.createElement("div");
+  padWrap.style.display = "grid";
+  padWrap.style.gridTemplateColumns = "repeat(2, minmax(120px, 1fr))";
+  padWrap.style.gap = "0.9rem";
+  padWrap.style.marginTop = "0.75rem";
+  activityPanel.append(padWrap);
+
+  const padButtons = pads.map((pad, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "ghost-btn";
+    button.style.minHeight = "90px";
+    button.style.display = "flex";
+    button.style.flexDirection = "column";
+    button.style.alignItems = "center";
+    button.style.justifyContent = "center";
+    button.style.gap = "0.35rem";
+    button.style.fontSize = "1rem";
+    button.style.fontWeight = "700";
+    button.dataset.padIndex = String(index);
+    button.innerHTML = `<span style="font-size:1.45rem">${pad.icon}</span><span>${index + 1}. ${pad.label}</span>`;
+    padWrap.append(button);
+    return button;
+  });
+
+  const sequences = Array.isArray(mode.sequences) && mode.sequences.length
+    ? mode.sequences.map((sequence) => sequence.slice())
+    : [[0, 1, 2], [0, 2, 3], [1, 2, 0, 3], [0, 1, 2, 3]];
+  const totalRounds = Math.min(mode.rounds || sequences.length, sequences.length);
+  const flashMs = Math.max(170, Math.floor((mode.playbackMs || 500) * 0.64));
+  const gapMs = Math.max(120, Math.floor((mode.playbackMs || 500) * 0.38));
+  const timers = new Set();
+  let round = 0;
+  let misses = 0;
+  let inputIndex = 0;
+  let accepting = false;
+  let running = true;
+
+  const queue = (callback, delay) => {
+    const timer = setTimeout(() => {
+      timers.delete(timer);
+      callback();
+    }, delay);
+    timers.add(timer);
+  };
+
+  const clearTimers = () => {
+    timers.forEach((timer) => clearTimeout(timer));
+    timers.clear();
+  };
+
+  const setPadState = (index, state) => {
+    const button = padButtons[index];
+    if (!button) return;
+    if (state === "play") {
+      button.style.transform = "translateY(-3px)";
+      button.style.boxShadow = "0 0 0 1px rgba(255,255,255,0.08), 0 0 0 2px rgba(213,169,72,0.42), 0 14px 30px rgba(213,169,72,0.22)";
+      button.style.background = "linear-gradient(180deg, rgba(213,169,72,0.22), rgba(18,27,40,0.96))";
+    } else if (state === "good") {
+      button.style.transform = "translateY(-2px)";
+      button.style.boxShadow = "0 0 0 2px rgba(130,211,146,0.45), 0 14px 30px rgba(70,170,88,0.18)";
+      button.style.background = "linear-gradient(180deg, rgba(72,148,88,0.22), rgba(18,27,40,0.96))";
+    } else if (state === "bad") {
+      button.style.transform = "translateY(-2px)";
+      button.style.boxShadow = "0 0 0 2px rgba(230,132,132,0.45), 0 14px 30px rgba(170,70,70,0.2)";
+      button.style.background = "linear-gradient(180deg, rgba(145,52,52,0.24), rgba(18,27,40,0.96))";
+    } else {
+      button.style.transform = "";
+      button.style.boxShadow = "";
+      button.style.background = "";
+    }
+  };
+
+  const updateStatus = (line) => {
+    const lead = line ? `${line} ` : "";
+    status.textContent = `${lead}${challengeCopy("Round", "Ronda")} ${Math.min(round + 1, totalRounds)}/${totalRounds} | ${t("missesLabel")}: ${misses}/${mode.maxMisses}`;
+  };
+
+  const failPattern = () => {
+    misses += 1;
+    if (misses >= mode.maxMisses) {
+      running = false;
+      const hasLives = loseLife();
+      feedback.className = "feedback warn";
+      feedback.textContent = hasLives ? t("challengeFailedReplay") : t("outOfLivesContinue");
+      playSfx("fail");
+      queueStageAutoClose(meta.id);
+      return;
+    }
+    feedback.className = "feedback warn";
+    feedback.textContent = challengeCopy("Wrong pattern. Watch it again.", "Patron incorrecto. Miralo de nuevo.");
+    playSfx("fail");
+    queue(playRound, 720);
+  };
+
+  const completePatternRound = () => {
+    if (round >= totalRounds - 1) {
+      running = false;
+      feedback.className = "feedback ok";
+      feedback.textContent = t("challengeComplete");
+      playSfx("success");
+      completeStage(meta, mode);
+      return;
+    }
+    feedback.className = "feedback ok";
+    feedback.textContent = challengeCopy("Pattern complete. Next round.", "Patron completo. Siguiente ronda.");
+    playSfx("hit");
+    round += 1;
+    queue(playRound, 650);
+  };
+
+  const handlePad = (index) => {
+    if (!running || !accepting || !canPlayStage()) return;
+    const sequence = sequences[Math.min(round, sequences.length - 1)];
+    const expected = sequence[inputIndex];
+    setPadState(index, index === expected ? "good" : "bad");
+    queue(() => setPadState(index, "idle"), 190);
+
+    if (index !== expected) {
+      accepting = false;
+      inputIndex = 0;
+      failPattern();
+      return;
+    }
+
+    inputIndex += 1;
+    if (inputIndex >= sequence.length) {
+      accepting = false;
+      inputIndex = 0;
+      completePatternRound();
+    }
+  };
+
+  function playRound() {
+    if (!running) return;
+    clearTimers();
+    feedback.textContent = "";
+    accepting = false;
+    inputIndex = 0;
+    updateStatus(challengeCopy("Watch the pattern.", "Mira el patron."));
+    const sequence = sequences[Math.min(round, sequences.length - 1)];
+    sequence.forEach((padIndex, step) => {
+      const startAt = 240 + step * ((mode.playbackMs || 500) + gapMs);
+      queue(() => setPadState(padIndex, "play"), startAt);
+      queue(() => setPadState(padIndex, "idle"), startAt + flashMs);
+    });
+    queue(() => {
+      accepting = true;
+      updateStatus(challengeCopy("Repeat it.", "Repitelo."));
+    }, 280 + sequence.length * ((mode.playbackMs || 500) + gapMs));
+  }
+
+  const clickHandlers = padButtons.map((button, index) => {
+    const handler = () => handlePad(index);
+    button.addEventListener("click", handler);
+    return handler;
+  });
+
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const keyMap = { "1": 0, "2": 1, "3": 2, "4": 3 };
+    if (!(event.key in keyMap)) return;
+    event.preventDefault();
+    handlePad(keyMap[event.key]);
+  };
+
+  window.addEventListener("keydown", onKey);
+  playRound();
+
+  return () => {
+    running = false;
+    clearTimers();
+    window.removeEventListener("keydown", onKey);
+    padButtons.forEach((button, index) => button.removeEventListener("click", clickHandlers[index]));
+  };
+}
+
+function renderBalance(meta, mode, feedback) {
+  const prompt = document.createElement("p");
+  prompt.textContent = mode.secondaryPrompt || "Keep the marker steady inside the gold band.";
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: hold Left/A or Right/D to keep the marker inside the gold band.");
+  const status = createSkillStatus("");
+  activityPanel.append(prompt, hint, status);
+
+  const wrap = document.createElement("div");
+  wrap.className = "activity-panel";
+  wrap.style.marginTop = "0.75rem";
+  activityPanel.append(wrap);
+
+  const bar = document.createElement("div");
+  bar.style.position = "relative";
+  bar.style.height = "34px";
+  bar.style.borderRadius = "999px";
+  bar.style.background = "linear-gradient(180deg, rgba(20,27,38,0.98), rgba(11,16,24,0.96))";
+  bar.style.border = "1px solid rgba(240, 207, 147, 0.2)";
+  bar.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,0.02), 0 12px 24px rgba(4,8,12,0.22)";
+  bar.style.overflow = "hidden";
+
+  const zone = document.createElement("div");
+  zone.style.position = "absolute";
+  zone.style.left = "42%";
+  zone.style.width = "16%";
+  zone.style.top = "0";
+  zone.style.bottom = "0";
+  zone.style.background = "linear-gradient(180deg, rgba(213,169,72,0.72), rgba(191,138,42,0.84))";
+  zone.style.boxShadow = "0 0 18px rgba(213,169,72,0.35)";
+
+  const marker = document.createElement("div");
+  marker.style.position = "absolute";
+  marker.style.top = "4px";
+  marker.style.width = "24px";
+  marker.style.height = "24px";
+  marker.style.borderRadius = "999px";
+  marker.style.background = "linear-gradient(180deg, #fff7df, #f2d18a)";
+  marker.style.boxShadow = "0 0 14px rgba(255, 243, 214, 0.45)";
+
+  bar.append(zone, marker);
+  wrap.append(bar);
+
+  const controls = document.createElement("div");
+  controls.style.display = "grid";
+  controls.style.gridTemplateColumns = "repeat(2, minmax(120px, 1fr))";
+  controls.style.gap = "0.75rem";
+  controls.style.marginTop = "0.85rem";
+  wrap.append(controls);
+
+  const leftBtn = document.createElement("button");
+  leftBtn.type = "button";
+  leftBtn.className = "ghost-btn";
+  leftBtn.textContent = challengeCopy("Hold Left", "Mantener izquierda");
+  const rightBtn = document.createElement("button");
+  rightBtn.type = "button";
+  rightBtn.className = "ghost-btn";
+  rightBtn.textContent = challengeCopy("Hold Right", "Mantener derecha");
+  controls.append(leftBtn, rightBtn);
+
+  let stable = 0;
+  let misses = 0;
+  let pos = 50;
+  let velocity = 0;
+  let driftBias = 0;
+  let leftHeld = false;
+  let rightHeld = false;
+  let running = true;
+  let raf = 0;
+  let lastTime = performance.now();
+
+  const updateStatus = () => {
+    status.textContent = `${challengeCopy("Steady", "Firme")}: ${stable.toFixed(1)}/${mode.target} ${t("secShort")} | ${t("missesLabel")}: ${misses}/${mode.maxMisses}`;
+  };
+
+  const setHeldState = (button, held) => {
+    button.style.transform = held ? "translateY(-2px)" : "";
+    button.style.boxShadow = held ? "0 0 0 2px rgba(213,169,72,0.42), 0 12px 22px rgba(213,169,72,0.18)" : "";
+  };
+
+  const failBalance = () => {
+    misses += 1;
+    feedback.className = "feedback warn";
+    feedback.textContent = challengeCopy("You drifted too far. Recover your footing.", "Te desviaste demasiado. Recupera el equilibrio.");
+    playSfx("fail");
+    pos = 50;
+    velocity = 0;
+    driftBias = (Math.random() - 0.5) * (mode.drift || 0.026);
+    if (misses >= mode.maxMisses) {
+      running = false;
+      const hasLives = loseLife();
+      feedback.textContent = hasLives ? t("challengeFailedReplay") : t("outOfLivesContinue");
+      queueStageAutoClose(meta.id);
+    }
+  };
+
+  const holdStart = (side) => {
+    if (side === "left") leftHeld = true;
+    if (side === "right") rightHeld = true;
+    setHeldState(leftBtn, leftHeld);
+    setHeldState(rightBtn, rightHeld);
+  };
+
+  const holdEnd = (side) => {
+    if (side === "left") leftHeld = false;
+    if (side === "right") rightHeld = false;
+    setHeldState(leftBtn, leftHeld);
+    setHeldState(rightBtn, rightHeld);
+  };
+
+  const tick = (now) => {
+    if (!running) return;
+    const dt = Math.min(40, now - lastTime) / 16.67;
+    lastTime = now;
+
+    if (Math.random() < 0.02) {
+      driftBias += (Math.random() - 0.5) * 0.012;
+      driftBias = Math.max(-0.05, Math.min(0.05, driftBias));
+    }
+
+    velocity += driftBias * dt;
+    if (leftHeld) velocity -= 0.075 * dt;
+    if (rightHeld) velocity += 0.075 * dt;
+    velocity *= 0.92;
+    pos += velocity * 1.45;
+
+    if (pos < 2 || pos > 98) {
+      pos = Math.max(2, Math.min(98, pos));
+      failBalance();
+      if (!running) return;
+    }
+
+    marker.style.left = `calc(${pos}% - 12px)`;
+    const inBand = pos >= 42 && pos <= 58;
+    if (inBand) {
+      stable += dt / 60;
+      if (!feedback.textContent) {
+        feedback.className = "feedback ok";
+        feedback.textContent = challengeCopy("Hold steady.", "Manten el equilibrio.");
+      }
+    } else {
+      stable = Math.max(0, stable - dt / 120);
+      if (feedback.className !== "feedback warn") {
+        feedback.className = "feedback";
+        feedback.textContent = challengeCopy("Guide the marker back into the gold band.", "Guia el marcador de vuelta a la banda dorada.");
+      }
+    }
+
+    updateStatus();
+
+    if (stable >= mode.target) {
+      running = false;
+      feedback.className = "feedback ok";
+      feedback.textContent = t("challengeComplete");
+      playSfx("success");
+      completeStage(meta, mode);
+      return;
+    }
+
+    raf = requestAnimationFrame(tick);
+  };
+
+  const onKeyDown = (event) => {
+    if (state.activeStage !== meta.id) return;
+    if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") {
+      event.preventDefault();
+      holdStart("left");
+    } else if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") {
+      event.preventDefault();
+      holdStart("right");
+    }
+  };
+
+  const onKeyUp = (event) => {
+    if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") {
+      holdEnd("left");
+    } else if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") {
+      holdEnd("right");
+    }
+  };
+
+  const bindHoldButton = (button, side) => {
+    const start = (event) => {
+      event.preventDefault();
+      holdStart(side);
+    };
+    const end = (event) => {
+      event.preventDefault();
+      holdEnd(side);
+    };
+    button.addEventListener("pointerdown", start);
+    button.addEventListener("pointerup", end);
+    button.addEventListener("pointercancel", end);
+    button.addEventListener("pointerleave", end);
+    return { start, end };
+  };
+
+  const leftHandlers = bindHoldButton(leftBtn, "left");
+  const rightHandlers = bindHoldButton(rightBtn, "right");
+  window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("keyup", onKeyUp);
+  updateStatus();
+  raf = requestAnimationFrame(tick);
+
+  return () => {
+    running = false;
+    cancelAnimationFrame(raf);
+    holdEnd("left");
+    holdEnd("right");
+    window.removeEventListener("keydown", onKeyDown);
+    window.removeEventListener("keyup", onKeyUp);
+    leftBtn.removeEventListener("pointerdown", leftHandlers.start);
+    leftBtn.removeEventListener("pointerup", leftHandlers.end);
+    leftBtn.removeEventListener("pointercancel", leftHandlers.end);
+    leftBtn.removeEventListener("pointerleave", leftHandlers.end);
+    rightBtn.removeEventListener("pointerdown", rightHandlers.start);
+    rightBtn.removeEventListener("pointerup", rightHandlers.end);
+    rightBtn.removeEventListener("pointercancel", rightHandlers.end);
+    rightBtn.removeEventListener("pointerleave", rightHandlers.end);
   };
 }
 
