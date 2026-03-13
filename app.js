@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-13-stage5-story-pass-v2";
+const CONTENT_VERSION = "2026-03-13-hebrew-names-speakers-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -1933,29 +1933,39 @@ const quizBank = [
   { era: "genesis", prompt: "What did God make for Adam and Eve after the fall?", options: ["Garments of skin", "A boat", "A crown", "Stone houses"], answer: "Garments of skin", sourceRef: "Genesis 3:21" },
   { era: "genesis", prompt: "What sign did God place in the sky after the flood?", options: ["Rainbow", "Comet", "Trumpet", "Lightning"], answer: "Rainbow", sourceRef: "Genesis 9:12-13" },
   { era: "genesis", prompt: "Who built the ark?", options: ["Moses", "Noah", "Abraham", "Cain"], answer: "Noah", sourceRef: "Genesis 6:13-14" },
+  { era: "genesis", prompt: "Who said, \"Am I my brother's keeper?\"", options: ["Cain", "Abel", "Adam", "Noah"], answer: "Cain", sourceRef: "Genesis 4:9" },
   { era: "patriarchs", prompt: "What new name did God give Abram?", options: ["Abraham", "Absalom", "Aaron", "Amos"], answer: "Abraham", sourceRef: "Genesis 17:5" },
   { era: "patriarchs", prompt: "Which son of Jacob was sold into Egypt?", options: ["Joseph", "Benjamin", "Levi", "Judah"], answer: "Joseph", sourceRef: "Genesis 37:28" },
   { era: "patriarchs", prompt: "Jacob was also called what?", options: ["Israel", "Ishmael", "Edom", "Judah"], answer: "Israel", sourceRef: "Genesis 32:28" },
+  { era: "patriarchs", prompt: "What name did Abraham call the place where God provided the ram?", options: ["Yahweh Yireh", "El Roi", "Yahweh Nissi", "Yahweh Shalom"], answer: "Yahweh Yireh", sourceRef: "Genesis 22:14" },
   { era: "exodus", prompt: "Who confronted Pharaoh and led Israel out of Egypt?", options: ["Joshua", "Moses", "Aaron", "Samuel"], answer: "Moses", sourceRef: "Exodus 5:1; 12:31" },
   { era: "exodus", prompt: "What event protected Israelite homes in Egypt?", options: ["Passover", "Pentecost", "Exile", "Day of Atonement"], answer: "Passover", sourceRef: "Exodus 12:13-14" },
   { era: "exodus", prompt: "What sea did Israel cross on dry ground?", options: ["Red Sea", "Dead Sea", "Galilee", "Mediterranean Sea"], answer: "Red Sea", sourceRef: "Exodus 14:21-22" },
+  { era: "exodus", prompt: "Who said, \"Who am I, that I should go to Pharaoh?\"", options: ["Moses", "Aaron", "Pharaoh", "Joshua"], answer: "Moses", sourceRef: "Exodus 3:11" },
+  { era: "exodus", prompt: "What name did God tell Moses to say forever to all generations?", options: ["Yahweh", "El Roi", "Yahweh Shalom", "El Shaddai"], answer: "Yahweh", sourceRef: "Exodus 3:15" },
   { era: "sinai", prompt: "Where were the Ten Commandments given?", options: ["Mount Sinai", "Mount Carmel", "Mount Zion", "Mount Nebo"], answer: "Mount Sinai", sourceRef: "Exodus 19:20; 20:1" },
   { era: "sinai", prompt: "What did the people promise after hearing the covenant words?", options: ["We will do all the Lord has spoken", "We will return to Egypt", "We will follow Pharaoh", "We will build a new kingdom"], answer: "We will do all the Lord has spoken", sourceRef: "Exodus 24:7" },
   { era: "sinai", prompt: "What did Moses build at the foot of the mountain after writing all Yahweh's words?", options: ["An altar", "A palace", "A bronze serpent", "A city gate"], answer: "An altar", sourceRef: "Exodus 24:4" },
   { era: "wilderness", prompt: "What food did God provide daily?", options: ["Manna", "Figs", "Barley", "Dates"], answer: "Manna", sourceRef: "Exodus 16:14-15" },
   { era: "wilderness", prompt: "Who helped Moses hold up his hands in battle?", options: ["Aaron and Hur", "Joshua and Caleb", "Nadab and Abihu", "Aaron and Miriam"], answer: "Aaron and Hur", sourceRef: "Exodus 17:12" },
+  { era: "wilderness", prompt: "What did Moses call the altar after Amalek was defeated?", options: ["Yahweh Nissi", "Yahweh Yireh", "El Roi", "Yahweh of Armies"], answer: "Yahweh Nissi", sourceRef: "Exodus 17:15" },
   { era: "conquest", prompt: "Who led Israel after Moses?", options: ["Joshua", "Saul", "David", "Aaron"], answer: "Joshua", sourceRef: "Joshua 1:1-2" },
   { era: "conquest", prompt: "How many days did Israel march around Jericho before the final shout?", options: ["7", "3", "12", "6"], answer: "7", sourceRef: "Joshua 6:3-4,15-16" },
   { era: "conquest", prompt: "What river did Israel cross into Canaan?", options: ["Jordan", "Nile", "Euphrates", "Jabbok"], answer: "Jordan", sourceRef: "Joshua 3:14-17" },
   { era: "judges", prompt: "Which judge led with 300 men?", options: ["Gideon", "Samson", "Jephthah", "Deborah"], answer: "Gideon", sourceRef: "Judges 7:7" },
   { era: "judges", prompt: "Who was a prophetess and judge?", options: ["Deborah", "Ruth", "Hannah", "Jael"], answer: "Deborah", sourceRef: "Judges 4:4" },
   { era: "judges", prompt: "Ruth stayed loyal to whom?", options: ["Naomi", "Miriam", "Abigail", "Orpah"], answer: "Naomi", sourceRef: "Ruth 1:16-17" },
+  { era: "judges", prompt: "What did Gideon call the altar he built after the angel spoke to him?", options: ["Yahweh Shalom", "Yahweh Nissi", "Yahweh Yireh", "El Shaddai"], answer: "Yahweh Shalom", sourceRef: "Judges 6:24" },
+  { era: "judges", prompt: "Who said, \"Where you go, I will go; and where you stay, I will stay\"?", options: ["Ruth", "Naomi", "Deborah", "Hannah"], answer: "Ruth", sourceRef: "Ruth 1:16" },
   { era: "samuel", prompt: "Who heard God's call as a boy?", options: ["Samuel", "Eli", "Jonathan", "Saul"], answer: "Samuel", sourceRef: "1 Samuel 3:8-10" },
   { era: "samuel", prompt: "Where did Samuel minister before Yahweh as a youth?", options: ["Shiloh", "Jerusalem", "Bethel", "Hebron"], answer: "Shiloh", sourceRef: "1 Samuel 1:3; 3:21" },
+  { era: "samuel", prompt: "Who said, \"Speak, Yahweh, for your servant hears\"?", options: ["Samuel", "Eli", "Hannah", "David"], answer: "Samuel", sourceRef: "1 Samuel 3:10" },
+  { era: "samuel", prompt: "What title of God appears in 1 Samuel 1:3?", options: ["Yahweh of Armies", "Yahweh Nissi", "El Roi", "Yahweh Yireh"], answer: "Yahweh of Armies", sourceRef: "1 Samuel 1:3" },
   { era: "saul", prompt: "Who was Israel's first king?", options: ["Saul", "David", "Solomon", "Abner"], answer: "Saul", sourceRef: "1 Samuel 10:1,24" },
   { era: "saul", prompt: "Who anointed Saul?", options: ["Samuel", "Nathan", "Gad", "Eli"], answer: "Samuel", sourceRef: "1 Samuel 10:1" },
   { era: "david", prompt: "How many stones did David pick up?", options: ["5", "3", "10", "1"], answer: "5", sourceRef: "1 Samuel 17:40" },
-  { era: "david", prompt: "What weapon did David use against Goliath?", options: ["Sling", "Spear", "Sword", "Bow"], answer: "Sling", sourceRef: "1 Samuel 17:49-50" }
+  { era: "david", prompt: "What weapon did David use against Goliath?", options: ["Sling", "Spear", "Sword", "Bow"], answer: "Sling", sourceRef: "1 Samuel 17:49-50" },
+  { era: "david", prompt: "Who said, \"The battle is Yahweh's\"?", options: ["David", "Saul", "Goliath", "Jonathan"], answer: "David", sourceRef: "1 Samuel 17:47" }
 ];
 
 
@@ -1970,15 +1980,19 @@ const mediumQuizBank = [
   { era: "patriarchs", prompt: "What did God compare Abram's descendants to when He made His promise?", options: ["Stars", "Trees", "Rivers", "Mountains"], answer: "Stars", sourceRef: "Genesis 15:5" },
   { era: "patriarchs", prompt: "What did Jacob see in his dream reaching toward heaven?", options: ["A ladder", "A chariot", "A throne", "A rainbow"], answer: "A ladder", sourceRef: "Genesis 28:12" },
   { era: "patriarchs", prompt: "What did Joseph store during the years of plenty in Egypt?", options: ["Grain", "Gold", "Oil", "Livestock"], answer: "Grain", sourceRef: "Genesis 41:48-49" },
+  { era: "patriarchs", prompt: "What does Yahweh Yireh mean?", options: ["Yahweh will provide", "Yahweh is peace", "Yahweh our Banner", "God Almighty"], answer: "Yahweh will provide", sourceRef: "Genesis 22:14" },
+  { era: "patriarchs", prompt: "What does El Shaddai mean in Genesis 17:1?", options: ["God Almighty", "God who sees me", "Yahweh will provide", "Yahweh of Armies"], answer: "God Almighty", sourceRef: "Genesis 17:1" },
   { era: "exodus", prompt: "What did Moses' staff become before Pharaoh as a sign?", options: ["A serpent", "A branch", "A torch", "A plow"], answer: "A serpent", sourceRef: "Exodus 7:10" },
   { era: "exodus", prompt: "What was placed on the doorposts and lintel at Passover?", options: ["Lamb's blood", "Oil", "Water", "Ashes"], answer: "Lamb's blood", sourceRef: "Exodus 12:7" },
   { era: "exodus", prompt: "What led Israel by night after leaving Egypt?", options: ["Pillar of fire", "Morning star", "Trumpet blast", "Cloud of smoke"], answer: "Pillar of fire", sourceRef: "Exodus 13:21" },
+  { era: "exodus", prompt: "Which divine name did God give Moses as His memorial to all generations?", options: ["Yahweh", "El Roi", "Yahweh Nissi", "Yahweh Shalom"], answer: "Yahweh", sourceRef: "Exodus 3:15" },
   { era: "sinai", prompt: "What covered Mount Sinai when the Lord descended on it?", options: ["Smoke", "Snow", "Rain", "Locusts"], answer: "Smoke", sourceRef: "Exodus 19:18" },
   { era: "sinai", prompt: "Which day is commanded as holy in the Ten Commandments?", options: ["Sabbath day", "First day", "New moon", "Passover day"], answer: "Sabbath day", sourceRef: "Exodus 20:8-11" },
   { era: "sinai", prompt: "What did Moses do with the covenant blood in Exodus 24?", options: ["Sprinkled it on the people", "Poured it into the sea", "Burned it on the altar", "Stored it in jars"], answer: "Sprinkled it on the people", sourceRef: "Exodus 24:8" },
   { era: "wilderness", prompt: "What came out of the rock when Moses struck it at Horeb?", options: ["Water", "Oil", "Honey", "Fire"], answer: "Water", sourceRef: "Exodus 17:6" },
   { era: "wilderness", prompt: "What large fruit cluster did the spies bring back from Canaan?", options: ["Grapes", "Figs", "Dates", "Olives"], answer: "Grapes", sourceRef: "Numbers 13:23" },
   { era: "wilderness", prompt: "With what are you to love Yahweh your God according to Deuteronomy 6:5?", options: ["All your heart", "All your silver", "Only your words", "Only your sacrifices"], answer: "All your heart", sourceRef: "Deuteronomy 6:5" },
+  { era: "wilderness", prompt: "What does Yahweh Nissi mean in Exodus 17:15?", options: ["Yahweh our Banner", "Yahweh is peace", "Yahweh will provide", "God Almighty"], answer: "Yahweh our Banner", sourceRef: "Exodus 17:15" },
   { era: "conquest", prompt: "Who hid the Israelite spies in Jericho?", options: ["Rahab", "Deborah", "Naomi", "Hannah"], answer: "Rahab", sourceRef: "Joshua 2:4" },
   { era: "conquest", prompt: "What happened to the Jordan waters when the priests stepped in?", options: ["They stood up in a heap", "They turned to blood", "They dried after seven days", "They flooded the camp"], answer: "They stood up in a heap", sourceRef: "Joshua 3:13-16" },
   { era: "conquest", prompt: "What sign was Rahab told to tie in her window?", options: ["Scarlet cord", "Golden ribbon", "White cloth", "Blue thread"], answer: "Scarlet cord", sourceRef: "Joshua 2:18" },
@@ -1986,8 +2000,10 @@ const mediumQuizBank = [
   { era: "judges", prompt: "What did Jael drive through Sisera while he slept?", options: ["Tent peg", "Spear", "Arrow", "Stone"], answer: "Tent peg", sourceRef: "Judges 4:21" },
   { era: "judges", prompt: "What happened to Samson after his hair was cut?", options: ["His strength left him", "He became king", "He escaped immediately", "He defeated more enemies"], answer: "His strength left him", sourceRef: "Judges 16:19-20" },
   { era: "judges", prompt: "What town did Naomi and Ruth come to at the beginning of barley harvest?", options: ["Bethlehem", "Jericho", "Hebron", "Shiloh"], answer: "Bethlehem", sourceRef: "Ruth 1:22" },
+  { era: "judges", prompt: "What does Yahweh Shalom mean in Judges 6:24?", options: ["Yahweh is peace", "Yahweh our Banner", "Yahweh will provide", "God Almighty"], answer: "Yahweh is peace", sourceRef: "Judges 6:24" },
   { era: "samuel", prompt: "Who taught Samuel how to answer when the Lord called him?", options: ["Eli", "Saul", "David", "Jonathan"], answer: "Eli", sourceRef: "1 Samuel 3:8-9" },
   { era: "samuel", prompt: "What did Eli think Hannah was when he first saw her praying?", options: ["Drunk", "Singing", "Prophesying", "Sleeping"], answer: "Drunk", sourceRef: "1 Samuel 1:13-14" },
+  { era: "samuel", prompt: "What does the title Yahweh of Armies mean?", options: ["The Lord of armies", "The God who sees me", "Yahweh is peace", "Yahweh will provide"], answer: "The Lord of armies", sourceRef: "1 Samuel 1:3" },
   { era: "saul", prompt: "From which tribe was Saul?", options: ["Benjamin", "Judah", "Levi", "Ephraim"], answer: "Benjamin", sourceRef: "1 Samuel 9:21" },
   { era: "saul", prompt: "What did Saul do when the Spirit of God came on him after anointing?", options: ["He prophesied", "He built an altar", "He fled to Egypt", "He wrote a psalm"], answer: "He prophesied", sourceRef: "1 Samuel 10:10-11" },
   { era: "saul", prompt: "What did Israel ask Samuel to appoint over them?", options: ["A king", "A new priest", "A judge from Judah", "A temple builder"], answer: "A king", sourceRef: "1 Samuel 8:5" },
@@ -2004,6 +2020,8 @@ const advancedQuizBank = [
   { era: "patriarchs", prompt: "How old was Abram when God appeared and established circumcision as covenant sign?", options: ["99", "75", "86", "120"], answer: "99", sourceRef: "Genesis 17:1,11" },
   { era: "genesis", prompt: "How many clean animals of each kind did Noah take onto the ark?", options: ["Seven pairs", "One pair", "Two pairs", "Seven total"], answer: "Seven pairs", sourceRef: "Genesis 7:2" },
   { era: "patriarchs", prompt: "What did Joseph name his firstborn son, saying God made him forget his trouble?", options: ["Manasseh", "Ephraim", "Benjamin", "Reuben"], answer: "Manasseh", sourceRef: "Genesis 41:51" },
+  { era: "patriarchs", prompt: "Which Hebrew name for God is linked to Hagar's words, \"You are a God who sees\"?", options: ["El Roi", "El Shaddai", "Yahweh Yireh", "Yahweh Nissi"], answer: "El Roi", sourceRef: "Genesis 16:13" },
+  { era: "patriarchs", prompt: "Which Hebrew name did Abraham use in Genesis 22:14 after God provided the ram?", options: ["Yahweh Yireh", "Yahweh Shalom", "El Roi", "Yahweh of Armies"], answer: "Yahweh Yireh", sourceRef: "Genesis 22:14" },
   { era: "patriarchs", prompt: "After wrestling with the man, what new name did Jacob receive?", options: ["Israel", "Jeshurun", "Edom", "Zion"], answer: "Israel", sourceRef: "Genesis 32:28" },
   { era: "patriarchs", prompt: "What statement shows Joseph's theology about his suffering in Egypt?", options: ["You intended to harm me, but God intended it for good", "I escaped by my own strength", "My brothers were right to fear", "Egypt saved us without God"], answer: "You intended to harm me, but God intended it for good", sourceRef: "Genesis 50:20" },
   { era: "exodus", prompt: "What was the first plague sent on Egypt?", options: ["Water turned to blood", "Frogs", "Gnats", "Hail"], answer: "Water turned to blood", sourceRef: "Exodus 7:20" },
@@ -2014,6 +2032,7 @@ const advancedQuizBank = [
   { era: "sinai", prompt: "What was under the God of Israel's feet in the mountain vision?", options: ["A paved work of sapphire stone", "A sea of brass", "A cedar platform", "A bed of gold"], answer: "A paved work of sapphire stone", sourceRef: "Exodus 24:10" },
   { era: "wilderness", prompt: "What stood over the tabernacle by day during Israel's wilderness journey?", options: ["A cloud", "A rainbow", "A pillar of stone", "A curtain of fire"], answer: "A cloud", sourceRef: "Numbers 9:15-16" },
   { era: "wilderness", prompt: "According to Deuteronomy 8:3, man doesn't live by bread alone, but by what?", options: ["Everything that proceeds out of Yahweh's mouth", "Only by manna", "Only by water", "Only by sacrifice"], answer: "Everything that proceeds out of Yahweh's mouth", sourceRef: "Deuteronomy 8:3" },
+  { era: "wilderness", prompt: "Which Hebrew name appears on Moses' altar in Exodus 17:15?", options: ["Yahweh Nissi", "Yahweh Shalom", "El Roi", "Yahweh Yireh"], answer: "Yahweh Nissi", sourceRef: "Exodus 17:15" },
   { era: "conquest", prompt: "How many priests carried trumpets before the ark around Jericho?", options: ["7", "12", "3", "40"], answer: "7", sourceRef: "Joshua 6:4" },
   { era: "conquest", prompt: "What did Joshua command the people before crossing Jordan?", options: ["Consecrate yourselves", "Build your homes", "Count your flocks", "Return to Egypt"], answer: "Consecrate yourselves", sourceRef: "Joshua 3:5" },
   { era: "conquest", prompt: "What memorial was set up after crossing the Jordan?", options: ["Twelve stones", "Bronze altar", "Golden lampstand", "Royal throne"], answer: "Twelve stones", sourceRef: "Joshua 4:20" },
@@ -2021,12 +2040,16 @@ const advancedQuizBank = [
   { era: "judges", prompt: "In Judges' cycle, what usually happened after Israel cried out?", options: ["The Lord raised a deliverer", "They were exiled to Babylon", "The temple was rebuilt", "A prophet became king"], answer: "The Lord raised a deliverer", sourceRef: "Judges 2:18" },
   { era: "judges", prompt: "What phrase summarizes the spiritual condition in the days of Judges?", options: ["Everyone did what was right in his own eyes", "All Israel followed David", "The law was forgotten forever", "No sacrifices were offered"], answer: "Everyone did what was right in his own eyes", sourceRef: "Judges 21:25" },
   { era: "judges", prompt: "Under whose wings did Boaz say Ruth came to take refuge?", options: ["Yahweh's", "Boaz's", "Naomi's", "Bethlehem's"], answer: "Yahweh's", sourceRef: "Ruth 2:12" },
+  { era: "judges", prompt: "Which Hebrew name appears on Gideon's altar in Judges 6:24?", options: ["Yahweh Shalom", "Yahweh Nissi", "El Roi", "Yahweh Yireh"], answer: "Yahweh Shalom", sourceRef: "Judges 6:24" },
   { era: "samuel", prompt: "What did Samuel say when the Lord stood and called him again after Eli instructed him?", options: ["Speak, for your servant hears", "Here I am, send me", "I am not worthy", "Please choose another"], answer: "Speak, for your servant hears", sourceRef: "1 Samuel 3:10" },
   { era: "samuel", prompt: "What did Hannah vow regarding her son if God gave her one?", options: ["He would be given to the Lord all his life", "He would serve as king", "He would inherit Eli's house", "He would never leave home"], answer: "He would be given to the Lord all his life", sourceRef: "1 Samuel 1:11" },
+  { era: "samuel", prompt: "Who said, \"For this child I prayed, and Yahweh has given me my petition\"?", options: ["Hannah", "Eli", "Samuel", "Naomi"], answer: "Hannah", sourceRef: "1 Samuel 1:27" },
+  { era: "samuel", prompt: "Which title of God appears in 1 Samuel 1:3 and 1:11?", options: ["Yahweh of Armies", "Yahweh Nissi", "El Roi", "Yahweh Yireh"], answer: "Yahweh of Armies", sourceRef: "1 Samuel 1:3" },
   { era: "saul", prompt: "What reason did Saul give for sparing the best Amalekite animals?", options: ["To sacrifice them to the Lord", "To feed his army", "To repay the Kenites", "To sell in Gilgal"], answer: "To sacrifice them to the Lord", sourceRef: "1 Samuel 15:15" },
   { era: "saul", prompt: "What principle did Samuel declare to Saul over ritual?", options: ["To obey is better than sacrifice", "Sacrifice covers all disobedience", "Kings decide their own law", "Victory proves obedience"], answer: "To obey is better than sacrifice", sourceRef: "1 Samuel 15:22" },
   { era: "david", prompt: "For how many days did Goliath challenge Israel?", options: ["40 days", "7 days", "12 days", "70 days"], answer: "40 days", sourceRef: "1 Samuel 17:16" },
   { era: "david", prompt: "What did David say the battle belongs to?", options: ["The Lord", "Israel's army", "Saul's crown", "The strongest warrior"], answer: "The Lord", sourceRef: "1 Samuel 17:47" },
+  { era: "david", prompt: "Who said, \"You come to me with a sword, with a spear, and with a javelin; but I come to you in Yahweh of Armies' name\"?", options: ["David", "Saul", "Goliath", "Samuel"], answer: "David", sourceRef: "1 Samuel 17:45" },
   { era: "david", prompt: "From where did David take the stones before facing Goliath?", options: ["The stream bed", "Saul's armory", "Bethlehem fields", "Priest's altar"], answer: "The stream bed", sourceRef: "1 Samuel 17:40" }
 ];
 
