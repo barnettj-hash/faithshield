@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-13-final-v4";
+const CONTENT_VERSION = "2026-03-14-final-v5";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -2258,6 +2258,12 @@ const mediumQuizBank = [
   { era: "genesis", prompt: "Who named the livestock, birds, and animals God brought to him?", options: ["Adam", "Noah", "Cain", "Seth"], answer: "Adam", sourceRef: "Genesis 2:19-20" },
   { era: "genesis", prompt: "What part of Adam did God use to make the woman?", options: ["One of his ribs", "His hand", "Dust", "His foot"], answer: "One of his ribs", sourceRef: "Genesis 2:21-22" },
   { era: "genesis", prompt: "Which tree, besides the tree of life, was in the middle of the garden?", options: ["The tree of the knowledge of good and evil", "The cedar of Lebanon", "The tamarisk", "The olive tree"], answer: "The tree of the knowledge of good and evil", sourceRef: "Genesis 2:9" },
+  { era: "genesis", prompt: "What did God say after creating the light?", options: ["It was good", "It was complete", "It was hidden", "It was distant"], answer: "It was good", sourceRef: "Genesis 1:4" },
+  { era: "genesis", prompt: "What did God place in the expanse of the sky on day four?", options: ["Lights for signs and seasons", "A rainbow only", "Manna", "Cherubim"], answer: "Lights for signs and seasons", sourceRef: "Genesis 1:14" },
+  { era: "genesis", prompt: "What work did God give the man in the garden?", options: ["To work it and keep it", "To name cities", "To build an ark", "To collect manna"], answer: "To work it and keep it", sourceRef: "Genesis 2:15" },
+  { era: "genesis", prompt: "What command did God give about the tree of the knowledge of good and evil?", options: ["You shall not eat of it", "You must water it", "You must guard it with fire", "You may harvest it first"], answer: "You shall not eat of it", sourceRef: "Genesis 2:17" },
+  { era: "genesis", prompt: "What was not good before God made the woman?", options: ["That the man was alone", "That the land was dry", "That birds were flying", "That rivers flowed"], answer: "That the man was alone", sourceRef: "Genesis 2:18" },
+  { era: "genesis", prompt: "What did God do on the seventh day?", options: ["Rested and made it holy", "Made animals", "Created light", "Sent rain"], answer: "Rested and made it holy", sourceRef: "Genesis 2:2-3" },
   { era: "genesis", prompt: "What opened after Adam and Eve ate?", options: ["Their eyes", "The ark door", "The heavens", "The sea"], answer: "Their eyes", sourceRef: "Genesis 3:7" },
   { era: "genesis", prompt: "What did Adam name his wife after the fall?", options: ["Eve", "Naomi", "Sarah", "Hagar"], answer: "Eve", sourceRef: "Genesis 3:20" },
   { era: "genesis", prompt: "What bird returned to Noah with a freshly plucked olive leaf?", options: ["Dove", "Raven", "Eagle", "Sparrow"], answer: "Dove", sourceRef: "Genesis 8:11" },
@@ -2494,8 +2500,18 @@ const orderBank = [
 
 
 const mediumFactBank = [
+  { era: "genesis", parts: ["In", "the", "beginning", "God", "created", "the", "heavens", "and", "the", "earth"], sourceRef: "Genesis 1:1" },
+  { era: "genesis", parts: ["God", "called", "the", "dry", "land", "Earth"], sourceRef: "Genesis 1:10" },
+  { era: "genesis", parts: ["God", "created", "man", "in", "his", "own", "image"], sourceRef: "Genesis 1:27" },
+  { era: "genesis", parts: ["God", "planted", "a", "garden", "eastward", "in", "Eden"], sourceRef: "Genesis 2:8" },
+  { era: "genesis", parts: ["Yahweh", "God", "commanded", "the", "man"], sourceRef: "Genesis 2:16" },
+  { era: "genesis", parts: ["The", "man", "gave", "names", "to", "all", "livestock"], sourceRef: "Genesis 2:20" },
+  { era: "genesis", parts: ["They", "were", "both", "naked", "and", "not", "ashamed"], sourceRef: "Genesis 2:25" },
   { era: "genesis", parts: ["God", "formed", "man", "from", "dust"], sourceRef: "Genesis 2:7" },
+  { era: "genesis", parts: ["The", "woman", "saw", "that", "the", "tree", "was", "good", "for", "food"], sourceRef: "Genesis 3:6" },
+  { era: "genesis", parts: ["Their", "eyes", "were", "opened"], sourceRef: "Genesis 3:7" },
   { era: "genesis", parts: ["The", "serpent", "deceived", "me"], sourceRef: "Genesis 3:13" },
+  { era: "genesis", parts: ["Adam", "called", "his", "wife", "Eve"], sourceRef: "Genesis 3:20" },
   { era: "genesis", parts: ["Noah", "found", "favor", "in", "Yahweh's", "eyes"], sourceRef: "Genesis 6:8" },
   { era: "genesis", parts: ["God", "shut", "Noah", "in", "the", "ark"], sourceRef: "Genesis 7:16" },
   { era: "genesis", parts: ["Come", "let's", "make", "bricks"], sourceRef: "Genesis 11:3" },
@@ -2537,8 +2553,12 @@ const advancedFactBank = [
 ];
 
 const factBank = [
+  { era: "genesis", parts: ["In", "the", "beginning", "God", "created"], sourceRef: "Genesis 1:1" },
+  { era: "genesis", parts: ["God", "called", "the", "light", "Day"], sourceRef: "Genesis 1:5" },
   { era: "genesis", parts: ["It", "was", "very", "good"], sourceRef: "Genesis 1:31" },
   { era: "genesis", parts: ["God", "rested", "on", "the", "seventh", "day"], sourceRef: "Genesis 2:2-3" },
+  { era: "genesis", parts: ["Yahweh", "God", "planted", "a", "garden"], sourceRef: "Genesis 2:8" },
+  { era: "genesis", parts: ["The", "man", "was", "alone"], sourceRef: "Genesis 2:18" },
   { era: "genesis", parts: ["Yahweh", "God", "made", "garments", "of", "skin"], sourceRef: "Genesis 3:21" },
   { era: "genesis", parts: ["Only", "Noah", "was", "left", "alive"], sourceRef: "Genesis 7:23" },
   { era: "genesis", parts: ["The", "whole", "earth", "was", "of", "one", "language"], sourceRef: "Genesis 11:1" },
@@ -2907,6 +2927,46 @@ const audioEngine = {
   musicCompressor: null,
   bootMusicHoldUntil: 0
 };
+const AUDIO_UNLOCK_EVENTS = ["pointerdown", "touchstart", "mousedown", "click", "keydown"];
+let audioUnlockArmed = false;
+
+function clearAudioNodes() {
+  audioEngine.ctx = null;
+  audioEngine.master = null;
+  audioEngine.musicGain = null;
+  audioEngine.sfxGain = null;
+  audioEngine.musicFilter = null;
+  audioEngine.musicCompressor = null;
+}
+
+function disarmAudioUnlock() {
+  if (!audioUnlockArmed) return;
+  AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
+    document.removeEventListener(eventName, handleAudioUnlock, true);
+  });
+  audioUnlockArmed = false;
+}
+
+function armAudioUnlock() {
+  if (audioUnlockArmed) return;
+  AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
+    document.addEventListener(eventName, handleAudioUnlock, true);
+  });
+  audioUnlockArmed = true;
+}
+
+function handleAudioUnlock() {
+  ensureAudio();
+  const ctx = audioEngine.ctx;
+  if (!ctx) return;
+  if (ctx.state === "suspended") {
+    ctx.resume().catch(() => {});
+  }
+  if (ctx.state === "running") {
+    disarmAudioUnlock();
+  }
+  updateAudioState();
+}
 
 function buildBadgeCatalog() {
   const list = [];
@@ -2988,8 +3048,15 @@ function buildBadgeCatalog() {
 }
 
 function ensureAudio() {
-  if (audioEngine.ctx) return;
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const AudioCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtor) return;
+
+  if (audioEngine.ctx && audioEngine.ctx.state !== "closed") return;
+  if (audioEngine.ctx && audioEngine.ctx.state === "closed") {
+    clearAudioNodes();
+  }
+
+  const ctx = new AudioCtor();
   const master = ctx.createGain();
   const musicGain = ctx.createGain();
   const sfxGain = ctx.createGain();
@@ -3099,7 +3166,8 @@ function playDrumPulse(kind, when, intensity = 1) {
 function playSfx(name) {
   if (!state.audio.sfx) return;
   ensureAudio();
-  if (audioEngine.ctx.state === "suspended") audioEngine.ctx.resume();
+  if (!audioEngine.ctx) return;
+  if (audioEngine.ctx.state === "suspended") audioEngine.ctx.resume().catch(() => {});
 
   if (name === "click") {
     // 80s coin-op button press: punchy blip + quick arcade tail.
@@ -3131,8 +3199,9 @@ function playSfx(name) {
 
 function startMusicLoop() {
   ensureAudio();
+  if (!audioEngine.ctx) return;
   if (!state.audio.music || state.activeStage || audioEngine.timer || audioEngine.finaleTimer || audioEngine.creditsTimer || isFinalOpen() || isCreditsOpen()) return;
-  if (audioEngine.ctx.state === "suspended") audioEngine.ctx.resume();
+  if (audioEngine.ctx.state === "suspended") audioEngine.ctx.resume().catch(() => {});
 
   const ctx = audioEngine.ctx;
   const style = resolvedMusicStyle();
@@ -4359,7 +4428,6 @@ function usedQuestionSourcesForDifficulty(difficultyId = state.difficulty) {
     if (!activity || !QUESTION_ACTIVITY_TYPES.has(activity.type)) return;
     const sourceRef = normalizeSourceRef(activity.historySourceRef || activity.sourceRef);
     if (!sourceRef) return;
-    if (!sourceRef.includes("::") && !sourceRef.includes("||")) return;
     used.add(sourceRef);
   });
 
@@ -4863,6 +4931,12 @@ function historyRecordFor(key) {
   return { uses: [] };
 }
 
+function recentUseSet(record, size = 3) {
+  const windowSize = Math.max(0, Number(size) || 0);
+  if (!windowSize || !record || !Array.isArray(record.uses) || !record.uses.length) return new Set();
+  return new Set(record.uses.slice(-windowSize));
+}
+
 function pickWithoutRepeat(pool, era, bucket, options = {}) {
   const matcher = typeof options.filter === "function"
     ? options.filter
@@ -4895,6 +4969,7 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   const historyKey = "global:" + bucket + ":" + historyScope;
   const record = historyRecordFor(historyKey);
   const counts = {};
+  const recentSet = recentUseSet(record, options.recentWindow || 3);
 
   record.uses.forEach((signature) => {
     counts[signature] = (counts[signature] || 0) + 1;
@@ -4906,7 +4981,9 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   let reuseCount = 0;
 
   if (unseen.length) {
-    choice = unseen[Math.floor(Math.random() * unseen.length)];
+    const unseenNotRecent = unseen.filter((item) => !recentSet.has(itemSignature(item)));
+    const unseenPool = unseenNotRecent.length ? unseenNotRecent : unseen;
+    choice = unseenPool[Math.floor(Math.random() * unseenPool.length)];
   } else {
     // When a scoped pool is fully used, remix the least-used authored item instead of hard-stopping.
     let min = Infinity;
@@ -4924,7 +5001,9 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
     });
 
     if (!leastUsed.length) return { item: null, reuseCount: 0 };
-    choice = leastUsed[Math.floor(Math.random() * leastUsed.length)];
+    const leastUsedNotRecent = leastUsed.filter((item) => !recentSet.has(itemSignature(item)));
+    const remixPool = leastUsedNotRecent.length ? leastUsedNotRecent : leastUsed;
+    choice = remixPool[Math.floor(Math.random() * remixPool.length)];
     reuseCount = counts[itemSignature(choice)] || 0;
   }
 
@@ -4959,6 +5038,7 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
   const historyKey = "global:" + bucket + ":" + historyScope;
   const record = historyRecordFor(historyKey);
   const counts = {};
+  const recentSet = recentUseSet(record, options.recentWindow || Math.max(2, count));
 
   record.uses.forEach((signature) => {
     counts[signature] = (counts[signature] || 0) + 1;
@@ -4975,12 +5055,17 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
     const ranked = shuffled(items).sort((a, b) => {
       const aCount = counts[itemSignature(a)] || 0;
       const bCount = counts[itemSignature(b)] || 0;
-      return aCount - bCount;
+      if (aCount !== bCount) return aCount - bCount;
+      const aRecent = recentSet.has(itemSignature(a)) ? 1 : 0;
+      const bRecent = recentSet.has(itemSignature(b)) ? 1 : 0;
+      return aRecent - bRecent;
     });
+    const preferredRanked = ranked.filter((item) => !recentSet.has(itemSignature(item)));
+    const sourceRanked = preferredRanked.length >= count ? preferredRanked : ranked;
     const picked = [];
     const seen = new Set();
 
-    ranked.forEach((item) => {
+    sourceRanked.forEach((item) => {
       const signature = itemSignature(item);
       if (seen.has(signature)) return;
       seen.add(signature);
@@ -5525,8 +5610,14 @@ function resumeLastSession() {
 
 function primeAudioAuto() {
   ensureAudio();
-  if (audioEngine.ctx && audioEngine.ctx.state === "suspended") {
+  if (!audioEngine.ctx) return;
+  if (audioEngine.ctx.state === "suspended") {
     audioEngine.ctx.resume().catch(() => {});
+  }
+  if (audioEngine.ctx.state === "running") {
+    disarmAudioUnlock();
+  } else {
+    armAudioUnlock();
   }
   updateAudioState();
 }
@@ -9235,14 +9326,7 @@ function restoreLives() {
   playSfx("success");
 }
 
-document.addEventListener(
-  "pointerdown",
-  () => {
-    ensureAudio();
-    updateAudioState();
-  },
-  { once: true }
-);
+armAudioUnlock();
 
 document.addEventListener(
   "click",
