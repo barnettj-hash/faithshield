@@ -4908,8 +4908,7 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   if (unseen.length) {
     choice = unseen[Math.floor(Math.random() * unseen.length)];
   } else {
-    if (!allowReuse) return { item: null, reuseCount: 0 };
-
+    // When a scoped pool is fully used, remix the least-used authored item instead of hard-stopping.
     let min = Infinity;
     let leastUsed = [];
 
@@ -4924,6 +4923,7 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
       }
     });
 
+    if (!leastUsed.length) return { item: null, reuseCount: 0 };
     choice = leastUsed[Math.floor(Math.random() * leastUsed.length)];
     reuseCount = counts[itemSignature(choice)] || 0;
   }
@@ -4991,7 +4991,8 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
   };
 
   let candidates = buildSelection(filterBySource(source));
-  if (candidates.length < count && allowReuse) {
+  if (candidates.length < count) {
+    // Remix mode fallback: prefer least-used authored combos when no-repeat pool is spent.
     candidates = buildSelection(source);
   }
 
