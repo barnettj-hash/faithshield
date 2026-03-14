@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-13-names-of-god-v2";
+const CONTENT_VERSION = "2026-03-13-pool-depth-v2";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -2201,6 +2201,13 @@ const quizBank = [
   { era: "genesis", prompt: "What sign did God place in the sky after the flood?", options: ["Rainbow", "Comet", "Trumpet", "Lightning"], answer: "Rainbow", sourceRef: "Genesis 9:12-13" },
   { era: "genesis", prompt: "Who built the ark?", options: ["Moses", "Noah", "Abraham", "Cain"], answer: "Noah", sourceRef: "Genesis 6:13-14" },
   { era: "genesis", prompt: "Who said, \"Am I my brother's keeper?\"", options: ["Cain", "Abel", "Adam", "Noah"], answer: "Cain", sourceRef: "Genesis 4:9" },
+  { era: "genesis", prompt: "Before Babel, what did the whole earth have?", options: ["One language", "Many kingdoms", "Different laws", "Many alphabets"], answer: "One language", sourceRef: "Genesis 11:1" },
+  { era: "genesis", prompt: "Where did the people settle before building the tower?", options: ["Shinar", "Eden", "Ararat", "Hebron"], answer: "Shinar", sourceRef: "Genesis 11:2" },
+  { era: "genesis", prompt: "What did the builders use for mortar at Babel?", options: ["Asphalt", "Clay", "Sand", "Straw"], answer: "Asphalt", sourceRef: "Genesis 11:3" },
+  { era: "genesis", prompt: "Why did the people say, let's make a name?", options: ["So they would not be scattered", "So they could cross the sea", "So they could find manna", "So they could defeat Egypt"], answer: "So they would not be scattered", sourceRef: "Genesis 11:4" },
+  { era: "genesis", prompt: "What happened after Yahweh confused the language at Babel?", options: ["People were scattered", "The flood began", "Noah built an ark", "Abram left Haran"], answer: "People were scattered", sourceRef: "Genesis 11:8" },
+  { era: "genesis", prompt: "Why was the city called Babel?", options: ["Yahweh confused the language", "It was where Noah lived", "A king named Babel ruled there", "It had twelve gates"], answer: "Yahweh confused the language", sourceRef: "Genesis 11:9" },
+  { era: "genesis", prompt: "Who was called a mighty hunter before Yahweh?", options: ["Nimrod", "Shem", "Japheth", "Noah"], answer: "Nimrod", sourceRef: "Genesis 10:8-9" },
   { era: "patriarchs", prompt: "What new name did God give Abram?", options: ["Abraham", "Absalom", "Aaron", "Amos"], answer: "Abraham", sourceRef: "Genesis 17:5" },
   { era: "patriarchs", prompt: "Which son of Jacob was sold into Egypt?", options: ["Joseph", "Benjamin", "Levi", "Judah"], answer: "Joseph", sourceRef: "Genesis 37:28" },
   { era: "patriarchs", prompt: "Jacob was also called what?", options: ["Israel", "Ishmael", "Edom", "Judah"], answer: "Israel", sourceRef: "Genesis 32:28" },
@@ -2249,6 +2256,10 @@ const mediumQuizBank = [
   { era: "genesis", prompt: "What opened after Adam and Eve ate?", options: ["Their eyes", "The ark door", "The heavens", "The sea"], answer: "Their eyes", sourceRef: "Genesis 3:7" },
   { era: "genesis", prompt: "What did Adam name his wife after the fall?", options: ["Eve", "Naomi", "Sarah", "Hagar"], answer: "Eve", sourceRef: "Genesis 3:20" },
   { era: "genesis", prompt: "What bird returned to Noah with a freshly plucked olive leaf?", options: ["Dove", "Raven", "Eagle", "Sparrow"], answer: "Dove", sourceRef: "Genesis 8:11" },
+  { era: "genesis", prompt: "What did the people say before making bricks in Genesis 11:3?", options: ["Come, let's make bricks", "Come, let's cross the sea", "Come, let's seek Joseph", "Come, let's build an ark"], answer: "Come, let's make bricks", sourceRef: "Genesis 11:3" },
+  { era: "genesis", prompt: "In Genesis 11:6, how did Yahweh describe the people?", options: ["One people", "A divided nation", "A wandering tribe", "A royal house"], answer: "One people", sourceRef: "Genesis 11:6" },
+  { era: "genesis", prompt: "What did Yahweh say He would confuse in Genesis 11:7?", options: ["Their language", "Their harvest", "Their houses", "Their livestock"], answer: "Their language", sourceRef: "Genesis 11:7" },
+  { era: "genesis", prompt: "What was the beginning of Nimrod's kingdom?", options: ["Babel", "Bethel", "Beersheba", "Hebron"], answer: "Babel", sourceRef: "Genesis 10:10" },
   { era: "patriarchs", prompt: "What did God compare Abram's descendants to when He made His promise?", options: ["Stars", "Trees", "Rivers", "Mountains"], answer: "Stars", sourceRef: "Genesis 15:5" },
   { era: "patriarchs", prompt: "What did Jacob see in his dream reaching toward heaven?", options: ["A ladder", "A chariot", "A throne", "A rainbow"], answer: "A ladder", sourceRef: "Genesis 28:12" },
   { era: "patriarchs", prompt: "What did Joseph store during the years of plenty in Egypt?", options: ["Grain", "Gold", "Oil", "Livestock"], answer: "Grain", sourceRef: "Genesis 41:48-49" },
@@ -2293,6 +2304,9 @@ const advancedQuizBank = [
   { era: "genesis", prompt: "What name did Adam give the woman because she was taken out of man?", options: ["Woman", "Eve", "Sarah", "Helper"], answer: "Woman", sourceRef: "Genesis 2:23" },
   { era: "genesis", prompt: "What would the ground grow for Adam after the fall?", options: ["Thorns and thistles", "Cedars and olives", "Wheat and barley", "Lilies and myrrh"], answer: "Thorns and thistles", sourceRef: "Genesis 3:17-18" },
   { era: "genesis", prompt: "What did God place east of the garden to guard the way to the tree of life?", options: ["Cherubim", "Prophets", "Twelve stones", "Angelic singers"], answer: "Cherubim", sourceRef: "Genesis 3:24" },
+  { era: "genesis", prompt: "According to Genesis 11:5, what did Yahweh come down to see?", options: ["The city and tower", "The ark and altar", "The garden and river", "The stars and moon"], answer: "The city and tower", sourceRef: "Genesis 11:5" },
+  { era: "genesis", prompt: "According to Genesis 11:6, what did Yahweh say would not be withheld from them?", options: ["Anything they intended to do", "Rain from heaven", "The promised land", "The covenant sign"], answer: "Anything they intended to do", sourceRef: "Genesis 11:6" },
+  { era: "genesis", prompt: "What did Yahweh do so the people would not understand each other's speech?", options: ["Confused their language", "Sent a flood", "Closed the city gate", "Changed the stars"], answer: "Confused their language", sourceRef: "Genesis 11:7" },
   { era: "patriarchs", prompt: "How old was Abram when God appeared and established circumcision as covenant sign?", options: ["99", "75", "86", "120"], answer: "99", sourceRef: "Genesis 17:1,11" },
   { era: "genesis", prompt: "How many clean animals of each kind did Noah take onto the ark?", options: ["Seven pairs", "One pair", "Two pairs", "Seven total"], answer: "Seven pairs", sourceRef: "Genesis 7:2" },
   { era: "patriarchs", prompt: "What did Joseph name his firstborn son, saying God made him forget his trouble?", options: ["Manasseh", "Ephraim", "Benjamin", "Reuben"], answer: "Manasseh", sourceRef: "Genesis 41:51" },
@@ -2337,6 +2351,8 @@ const spellingBank = [
   { era: "genesis", prompt: "Spell the name Adam gave the woman in Genesis 3.", answer: "Eve", sourceRef: "Genesis 3:20" },
   { era: "genesis", prompt: "Spell the name of the man who built the ark.", answer: "Noah", sourceRef: "Genesis 6:13-14" },
   { era: "genesis", prompt: "Spell the covenant sign God set in the sky after the flood.", answer: "Rainbow", sourceRef: "Genesis 9:13" },
+  { era: "genesis", prompt: "Spell the city where God confused human language.", answer: "Babel", sourceRef: "Genesis 11:9" },
+  { era: "genesis", prompt: "Spell the mighty hunter named in Genesis 10.", answer: "Nimrod", sourceRef: "Genesis 10:8-9" },
   { era: "patriarchs", prompt: "Spell the name God gave Abram.", answer: "Abraham", sourceRef: "Genesis 17:5" },
   { era: "patriarchs", prompt: "Spell the name Jacob was given after he wrestled.", answer: "Israel", sourceRef: "Genesis 32:28" },
   { era: "exodus", prompt: "Spell the feast that marked Israel's deliverance from Egypt.", answer: "Passover", sourceRef: "Exodus 12:13-14" },
@@ -2356,6 +2372,8 @@ const mediumSpellingBank = [
   { era: "genesis", prompt: "Spell what Adam was formed from.", answer: "Dust", sourceRef: "Genesis 2:7" },
   { era: "genesis", prompt: "Spell what the ground would grow after the fall.", answer: "Thistles", sourceRef: "Genesis 3:18" },
   { era: "genesis", prompt: "Spell the mountain region where Noah's ark rested.", answer: "Ararat", sourceRef: "Genesis 8:4" },
+  { era: "genesis", prompt: "Spell the plain where the people settled before Babel.", answer: "Shinar", sourceRef: "Genesis 11:2" },
+  { era: "genesis", prompt: "Spell the material used for mortar at Babel.", answer: "Asphalt", sourceRef: "Genesis 11:3" },
   { era: "patriarchs", prompt: "Spell the place name Jacob gave after his dream of the ladder.", answer: "Bethel", sourceRef: "Genesis 28:19" },
   { era: "patriarchs", prompt: "Spell Joseph's second son.", answer: "Ephraim", sourceRef: "Genesis 41:52" },
   { era: "exodus", prompt: "Spell the title of Egypt's ruler whom Moses confronted.", answer: "Pharaoh", sourceRef: "Exodus 5:1" },
@@ -2374,6 +2392,8 @@ const advancedSpellingBank = [
   { era: "genesis", prompt: "Type the realm the greater light was made to rule in Genesis 1.", answer: "day", sourceRef: "Genesis 1:16-18" },
   { era: "genesis", prompt: "Type the word that describes the man and woman in Genesis 2:25.", answer: "naked", sourceRef: "Genesis 2:25" },
   { era: "genesis", prompt: "Type the beings God placed east of Eden.", answer: "cherubim", sourceRef: "Genesis 3:24" },
+  { era: "genesis", prompt: "Type the first word describing the earth's speech in Genesis 11:1.", answer: "one", sourceRef: "Genesis 11:1" },
+  { era: "genesis", prompt: "Type the city name given in Genesis 11:9.", answer: "babel", sourceRef: "Genesis 11:9" },
   { era: "patriarchs", prompt: "Spell Joseph's firstborn son's name.", answer: "Manasseh", sourceRef: "Genesis 41:51" },
   { era: "exodus", prompt: "Spell the word describing bread made without yeast.", answer: "unleavened", sourceRef: "Exodus 12:34" },
   { era: "sinai", prompt: "Type the covenant response phrase summarizing Exodus 24:7: 'we will ___'.", answer: "obey", sourceRef: "Exodus 24:7" },
@@ -2393,6 +2413,8 @@ const mediumOrderBank = [
   { era: "genesis", items: ["Man formed from dust", "Garden planted in Eden", "Woman brought to Adam"], sourceRef: "Genesis 2:7; 2:8; 2:22" },
   { era: "genesis", items: ["Serpent speaks", "Eyes opened", "Adam and Eve hide"], sourceRef: "Genesis 3:1-7" },
   { era: "genesis", items: ["Noah obeys God", "Flood begins", "Rainbow covenant"], sourceRef: "Genesis 6:22; 7:17; 9:13" },
+  { era: "genesis", items: ["Nimrod rises", "Kingdom begins at Babel", "Families spread by nations"], sourceRef: "Genesis 10:8-10; 10:32" },
+  { era: "genesis", items: ["One language", "Come, let's build", "Languages confused"], sourceRef: "Genesis 11:1; 11:4; 11:7" },
   { era: "patriarchs", items: ["Jacob dreams at Bethel", "Jacob serves Laban", "Jacob returns to Canaan"], sourceRef: "Genesis 28:12; 29:20; 31:3" },
   { era: "patriarchs", items: ["Joseph sold", "Joseph imprisoned", "Joseph raised in Egypt"], sourceRef: "Genesis 37:28; 39:20; 41:41" },
   { era: "exodus", items: ["Burning bush call", "Passover night", "Sea crossing"], sourceRef: "Exodus 3:4; 12:29-31; 14:21-22" },
@@ -2413,6 +2435,8 @@ const advancedOrderBank = [
   { era: "genesis", items: ["Adam placed in the garden", "Animals brought to Adam", "Woman built from the rib"], sourceRef: "Genesis 2:15; 2:19-20; 2:21-22" },
   { era: "genesis", items: ["Adam and Eve hide", "God declares the curse", "Cherubim guard Eden"], sourceRef: "Genesis 3:8; 3:14-19; 3:24" },
   { era: "genesis", items: ["Noah enters ark", "Waters prevail", "Ark rests on Ararat"], sourceRef: "Genesis 7:7; 7:24; 8:4" },
+  { era: "genesis", items: ["People settle in Shinar", "Yahweh comes down", "People scattered abroad"], sourceRef: "Genesis 11:2; 11:5; 11:8" },
+  { era: "genesis", items: ["Nimrod's kingdom begins", "City called Babel", "Nations spread abroad"], sourceRef: "Genesis 10:10; 11:9; 10:32" },
   { era: "patriarchs", items: ["Abram leaves Haran", "Covenant promise under the stars", "Isaac offered"], sourceRef: "Genesis 12:4; 15:5-6; 22:10-12" },
   { era: "patriarchs", items: ["Joseph dreams", "Joseph interprets Pharaoh", "Joseph reveals himself"], sourceRef: "Genesis 37:5; 41:25-32; 45:4" },
   { era: "exodus", items: ["Staff becomes serpent", "Hail plague falls", "Firstborn struck in Egypt"], sourceRef: "Exodus 7:10; 9:23-24; 12:29" },
@@ -2434,6 +2458,8 @@ const orderBank = [
   { era: "genesis", items: ["Light", "People created", "God rested"], sourceRef: "Genesis 1:3; 1:27; 2:2-3" },
   { era: "genesis", items: ["Serpent tempts", "Sin enters", "God sends them out"], sourceRef: "Genesis 3:1-6; 3:23" },
   { era: "genesis", items: ["Flood ends", "Nations spread", "Tower of Babel"], sourceRef: "Genesis 8:13; 10:32; 11:1-9" },
+  { era: "genesis", items: ["Whole earth has one language", "People settle in Shinar", "Yahweh scatters them"], sourceRef: "Genesis 11:1; 11:2; 11:8" },
+  { era: "genesis", items: ["Bricks made", "Tower planned", "Babel named"], sourceRef: "Genesis 11:3; 11:4; 11:9" },
   { era: "patriarchs", items: ["Abram called", "Isaac born", "Jacob renamed Israel"], sourceRef: "Genesis 12:1; 21:1-3; 32:28" },
   { era: "patriarchs", items: ["Joseph sold", "Pharaoh's dreams interpreted", "Family saved from famine"], sourceRef: "Genesis 37:28; 41:25-32; 45:7" },
   { era: "exodus", items: ["Plagues", "Passover", "Sea crossing"], sourceRef: "Exodus 7:14-12:30; 12:11-14; 14:21-22" },
@@ -2454,6 +2480,8 @@ const mediumFactBank = [
   { era: "genesis", parts: ["The", "serpent", "deceived", "me"], sourceRef: "Genesis 3:13" },
   { era: "genesis", parts: ["Noah", "found", "favor", "in", "Yahweh's", "eyes"], sourceRef: "Genesis 6:8" },
   { era: "genesis", parts: ["God", "shut", "Noah", "in", "the", "ark"], sourceRef: "Genesis 7:16" },
+  { era: "genesis", parts: ["Come", "let's", "make", "bricks"], sourceRef: "Genesis 11:3" },
+  { era: "genesis", parts: ["Come", "let's", "build", "a", "tower"], sourceRef: "Genesis 11:4" },
   { era: "patriarchs", parts: ["He", "believed", "in", "Yahweh"], sourceRef: "Genesis 15:6" },
   { era: "patriarchs", parts: ["God", "meant", "it", "for", "good"], sourceRef: "Genesis 50:20" },
   { era: "exodus", parts: ["Yahweh", "led", "Israel", "by", "cloud", "and", "fire"], sourceRef: "Exodus 13:21" },
@@ -2474,6 +2502,8 @@ const advancedFactBank = [
   { era: "genesis", parts: ["God", "blessed", "the", "seventh", "day"], sourceRef: "Genesis 2:3" },
   { era: "genesis", parts: ["He", "will", "bruise", "your", "head"], sourceRef: "Genesis 3:15" },
   { era: "genesis", parts: ["God", "remembered", "Noah"], sourceRef: "Genesis 8:1" },
+  { era: "genesis", parts: ["Yahweh", "came", "down", "to", "see", "the", "city"], sourceRef: "Genesis 11:5" },
+  { era: "genesis", parts: ["There", "Yahweh", "confused", "the", "language", "of", "all", "the", "earth"], sourceRef: "Genesis 11:9" },
   { era: "patriarchs", parts: ["Look", "now", "toward", "the", "sky", "and", "count", "the", "stars"], sourceRef: "Genesis 15:5" },
   { era: "patriarchs", parts: ["God", "sent", "me", "before", "you", "to", "preserve", "life"], sourceRef: "Genesis 45:5" },
   { era: "exodus", parts: ["When", "I", "see", "the", "blood", "I", "will", "pass", "over", "you"], sourceRef: "Exodus 12:13" },
@@ -2493,6 +2523,8 @@ const factBank = [
   { era: "genesis", parts: ["God", "rested", "on", "the", "seventh", "day"], sourceRef: "Genesis 2:2-3" },
   { era: "genesis", parts: ["Yahweh", "God", "made", "garments", "of", "skin"], sourceRef: "Genesis 3:21" },
   { era: "genesis", parts: ["Only", "Noah", "was", "left", "alive"], sourceRef: "Genesis 7:23" },
+  { era: "genesis", parts: ["The", "whole", "earth", "was", "of", "one", "language"], sourceRef: "Genesis 11:1" },
+  { era: "genesis", parts: ["Yahweh", "scattered", "them", "abroad", "from", "there"], sourceRef: "Genesis 11:8" },
   { era: "patriarchs", parts: ["All", "families", "of", "the", "earth", "will", "be", "blessed"], sourceRef: "Genesis 12:3" },
   { era: "patriarchs", parts: ["God", "intended", "it", "for", "good"], sourceRef: "Genesis 50:20" },
   { era: "exodus", parts: ["Yahweh", "saved", "Israel", "that", "day"], sourceRef: "Exodus 14:30" },
@@ -4211,6 +4243,13 @@ function itemSignature(item) {
   return JSON.stringify(item);
 }
 
+function historyKeyForItem(item, bucket = "item") {
+  const source = normalizeSourceRef(item && item.sourceRef);
+  const signature = itemSignature(item);
+  if (source) return `${source}::${bucket}::${signature}`;
+  return `${bucket}::${signature}`;
+}
+
 
 function normalizeSourceRef(sourceRef) {
   return String(sourceRef || "").trim();
@@ -4301,7 +4340,9 @@ function usedQuestionSourcesForDifficulty(difficultyId = state.difficulty) {
   Object.values(state.stageActivities || {}).forEach((activity) => {
     if (!activity || !QUESTION_ACTIVITY_TYPES.has(activity.type)) return;
     const sourceRef = normalizeSourceRef(activity.historySourceRef || activity.sourceRef);
-    if (sourceRef) used.add(sourceRef);
+    if (!sourceRef) return;
+    if (!sourceRef.includes("::") && !sourceRef.includes("||")) return;
+    used.add(sourceRef);
   });
 
   return used;
@@ -4478,7 +4519,7 @@ function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
     options: buildQuizOptions(question, theme.era, difficulty.quizOptions, scopedQuizPool.length ? scopedQuizPool : quizPool),
     answer: question.answer,
     sourceRef: question.sourceRef,
-    historySourceRef: question.historySourceRef || question.sourceRef
+    historySourceRef: question.historySourceRef || historyKeyForItem(question, "quiz")
   };
 }
 
@@ -4503,7 +4544,7 @@ function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources) {
     clue: pick.item.clue || "",
     answer: pick.item.answer,
     sourceRef: pick.item.sourceRef,
-    historySourceRef: pick.item.historySourceRef || pick.item.sourceRef
+    historySourceRef: pick.item.historySourceRef || historyKeyForItem(pick.item, "spelling")
   };
 }
 
@@ -4527,7 +4568,7 @@ function buildFallbackOrderActivity(meta, theme, difficulty, usedSources) {
     maxMoves: difficulty.orderMaxMoves,
     nearShuffle: difficulty.orderNearShuffle,
     sourceRef: pick.item.sourceRef,
-    historySourceRef: pick.item.historySourceRef || pick.item.sourceRef
+    historySourceRef: pick.item.historySourceRef || historyKeyForItem(pick.item, "order")
   };
 }
 
@@ -4552,7 +4593,7 @@ function buildFallbackFactActivity(meta, theme, difficulty, usedSources) {
     prefilled: factMode.prefilled,
     parts: factMode.pool,
     sourceRef: pick.item.sourceRef,
-    historySourceRef: pick.item.historySourceRef || pick.item.sourceRef
+    historySourceRef: pick.item.historySourceRef || historyKeyForItem(pick.item, "fact")
   };
 }
 
@@ -4581,7 +4622,7 @@ function buildTrueFalseActivity(meta, theme, usedSources) {
     claim: answerIsTrue ? question.answer : falseAnswer,
     answer: answerIsTrue,
     sourceRef: question.sourceRef,
-    historySourceRef: question.historySourceRef || question.sourceRef
+    historySourceRef: question.historySourceRef || historyKeyForItem(question, "truefalse")
   };
 }
 
@@ -4612,7 +4653,7 @@ function buildMatchingActivity(meta, theme, usedSources) {
     pairs,
     options: shuffled(pairs.map((pair) => pair.right)),
     sourceRef: pick.items.map((item) => item.sourceRef).join("; "),
-    historySourceRef: pick.items.map((item) => item.historySourceRef || item.sourceRef).join("; ")
+    historySourceRef: pick.items.map((item) => item.historySourceRef || historyKeyForItem(item, "matching")).join(" || ")
   };
 }
 
@@ -4637,7 +4678,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       prompt: stagePrompt(meta, q.prompt, pick.reuseCount),
       options: buildQuizOptions(q, theme.era, difficulty.quizOptions, scopedQuizSource.length ? scopedQuizSource : quizSource),
       answer: q.answer,
-      sourceRef: q.sourceRef
+      sourceRef: q.sourceRef,
+      historySourceRef: q.historySourceRef || historyKeyForItem(q, "quiz")
     };
   }
 
@@ -4659,7 +4701,7 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       clue: s.clue || "",
       answer: s.answer,
       sourceRef: s.sourceRef,
-      historySourceRef: s.historySourceRef || s.sourceRef
+      historySourceRef: s.historySourceRef || historyKeyForItem(s, "spelling")
     };
   }
 
@@ -4680,7 +4722,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       items: order.items,
       maxMoves: difficulty.orderMaxMoves,
       nearShuffle: difficulty.orderNearShuffle,
-      sourceRef: order.sourceRef
+      sourceRef: order.sourceRef,
+      historySourceRef: order.historySourceRef || historyKeyForItem(order, "order")
     };
   }
 
@@ -4702,7 +4745,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       answerParts: factMode.answerParts,
       prefilled: factMode.prefilled,
       parts: factMode.pool,
-      sourceRef: fact.sourceRef
+      sourceRef: fact.sourceRef,
+      historySourceRef: fact.historySourceRef || historyKeyForItem(fact, "fact")
     };
   }
 
@@ -5063,7 +5107,7 @@ function derivedOrderSetsForTheme(theme) {
       era: theme.era,
       items: labels.slice(index, index + 3),
       sourceRef: themeItems.slice(index, index + 3).map((item) => item.sourceRef).join("; "),
-      historySourceRef: themeItems.slice(index, index + 3).map((item) => item.sourceRef).join("; ")
+      historySourceRef: themeItems.slice(index, index + 3).map((item) => `${item.sourceRef}::derived-order`).join(" || ")
     });
   }
 
