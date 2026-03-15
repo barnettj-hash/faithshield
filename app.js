@@ -4201,9 +4201,8 @@ function flushQueuedHubReturn() {
 }
 
 function completeStage(meta, mode, options = {}) {
-  if (options.returnTarget !== false) {
-    queueHubReturn(options.returnTarget || "storyPathHeading");
-  }
+  // Keep player at current scroll position unless an explicit return target is requested.
+  if (options.returnTarget) queueHubReturn(options.returnTarget);
   markDone(meta.id, mode);
   queueStageAutoClose(meta.id, options.delayMs || 850);
 }
