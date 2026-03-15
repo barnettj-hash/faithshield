@@ -1622,9 +1622,9 @@ body.has-overlay {
 
 .badge-unlock-toast {
   position: fixed;
-  top: max(0.65rem, env(safe-area-inset-top));
+  top: 50%;
   left: 50%;
-  transform: translate(-50%, -12px);
+  transform: translate(-50%, -52%);
   width: min(560px, calc(100vw - 1rem));
   z-index: 72;
   pointer-events: none;
@@ -1634,7 +1634,7 @@ body.has-overlay {
 
 .badge-unlock-toast.show {
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: translate(-50%, -50%);
 }
 
 .badge-unlock-card {

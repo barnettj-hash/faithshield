@@ -885,10 +885,11 @@ const CANONICAL_BOOK_ORDER = {
   Genesis: 1,
   Exodus: 2,
   Numbers: 3,
-  Joshua: 4,
-  Judges: 5,
-  Ruth: 6,
-  "1 Samuel": 7
+  Deuteronomy: 4,
+  Joshua: 5,
+  Judges: 6,
+  Ruth: 7,
+  "1 Samuel": 8
 };
 const BOOK_OPTIONS = Object.keys(CANONICAL_BOOK_ORDER);
 const SORTED_CANONICAL_BOOKS = Object.keys(CANONICAL_BOOK_ORDER).sort((a, b) => b.length - a.length);
@@ -2237,6 +2238,7 @@ const quizBank = [
   { era: "conquest", prompt: "What river did Israel cross into Canaan?", options: ["Jordan", "Nile", "Euphrates", "Jabbok"], answer: "Jordan", sourceRef: "Joshua 3:14-17" },
   { era: "conquest", prompt: "Which people are named among the nations God would drive out before Israel?", options: ["Hivites", "Philistines", "Persians", "Romans"], answer: "Hivites", sourceRef: "Joshua 3:10" },
   { era: "conquest", prompt: "Which people made peace with Israel by pretending to come from far away?", options: ["Gibeonites", "Moabites", "Philistines", "Midianites"], answer: "Gibeonites", sourceRef: "Joshua 9:3-15" },
+  { era: "conquest", prompt: "At the end of Joshua, where were all Israel's tribes gathered for covenant renewal?", options: ["Shechem", "Jericho", "Gilgal", "Shiloh"], answer: "Shechem", sourceRef: "Joshua 24:1" },
   { era: "judges", prompt: "Which judge led with 300 men?", options: ["Gideon", "Samson", "Jephthah", "Deborah"], answer: "Gideon", sourceRef: "Judges 7:7" },
   { era: "judges", prompt: "Who was a prophetess and judge?", options: ["Deborah", "Ruth", "Hannah", "Jael"], answer: "Deborah", sourceRef: "Judges 4:4" },
   { era: "judges", prompt: "Ruth stayed loyal to whom?", options: ["Naomi", "Miriam", "Abigail", "Orpah"], answer: "Naomi", sourceRef: "Ruth 1:16-17" },
@@ -2273,9 +2275,9 @@ const mediumQuizBank = [
   { era: "genesis", prompt: "Who shut Noah in when he entered the ark?", options: ["Yahweh", "Shem", "Ham", "An angel"], answer: "Yahweh", sourceRef: "Genesis 7:16" },
   { era: "genesis", prompt: "How long did rain fall on the earth during the flood?", options: ["Forty days and forty nights", "Seven days", "One hundred days", "Twelve days"], answer: "Forty days and forty nights", sourceRef: "Genesis 7:12" },
   { era: "genesis", prompt: "What did Noah build after leaving the ark?", options: ["An altar", "A city wall", "A tower", "A vineyard fence"], answer: "An altar", sourceRef: "Genesis 8:20" },
-  { era: "genesis", prompt: "What sign did God set in the cloud for His covenant?", options: ["Rainbow", "Thunder", "Flaming sword", "Morning star"], answer: "Rainbow", sourceRef: "Genesis 9:13" },
+  { era: "genesis", prompt: "Where did God set His covenant sign after the flood?", options: ["In the cloud", "In the ark", "On the altar", "In the river"], answer: "In the cloud", sourceRef: "Genesis 9:13" },
   { era: "genesis", prompt: "What bird returned to Noah with a freshly plucked olive leaf?", options: ["Dove", "Raven", "Eagle", "Sparrow"], answer: "Dove", sourceRef: "Genesis 8:11" },
-  { era: "genesis", prompt: "Who said, \"Cursed be Canaan; a servant of servants will he be to his brothers\"?", options: ["Noah", "Ham", "Shem", "Japheth"], answer: "Noah", sourceRef: "Genesis 9:25" },
+  { era: "genesis", prompt: "Who was cursed to be a servant of servants in Noah's words?", options: ["Canaan", "Ham", "Shem", "Japheth"], answer: "Canaan", sourceRef: "Genesis 9:25" },
   { era: "genesis", prompt: "What did the people say before making bricks in Genesis 11:3?", options: ["Come, let's make bricks", "Come, let's cross the sea", "Come, let's seek Joseph", "Come, let's build an ark"], answer: "Come, let's make bricks", sourceRef: "Genesis 11:3" },
   { era: "genesis", prompt: "In Genesis 11:6, how did Yahweh describe the people?", options: ["One people", "A divided nation", "A wandering tribe", "A royal house"], answer: "One people", sourceRef: "Genesis 11:6" },
   { era: "genesis", prompt: "What did Yahweh say He would confuse in Genesis 11:7?", options: ["Their language", "Their harvest", "Their houses", "Their livestock"], answer: "Their language", sourceRef: "Genesis 11:7" },
@@ -2321,6 +2323,26 @@ const mediumQuizBank = [
   { era: "david", prompt: "Who anointed David as a young man?", options: ["Samuel", "Saul", "Nathan", "Eli"], answer: "Samuel", sourceRef: "1 Samuel 16:13" },
   { era: "david", prompt: "What instrument did David play to soothe Saul?", options: ["Harp", "Trumpet", "Flute", "Drum"], answer: "Harp", sourceRef: "1 Samuel 16:23" },
   { era: "david", prompt: "Who said, \"What have I now done? Is there not a cause?\"", options: ["David", "Eliab", "Saul", "Goliath"], answer: "David", sourceRef: "1 Samuel 17:29" },
+  { era: "genesis", prompt: "Who walked with God, and he was not, for God took him?", options: ["Enoch", "Noah", "Seth", "Lamech"], answer: "Enoch", sourceRef: "Genesis 5:24" },
+  { era: "genesis", prompt: "What bird did Noah send out first from the ark?", options: ["Raven", "Dove", "Eagle", "Sparrow"], answer: "Raven", sourceRef: "Genesis 8:7" },
+  { era: "patriarchs", prompt: "What does the Hebrew name El Roi mean?", options: ["God who sees me", "God Most High", "Yahweh is peace", "Yahweh our Banner"], answer: "God who sees me", sourceRef: "Genesis 16:13" },
+  { era: "patriarchs", prompt: "Who named the place Bethel after the dream of the ladder?", options: ["Jacob", "Abraham", "Isaac", "Joseph"], answer: "Jacob", sourceRef: "Genesis 28:19" },
+  { era: "exodus", prompt: "Who was appointed to speak for Moses before Pharaoh?", options: ["Aaron", "Joshua", "Hur", "Caleb"], answer: "Aaron", sourceRef: "Exodus 4:14-16" },
+  { era: "exodus", prompt: "What did the Israelites ask from Egypt before leaving?", options: ["Silver, gold, and clothing", "Chariots and horses", "Stone tablets", "Land deeds"], answer: "Silver, gold, and clothing", sourceRef: "Exodus 12:35-36" },
+  { era: "sinai", prompt: "Who went up with Moses partway on the mountain in Exodus 24:1?", options: ["Aaron, Nadab, Abihu, and seventy elders", "Only Joshua", "Only Aaron", "All Israel"], answer: "Aaron, Nadab, Abihu, and seventy elders", sourceRef: "Exodus 24:1" },
+  { era: "sinai", prompt: "What did the people do when they saw thunder, lightning, and the mountain smoke?", options: ["They stood far off", "They ran up the mountain", "They camped at the summit", "They built a city"], answer: "They stood far off", sourceRef: "Exodus 20:18" },
+  { era: "wilderness", prompt: "What two names were given to the place where Israel tested Yahweh for water?", options: ["Massah and Meribah", "Shittim and Gilgal", "Bethel and Ai", "Horeb and Carmel"], answer: "Massah and Meribah", sourceRef: "Exodus 17:7" },
+  { era: "wilderness", prompt: "Which two spies urged Israel to trust Yahweh and enter the land?", options: ["Joshua and Caleb", "Aaron and Hur", "Moses and Aaron", "Nadab and Abihu"], answer: "Joshua and Caleb", sourceRef: "Numbers 14:6-9" },
+  { era: "conquest", prompt: "What did the priests carry when they stepped into the Jordan?", options: ["The ark of the covenant", "The bronze serpent", "Stone tablets", "The lampstand"], answer: "The ark of the covenant", sourceRef: "Joshua 3:14-15" },
+  { era: "conquest", prompt: "How many stones were set up as a memorial after crossing Jordan?", options: ["12", "7", "40", "3"], answer: "12", sourceRef: "Joshua 4:20" },
+  { era: "judges", prompt: "Who was the first judge raised to deliver Israel after they cried out?", options: ["Othniel", "Gideon", "Samson", "Deborah"], answer: "Othniel", sourceRef: "Judges 3:9-11" },
+  { era: "judges", prompt: "Who told Ruth to stay close to his young women in the fields?", options: ["Boaz", "Naomi", "Samuel", "Eli"], answer: "Boaz", sourceRef: "Ruth 2:8" },
+  { era: "samuel", prompt: "Who ministered before Yahweh as a boy, wearing a linen ephod?", options: ["Samuel", "Saul", "Jonathan", "Abner"], answer: "Samuel", sourceRef: "1 Samuel 2:18" },
+  { era: "samuel", prompt: "What did the name Ichabod mean when the ark was captured?", options: ["The glory has departed", "Yahweh is peace", "God remembers", "The king is chosen"], answer: "The glory has departed", sourceRef: "1 Samuel 4:21-22" },
+  { era: "saul", prompt: "What did Samuel pour on Saul's head when he anointed him?", options: ["Oil", "Water", "Wine", "Blood"], answer: "Oil", sourceRef: "1 Samuel 10:1" },
+  { era: "saul", prompt: "Where did Saul hide when he was chosen as king?", options: ["Among the baggage", "In the temple", "In a cave", "Behind the altar"], answer: "Among the baggage", sourceRef: "1 Samuel 10:22" },
+  { era: "david", prompt: "Who sent David with food to his brothers at the battle line?", options: ["Jesse", "Saul", "Samuel", "Jonathan"], answer: "Jesse", sourceRef: "1 Samuel 17:17-18" },
+  { era: "david", prompt: "What did David refuse before facing Goliath?", options: ["Saul's armor", "Five stones", "His sling", "A shepherd's staff"], answer: "Saul's armor", sourceRef: "1 Samuel 17:38-39" },
 ];
 
 const advancedQuizBank = [
@@ -2366,7 +2388,7 @@ const advancedQuizBank = [
   { era: "samuel", prompt: "What did Hannah vow regarding her son if God gave her one?", options: ["He would be given to the Lord all his life", "He would serve as king", "He would inherit Eli's house", "He would never leave home"], answer: "He would be given to the Lord all his life", sourceRef: "1 Samuel 1:11" },
   { era: "samuel", prompt: "Who said, \"For this child I prayed, and Yahweh has given me my petition\"?", options: ["Hannah", "Eli", "Samuel", "Naomi"], answer: "Hannah", sourceRef: "1 Samuel 1:27" },
   { era: "samuel", prompt: "Which title of God appears in 1 Samuel 1:3 and 1:11?", options: ["Yahweh of Armies", "Yahweh Nissi", "El Roi", "Yahweh Yireh"], answer: "Yahweh of Armies", sourceRef: "1 Samuel 1:3" },
-  { era: "samuel", prompt: "Who said, \"It is Yahweh. Let him do what seems good to him\"?", options: ["Eli", "Samuel", "Hannah", "Saul"], answer: "Eli", sourceRef: "1 Samuel 3:18" },
+  { era: "samuel", prompt: "How did Eli respond after hearing Samuel's report?", options: ["It is Yahweh. Let him do what seems good to him", "I will ask Pharaoh for help", "Bring me the ark now", "I will appoint Saul today"], answer: "It is Yahweh. Let him do what seems good to him", sourceRef: "1 Samuel 3:18" },
   { era: "saul", prompt: "What reason did Saul give for sparing the best Amalekite animals?", options: ["To sacrifice them to the Lord", "To feed his army", "To repay the Kenites", "To sell in Gilgal"], answer: "To sacrifice them to the Lord", sourceRef: "1 Samuel 15:15" },
   { era: "saul", prompt: "What principle did Samuel declare to Saul over ritual?", options: ["To obey is better than sacrifice", "Sacrifice covers all disobedience", "Kings decide their own law", "Victory proves obedience"], answer: "To obey is better than sacrifice", sourceRef: "1 Samuel 15:22" },
   { era: "saul", prompt: "Who said, \"I have sinned; for I have transgressed Yahweh's commandment\"?", options: ["Saul", "Samuel", "David", "Jonathan"], answer: "Saul", sourceRef: "1 Samuel 15:24" },
@@ -2374,7 +2396,29 @@ const advancedQuizBank = [
   { era: "david", prompt: "What did David say the battle belongs to?", options: ["The Lord", "Israel's army", "Saul's crown", "The strongest warrior"], answer: "The Lord", sourceRef: "1 Samuel 17:47" },
   { era: "david", prompt: "Who said, \"You come to me with a sword, with a spear, and with a javelin; but I come to you in Yahweh of Armies' name\"?", options: ["David", "Saul", "Goliath", "Samuel"], answer: "David", sourceRef: "1 Samuel 17:45" },
   { era: "david", prompt: "Who said, \"Am I a dog, that you come to me with staffs?\"?", options: ["Goliath", "David", "Saul", "Abner"], answer: "Goliath", sourceRef: "1 Samuel 17:43" },
-  { era: "david", prompt: "From where did David take the stones before facing Goliath?", options: ["The stream bed", "Saul's armory", "Bethlehem fields", "Priest's altar"], answer: "The stream bed", sourceRef: "1 Samuel 17:40" }
+  { era: "david", prompt: "From where did David take the stones before facing Goliath?", options: ["The stream bed", "Saul's armory", "Bethlehem fields", "Priest's altar"], answer: "The stream bed", sourceRef: "1 Samuel 17:40" },
+  { era: "genesis", prompt: "Who said, \"My punishment is greater than I can bear\"?", options: ["Cain", "Adam", "Noah", "Lamech"], answer: "Cain", sourceRef: "Genesis 4:13" },
+  { era: "genesis", prompt: "After the dove returned with an olive leaf, what did Noah know?", options: ["The waters had gone down", "The flood had just begun", "The ark had sunk", "The tower was finished"], answer: "The waters had gone down", sourceRef: "Genesis 8:11" },
+  { era: "genesis", prompt: "At Babel, what danger were the people trying to avoid according to Genesis 11:4?", options: ["Being scattered over the earth", "Losing their crops", "Being defeated by Egypt", "Forgetting their language"], answer: "Being scattered over the earth", sourceRef: "Genesis 11:4" },
+  { era: "patriarchs", prompt: "Who said, \"I am not worthy of the least of all the loving kindnesses\"?", options: ["Jacob", "Abraham", "Isaac", "Joseph"], answer: "Jacob", sourceRef: "Genesis 32:10" },
+  { era: "patriarchs", prompt: "In Genesis 49:10, from which tribe did Jacob say the scepter would not depart?", options: ["Judah", "Levi", "Benjamin", "Ephraim"], answer: "Judah", sourceRef: "Genesis 49:10" },
+  { era: "patriarchs", prompt: "Which Hebrew title means \"God who sees me\" in Hagar's confession?", options: ["El Roi", "El Elyon", "Yahweh Nissi", "Yahweh Shalom"], answer: "El Roi", sourceRef: "Genesis 16:13" },
+  { era: "exodus", prompt: "When Moses put his hand into his cloak at Horeb, how did it come out the first time?", options: ["Leprous like snow", "Covered in blood", "Burning with fire", "Shining like bronze"], answer: "Leprous like snow", sourceRef: "Exodus 4:6" },
+  { era: "exodus", prompt: "Who said, \"Yahweh will fight for you, and you shall be still\"?", options: ["Moses", "Aaron", "Joshua", "Pharaoh"], answer: "Moses", sourceRef: "Exodus 14:14" },
+  { era: "sinai", prompt: "What is the first commandment spoken in Exodus 20?", options: ["You shall have no other gods before me", "Honor your father and mother", "You shall not steal", "Remember the sabbath day"], answer: "You shall have no other gods before me", sourceRef: "Exodus 20:3" },
+  { era: "sinai", prompt: "Who read the book of the covenant in the hearing of the people?", options: ["Moses", "Aaron", "Joshua", "Nadab"], answer: "Moses", sourceRef: "Exodus 24:7" },
+  { era: "wilderness", prompt: "How long did the spies search the land before returning to Israel's camp?", options: ["40 days", "7 days", "12 days", "70 days"], answer: "40 days", sourceRef: "Numbers 13:25" },
+  { era: "wilderness", prompt: "Who made and lifted the bronze serpent so bitten Israelites could look and live?", options: ["Moses", "Aaron", "Joshua", "Caleb"], answer: "Moses", sourceRef: "Numbers 21:9" },
+  { era: "conquest", prompt: "What happened to Jericho's wall after the people shouted?", options: ["It fell down flat", "It burned slowly", "It split the river", "It rose higher"], answer: "It fell down flat", sourceRef: "Joshua 6:20" },
+  { era: "conquest", prompt: "Whose house was spared in Jericho because of the scarlet line?", options: ["Rahab's", "Achan's", "Joshua's", "Caleb's"], answer: "Rahab's", sourceRef: "Joshua 6:25" },
+  { era: "judges", prompt: "What did Samson carry to the top of the hill toward Hebron?", options: ["The gates of Gaza", "The ark of the covenant", "A stone altar", "A trumpet"], answer: "The gates of Gaza", sourceRef: "Judges 16:3" },
+  { era: "judges", prompt: "Who said, \"Your people shall be my people, and your God my God\"?", options: ["Ruth", "Naomi", "Deborah", "Hannah"], answer: "Ruth", sourceRef: "Ruth 1:16" },
+  { era: "samuel", prompt: "What does 1 Samuel 3:19 say happened to Samuel's words?", options: ["None of them fell to the ground", "All were forgotten", "Only priests heard them", "They were hidden in Shiloh"], answer: "None of them fell to the ground", sourceRef: "1 Samuel 3:19" },
+  { era: "samuel", prompt: "Who said, \"It is Yahweh. Let him do what seems good to him\"?", options: ["Eli", "Samuel", "Hannah", "Saul"], answer: "Eli", sourceRef: "1 Samuel 3:18" },
+  { era: "saul", prompt: "Whom did Saul spare alive when he struck Amalek?", options: ["Agag", "Doeg", "Abner", "Jonathan"], answer: "Agag", sourceRef: "1 Samuel 15:8-9" },
+  { era: "saul", prompt: "According to Samuel, why was Saul rejected from being king?", options: ["He rejected Yahweh's word", "He was too short", "He lost one battle", "He left Gibeah"], answer: "He rejected Yahweh's word", sourceRef: "1 Samuel 15:23" },
+  { era: "david", prompt: "Who ran quickly toward the battle line to meet the Philistine?", options: ["David", "Saul", "Jonathan", "Abner"], answer: "David", sourceRef: "1 Samuel 17:48" },
+  { era: "david", prompt: "Which name of God did David use when he faced Goliath?", options: ["Yahweh of Armies", "El Roi", "Yahweh Shalom", "El Elyon"], answer: "Yahweh of Armies", sourceRef: "1 Samuel 17:45" }
 ];
 
 const spellingBank = [
@@ -2462,7 +2506,17 @@ const mediumOrderBank = [
   { era: "judges", items: ["Ruth stays with Naomi", "Ruth gleans in Boaz's field", "Boaz redeems Ruth"], sourceRef: "Ruth 1:16; 2:3; 4:13" },
   { era: "samuel", items: ["Hannah prays", "Samuel ministers", "Samuel hears God's call"], sourceRef: "1 Samuel 1:10-11; 2:18; 3:10" },
   { era: "saul", items: ["Saul searches for donkeys", "Saul anointed", "Saul presented as king"], sourceRef: "1 Samuel 9:3; 10:1; 10:24" },
-  { era: "david", items: ["David anointed", "Goliath defeated", "David flees Saul"], sourceRef: "1 Samuel 16:13; 17:50; 19:10" }
+  { era: "david", items: ["David anointed", "Goliath defeated", "David flees Saul"], sourceRef: "1 Samuel 16:13; 17:50; 19:10" },
+  { era: "genesis", items: ["Waters gathered", "Plants sprouted", "Humanity created"], sourceRef: "Genesis 1:9-10; 1:11-12; 1:27" },
+  { era: "patriarchs", items: ["Abram called from Haran", "Covenant sign given", "Isaac offered on Moriah"], sourceRef: "Genesis 12:1-4; 17:11; 22:10-12" },
+  { era: "exodus", items: ["Moses returns to Egypt", "Passover kept", "Sea divided"], sourceRef: "Exodus 4:20; 12:28; 14:21" },
+  { era: "sinai", items: ["People prepare for the third day", "Yahweh descends on Sinai", "Book of the covenant read"], sourceRef: "Exodus 19:10-11; 19:18; 24:7" },
+  { era: "wilderness", items: ["Spies explore Canaan", "Israel rebels", "Forty-year judgment declared"], sourceRef: "Numbers 13:25; 14:1-2; 14:33-34" },
+  { era: "conquest", items: ["Ark enters Jordan", "Twelve stones taken", "Jericho marched seven days"], sourceRef: "Joshua 3:14-17; 4:8; 6:15" },
+  { era: "judges", items: ["Othniel delivers Israel", "Deborah judges Israel", "Gideon defeats Midian"], sourceRef: "Judges 3:9-11; 4:4; 7:22" },
+  { era: "samuel", items: ["Samuel serves in Shiloh", "Yahweh calls Samuel", "Samuel reports the vision to Eli"], sourceRef: "1 Samuel 2:18; 3:10; 3:18" },
+  { era: "saul", items: ["Saul anointed", "Saul chosen by lot", "Saul spares Agag"], sourceRef: "1 Samuel 10:1; 10:20-24; 15:8-9" },
+  { era: "david", items: ["David sent by Jesse", "David rejects Saul's armor", "David strikes Goliath"], sourceRef: "1 Samuel 17:17; 17:39; 17:49" }
 ];
 
 
@@ -2489,7 +2543,17 @@ const advancedOrderBank = [
   { era: "judges", items: ["Ruth meets Boaz", "Ruth asks for redemption", "Obed is born"], sourceRef: "Ruth 2:8; 3:9; 4:13,17" },
   { era: "samuel", items: ["Hannah prays", "Samuel hears Yahweh", "Ebenezer raised"], sourceRef: "1 Samuel 1:10-11; 3:10; 7:12" },
   { era: "saul", items: ["Saul prophesies", "Saul disobeys at Gilgal", "Kingdom torn from Saul announced"], sourceRef: "1 Samuel 10:10-11; 13:13; 15:28" },
-  { era: "david", items: ["David anointed", "David defeats Goliath", "Jonathan and David covenant"], sourceRef: "1 Samuel 16:13; 17:50; 18:3" }
+  { era: "david", items: ["David anointed", "David defeats Goliath", "Jonathan and David covenant"], sourceRef: "1 Samuel 16:13; 17:50; 18:3" },
+  { era: "genesis", items: ["Humanity multiplies", "Violence fills earth", "Noah finds favor"], sourceRef: "Genesis 6:1; 6:11; 6:8" },
+  { era: "patriarchs", items: ["Abram believes Yahweh", "Covenant sign established", "Ram provided instead of Isaac"], sourceRef: "Genesis 15:6; 17:11; 22:13-14" },
+  { era: "exodus", items: ["Moses sent to Pharaoh", "Passover blood applied", "Egyptians urge Israel to leave"], sourceRef: "Exodus 3:10; 12:7; 12:33" },
+  { era: "sinai", items: ["Moses writes Yahweh's words", "Blood sprinkled on the people", "Moses enters the cloud"], sourceRef: "Exodus 24:4; 24:8; 24:18" },
+  { era: "wilderness", items: ["Spies return after forty days", "Caleb urges trust", "Generation sentenced to wander"], sourceRef: "Numbers 13:25; 14:6-9; 14:33-34" },
+  { era: "conquest", items: ["Jordan waters stand in a heap", "Rahab and family spared", "Covenant renewed at Shechem"], sourceRef: "Joshua 3:16; 6:25; 24:25" },
+  { era: "judges", items: ["Angel calls Gideon", "Army reduced to three hundred", "Midian camp falls"], sourceRef: "Judges 6:12; 7:7; 7:22" },
+  { era: "samuel", items: ["Samuel says \"Speak, for your servant hears\"", "Word of Yahweh established with Samuel", "Philistines subdued in Samuel's days"], sourceRef: "1 Samuel 3:10; 3:19; 7:13" },
+  { era: "saul", items: ["Saul chosen king", "Saul spares Agag", "Samuel declares rejection"], sourceRef: "1 Samuel 10:24; 15:8-9; 15:26" },
+  { era: "david", items: ["David runs toward the battle", "Stone sinks into Goliath's forehead", "Philistine army flees"], sourceRef: "1 Samuel 17:48; 17:49; 17:51" }
 ];
 
 const orderBank = [
@@ -2515,7 +2579,17 @@ const orderBank = [
   { era: "judges", items: ["Ruth stays with Naomi", "Ruth gleans in Boaz's field", "Boaz redeems Ruth"], sourceRef: "Ruth 1:16; 2:3; 4:13" },
   { era: "samuel", items: ["Samuel called", "Ark returned", "Ebenezer raised"], sourceRef: "1 Samuel 3:8-10; 6:13; 7:12" },
   { era: "saul", items: ["Saul anointed", "Early victories", "Disobedience exposed"], sourceRef: "1 Samuel 10:1; 11:11; 15:22-23" },
-  { era: "david", items: ["David anointed", "David serves Saul", "Goliath defeated"], sourceRef: "1 Samuel 16:13,21; 17:50" }
+  { era: "david", items: ["David anointed", "David serves Saul", "Goliath defeated"], sourceRef: "1 Samuel 16:13,21; 17:50" },
+  { era: "genesis", items: ["Day and night separated", "Fish and birds created", "Humans created"], sourceRef: "Genesis 1:4-5; 1:20-21; 1:27" },
+  { era: "patriarchs", items: ["Abram called", "Covenant of stars", "Jacob named Israel"], sourceRef: "Genesis 12:1; 15:5; 32:28" },
+  { era: "exodus", items: ["Moses called at bush", "Passover night", "Sea crossed on dry ground"], sourceRef: "Exodus 3:4; 12:29-31; 14:21-22" },
+  { era: "sinai", items: ["People prepare", "God speaks commandments", "Covenant sealed"], sourceRef: "Exodus 19:10; 20:1; 24:8" },
+  { era: "wilderness", items: ["Manna given", "Spies sent", "Bronze serpent lifted"], sourceRef: "Exodus 16:15; Numbers 13:1-2; Numbers 21:9" },
+  { era: "conquest", items: ["Ark enters Jordan", "Walls of Jericho fall", "Joshua renews covenant"], sourceRef: "Joshua 3:14-17; 6:20; 24:25" },
+  { era: "judges", items: ["Othniel judges", "Deborah judges", "Gideon delivers"], sourceRef: "Judges 3:9; 4:4; 7:22" },
+  { era: "samuel", items: ["Hannah prays", "Samuel hears God's voice", "Samuel warns Israel"], sourceRef: "1 Samuel 1:10; 3:10; 7:3" },
+  { era: "saul", items: ["Saul anointed", "Saul chosen king", "Saul rejected"], sourceRef: "1 Samuel 10:1; 10:24; 15:23" },
+  { era: "david", items: ["David sent by Jesse", "David takes five stones", "David defeats Goliath"], sourceRef: "1 Samuel 17:17; 17:40; 17:50" }
 ];
 
 
@@ -2674,6 +2748,7 @@ let stageGridRenderDelayTimer = 0;
 let hasRenderedStageGridOnce = false;
 let pendingStageFocusId = null;
 let pendingHubReturnTargetId = null;
+let pendingHubReturnScrollY = null;
 let lastPersistFingerprint = "";
 const runtimePerformance = {
   reducedMotionQuery: null,
@@ -2958,6 +3033,7 @@ const AUDIO_UNLOCK_EVENTS = ["pointerdown", "touchstart", "mousedown", "click", 
 let audioUnlockArmed = false;
 let badgeUnlockToastTimer = 0;
 let badgeUnlockToastNode = null;
+let badgePraiseUtterance = null;
 
 function clearAudioNodes() {
   audioEngine.ctx = null;
@@ -3214,7 +3290,7 @@ function playSfx(name) {
     playTone(523.25, 0.1, "triangle", 0.18);
     setTimeout(() => playTone(659.25, 0.12, "triangle", 0.18), 90);
   } else if (name === "badge") {
-    // Badge fanfare: 4-second trumpet-style celebration for badge unlock moments.
+    // Badge fanfare: 5-second trumpet-style celebration for badge unlock moments.
     const note = (freq, delay, duration, leadVol = 0.12, colorVol = 0.064) => {
       setTimeout(() => {
         playTone(freq, duration, "sawtooth", leadVol);
@@ -3229,6 +3305,8 @@ function playSfx(name) {
     note(783.99, 2320, 0.38, 0.14, 0.078);
     note(880.0, 2840, 0.46, 0.145, 0.082);
     note(1046.5, 3340, 0.74, 0.155, 0.086);
+    note(1174.66, 4120, 0.5, 0.15, 0.082);
+    note(1318.51, 4620, 0.56, 0.16, 0.09);
   } else if (name === "fail") {
     playTone(185, 0.12, "square", 0.16);
     setTimeout(() => playTone(138.59, 0.12, "square", 0.14), 100);
@@ -3974,6 +4052,58 @@ function ensureBadgeUnlockToast() {
   return node;
 }
 
+function speakBadgePraise() {
+  if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return;
+  const utterance = new SpeechSynthesisUtterance("Good job!");
+  const voice = pickNarrationVoice();
+
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang || "en-US";
+  } else {
+    utterance.lang = state.language === "es" ? "es-ES" : "en-US";
+  }
+
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  utterance.rate = state.language === "es" ? 0.9 : 0.86;
+  badgePraiseUtterance = utterance;
+  const clearUtterance = () => {
+    if (badgePraiseUtterance === utterance) badgePraiseUtterance = null;
+  };
+  utterance.onend = clearUtterance;
+  utterance.onerror = clearUtterance;
+
+  const speak = () => {
+    try {
+      window.speechSynthesis.speak(utterance);
+    } catch (_) {
+      // Ignore speech playback errors.
+    }
+  };
+
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) {
+    const onVoices = () => {
+      window.speechSynthesis.removeEventListener("voiceschanged", onVoices);
+      if (badgePraiseUtterance !== utterance) return;
+      const lateVoice = pickNarrationVoice();
+      if (lateVoice) {
+        utterance.voice = lateVoice;
+        utterance.lang = lateVoice.lang || "en-US";
+      }
+      speak();
+    };
+    window.speechSynthesis.addEventListener("voiceschanged", onVoices);
+    window.setTimeout(() => {
+      if (badgePraiseUtterance === utterance) speak();
+    }, 180);
+    return;
+  }
+
+  speak();
+}
+
 function showBadgeUnlockMoment(badge) {
   if (!badge) return;
   const node = ensureBadgeUnlockToast();
@@ -3989,11 +4119,12 @@ function showBadgeUnlockMoment(badge) {
   if (sub) sub.textContent = badge.accomplishment || t("badgeUnlockedNow");
 
   node.classList.add("show");
+  speakBadgePraise();
   if (badgeUnlockToastTimer) window.clearTimeout(badgeUnlockToastTimer);
   badgeUnlockToastTimer = window.setTimeout(() => {
     node.classList.remove("show");
     badgeUnlockToastTimer = 0;
-  }, 4000);
+  }, 5000);
 }
 
 function currentShareBadge() {
@@ -4237,7 +4368,8 @@ function closeActivity() {
   activityOverlay.classList.add("hidden");
   trimPreloadedMediaCaches();
   updateOverlayLock();
-  flushQueuedHubReturn();
+  const queuedReturnHandled = flushQueuedHubReturn();
+  if (!queuedReturnHandled) restoreHubScrollPosition();
 
   updateAudioState();
 }
@@ -4256,20 +4388,43 @@ function queueHubReturn(targetId = "storyPathHeading") {
   pendingHubReturnTargetId = targetId;
 }
 
+function captureHubScrollPosition() {
+  if (!Number.isFinite(window.scrollY)) return;
+  pendingHubReturnScrollY = Math.max(0, Math.round(window.scrollY));
+}
+
+function restoreHubScrollPosition() {
+  if (!Number.isFinite(pendingHubReturnScrollY)) return;
+  const y = Math.max(0, pendingHubReturnScrollY);
+  pendingHubReturnScrollY = null;
+  const restore = () => {
+    try {
+      window.scrollTo({ top: y, left: 0, behavior: "auto" });
+    } catch (_) {
+      window.scrollTo(0, y);
+    }
+  };
+  restore();
+  window.requestAnimationFrame(restore);
+  window.setTimeout(restore, 80);
+}
+
 function flushQueuedHubReturn() {
   const targetId = pendingHubReturnTargetId;
   pendingHubReturnTargetId = null;
-  if (!targetId || !isDesktopViewport()) return;
+  if (!targetId || !isDesktopViewport()) return false;
 
   const target = document.getElementById(targetId)
     || storyPathHeading
     || gameDashboard
     || document.querySelector(".progress-wrap");
-  if (!target) return;
+  if (!target) return false;
 
   window.requestAnimationFrame(() => {
     target.scrollIntoView({ block: "start", inline: "nearest", behavior: "smooth" });
   });
+  pendingHubReturnScrollY = null;
+  return true;
 }
 
 function completeStage(meta, mode, options = {}) {
@@ -4468,12 +4623,14 @@ function parseSourceRefSegments(sourceRef) {
       remainder = clause.slice(explicitBook.length).trim();
     }
 
-    const match = remainder.match(/^(\d+):\d+(?:-(?:(\d+):)?\d+)?/);
+    const match = remainder.match(/^(\d+):(\d+)(?:-(?:(\d+):)?(\d+))?/);
     if (!book || !match) return;
 
     const startChapter = Number(match[1]);
-    const endChapter = match[2] ? Number(match[2]) : startChapter;
-    entries.push({ book, startChapter, endChapter });
+    const startVerse = Number(match[2]);
+    const endChapter = match[3] ? Number(match[3]) : startChapter;
+    const endVerse = match[4] ? Number(match[4]) : startVerse;
+    entries.push({ book, startChapter, endChapter, startVerse, endVerse });
   });
 
   return entries;
@@ -4532,14 +4689,34 @@ function themeScopeKey(theme, bucket) {
   return `${bucket}:theme:${theme.name}`;
 }
 
-function usedQuestionSourcesForDifficulty(difficultyId = state.difficulty) {
-  const used = new Set();
+function questionSourceGroup(bucket) {
+  if (!bucket) return null;
+  if (bucket === "quiz" || bucket === "truefalse" || bucket === "matching") {
+    return new Set(["quiz", "truefalse", "matching"]);
+  }
+  return new Set([bucket]);
+}
 
-  Object.values(state.stageActivities || {}).forEach((activity) => {
+function usedQuestionSourcesForDifficulty(difficultyId = state.difficulty, bucket = null, theme = null) {
+  const used = new Set();
+  const cachePrefix = `${difficultyId}:`;
+  const typeGroup = questionSourceGroup(bucket);
+  const plan = theme ? themeReferencePlan(theme) : [];
+
+  Object.entries(state.stageActivities || {}).forEach(([cacheKey, activity]) => {
+    if (!String(cacheKey || "").startsWith(cachePrefix)) return;
     if (!activity || !QUESTION_ACTIVITY_TYPES.has(activity.type)) return;
+    if (typeGroup && !typeGroup.has(activity.type)) return;
     const sourceRef = normalizeSourceRef(activity.historySourceRef || activity.sourceRef);
     if (!sourceRef) return;
-    used.add(sourceRef);
+    sourceRef
+      .split("||")
+      .map((entry) => normalizeSourceRef(entry))
+      .filter(Boolean)
+      .forEach((entry) => {
+        if (plan.length && !sourceRefMatchesPlan(entry, plan)) return;
+        used.add(entry);
+      });
   });
 
   return used;
@@ -4838,7 +5015,87 @@ function buildMatchingActivity(meta, theme, usedSources) {
   });
   if (!pick.items || pick.items.length < 2) return null;
 
-  const pairs = pick.items.map((item, index) => ({
+  const selectedItems = [];
+  const seenAnswers = new Set();
+  const seenSignatures = new Set();
+  const addedItems = [];
+
+  const tryAdd = (item, trackAdded = false) => {
+    if (!item || !item.answer) return false;
+    const answerKey = normalizeQuizAnswerKey(item.answer);
+    if (!answerKey || seenAnswers.has(answerKey)) return false;
+    const signature = itemSignature(item);
+    if (seenSignatures.has(signature)) return false;
+    seenAnswers.add(answerKey);
+    seenSignatures.add(signature);
+    selectedItems.push(item);
+    if (trackAdded) addedItems.push(item);
+    return true;
+  };
+
+  pick.items.forEach((item) => tryAdd(item, false));
+
+  if (selectedItems.length < desiredCount) {
+    const scopedUnusedBySource = (usedSources instanceof Set)
+      ? scopedPool.filter((item) => {
+        const sourceRef = normalizeSourceRef(item.sourceRef);
+        return !sourceRef || !usedSources.has(sourceRef);
+      })
+      : scopedPool;
+
+    for (const item of shuffled(scopedUnusedBySource)) {
+      if (selectedItems.length >= desiredCount) break;
+      tryAdd(item, true);
+    }
+
+    for (const item of shuffled(scopedPool)) {
+      if (selectedItems.length >= desiredCount) break;
+      tryAdd(item, true);
+    }
+  }
+
+  if (selectedItems.length < 2) return null;
+  const finalItems = selectedItems.slice(0, desiredCount);
+
+  const stabilizedItems = [];
+  const stabilizedAnswers = new Set();
+  const stabilizedSignatures = new Set();
+  const tryStabilize = (item) => {
+    if (!item || !item.answer) return false;
+    const answerKey = normalizeQuizAnswerKey(item.answer);
+    if (!answerKey || stabilizedAnswers.has(answerKey)) return false;
+    const signature = itemSignature(item);
+    if (stabilizedSignatures.has(signature)) return false;
+    stabilizedAnswers.add(answerKey);
+    stabilizedSignatures.add(signature);
+    stabilizedItems.push(item);
+    return true;
+  };
+
+  finalItems.forEach(tryStabilize);
+  if (stabilizedItems.length < desiredCount) {
+    for (const item of shuffled(scopedPool)) {
+      if (stabilizedItems.length >= desiredCount) break;
+      tryStabilize(item);
+    }
+  }
+
+  if (stabilizedItems.length < 2) return null;
+  const renderItems = stabilizedItems.slice(0, Math.min(desiredCount, stabilizedItems.length));
+
+  if (addedItems.length) {
+    const historyKey = "global:matching:" + scopeKey;
+    const record = historyRecordFor(historyKey);
+    addedItems.forEach((item) => {
+      record.uses.push(itemSignature(item));
+    });
+    if (record.uses.length > 5000) {
+      record.uses.splice(0, record.uses.length - 5000);
+    }
+    state.questionHistory[historyKey] = record;
+  }
+
+  const pairs = renderItems.map((item, index) => ({
     id: `${meta.id}-match-${index + 1}`,
     left: clueTextFromPrompt(item.prompt),
     right: item.answer
@@ -4849,8 +5106,8 @@ function buildMatchingActivity(meta, theme, usedSources) {
     prompt: stagePrompt(meta, challengeCopy("Match each Bible clue to the correct answer.", "Relaciona cada pista bíblica con la respuesta correcta."), pick.reuseCount),
     pairs,
     options: shuffled(pairs.map((pair) => pair.right)),
-    sourceRef: pick.items.map((item) => item.sourceRef).join("; "),
-    historySourceRef: pick.items.map((item) => item.historySourceRef || historyKeyForItem(item, "matching")).join(" || ")
+    sourceRef: renderItems.map((item) => item.sourceRef).join("; "),
+    historySourceRef: renderItems.map((item) => item.historySourceRef || historyKeyForItem(item, "matching")).join(" || ")
   };
 }
 
@@ -5061,7 +5318,6 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   if (!source.length) return { item: null, reuseCount: 0 };
 
   const usedSources = options.usedSources instanceof Set ? options.usedSources : null;
-  const allowReuse = options.allowReuse !== false;
 
   const sourceFiltered = usedSources
     ? source.filter((item) => {
@@ -5070,11 +5326,8 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
     })
     : source;
 
-  if (usedSources && !sourceFiltered.length && !allowReuse) {
-    return { item: null, reuseCount: 0 };
-  }
-
-  const pickPool = sourceFiltered.length ? sourceFiltered : source;
+  const pickPool = usedSources ? sourceFiltered : source;
+  if (!pickPool.length) return { item: null, reuseCount: 0 };
 
   const historyScope = options.scopeKey || (scopedPool.length ? era : "all");
   const historyKey = "global:" + bucket + ":" + historyScope;
@@ -5088,35 +5341,12 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
 
   const unseen = pickPool.filter((item) => !counts[itemSignature(item)]);
 
-  let choice;
-  let reuseCount = 0;
+  if (!unseen.length) return { item: null, reuseCount: 0 };
 
-  if (unseen.length) {
-    const unseenNotRecent = unseen.filter((item) => !recentSet.has(itemSignature(item)));
-    const unseenPool = unseenNotRecent.length ? unseenNotRecent : unseen;
-    choice = unseenPool[Math.floor(Math.random() * unseenPool.length)];
-  } else {
-    // When a scoped pool is fully used, remix the least-used authored item instead of hard-stopping.
-    let min = Infinity;
-    let leastUsed = [];
-
-    pickPool.forEach((item) => {
-      const signature = itemSignature(item);
-      const used = counts[signature] || 0;
-      if (used < min) {
-        min = used;
-        leastUsed = [item];
-      } else if (used === min) {
-        leastUsed.push(item);
-      }
-    });
-
-    if (!leastUsed.length) return { item: null, reuseCount: 0 };
-    const leastUsedNotRecent = leastUsed.filter((item) => !recentSet.has(itemSignature(item)));
-    const remixPool = leastUsedNotRecent.length ? leastUsedNotRecent : leastUsed;
-    choice = remixPool[Math.floor(Math.random() * remixPool.length)];
-    reuseCount = counts[itemSignature(choice)] || 0;
-  }
+  const unseenNotRecent = unseen.filter((item) => !recentSet.has(itemSignature(item)));
+  const unseenPool = unseenNotRecent.length ? unseenNotRecent : unseen;
+  const choice = unseenPool[Math.floor(Math.random() * unseenPool.length)];
+  const reuseCount = 0;
 
   const pickedSignature = itemSignature(choice);
   record.uses.push(pickedSignature);
@@ -5144,7 +5374,6 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
   if (source.length < count) return { items: null, reuseCount: 0 };
 
   const usedSources = options.usedSources instanceof Set ? options.usedSources : null;
-  const allowReuse = options.allowReuse !== false;
   const historyScope = options.scopeKey || (scopedPool.length ? era : "all");
   const historyKey = "global:" + bucket + ":" + historyScope;
   const record = historyRecordFor(historyKey);
@@ -5171,8 +5400,9 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
       const bRecent = recentSet.has(itemSignature(b)) ? 1 : 0;
       return aRecent - bRecent;
     });
-    const preferredRanked = ranked.filter((item) => !recentSet.has(itemSignature(item)));
-    const sourceRanked = preferredRanked.length >= count ? preferredRanked : ranked;
+    const unseenRanked = ranked.filter((item) => !counts[itemSignature(item)]);
+    const preferredRanked = unseenRanked.filter((item) => !recentSet.has(itemSignature(item)));
+    const sourceRanked = preferredRanked.length >= count ? preferredRanked : unseenRanked;
     const picked = [];
     const seen = new Set();
 
@@ -5186,11 +5416,7 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
     return picked.slice(0, count);
   };
 
-  let candidates = buildSelection(filterBySource(source));
-  if (candidates.length < count) {
-    // Remix mode fallback: prefer least-used authored combos when no-repeat pool is spent.
-    candidates = buildSelection(source);
-  }
+  const candidates = buildSelection(filterBySource(source));
 
   if (candidates.length < count) return { items: null, reuseCount: 0 };
 
@@ -5326,29 +5552,6 @@ function derivedOrderSetsForTheme(theme) {
     });
   }
 
-  const eraThemes = themesInEra(theme.era);
-  if (eraThemes.length >= 3) {
-    const focusIndex = Math.max(0, eraThemes.findIndex((entry) => entry.name === theme.name));
-    const startIndex = Math.max(0, Math.min(focusIndex - 1, eraThemes.length - 3));
-    const trio = eraThemes.slice(startIndex, startIndex + 3);
-    if (trio.length === 3) {
-      sets.push({
-        era: theme.era,
-        prompt: challengeCopy("Put these Bible sections in order.", "Pon estas secciones de la Biblia en orden."),
-        items: trio.map((entry) => entry.name),
-        sourceRef: trio.map((entry) => entry.sourceRef).join("; "),
-        historySourceRef: trio.map((entry) => `${entry.sourceRef}::theme`).join("; ")
-      });
-      sets.push({
-        era: theme.era,
-        prompt: challengeCopy("Put these Bible sections in order.", "Pon estas secciones de la Biblia en orden."),
-        items: trio.map((entry) => entry.period),
-        sourceRef: trio.map((entry) => entry.sourceRef).join("; "),
-        historySourceRef: trio.map((entry) => `${entry.sourceRef}::period`).join("; ")
-      });
-    }
-  }
-
   return sets;
 }
 
@@ -5390,6 +5593,13 @@ function normalizeSpellingAnswer(value) {
     .replace(/[’`]/g, "'");
 }
 
+function normalizeQuizAnswerKey(value) {
+  return normalizeSpellingAnswer(value)
+    .replace(/[^a-z0-9'\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function buildQuizOptions(question, era, optionCount, sourcePool = quizBank) {
   const total = 4;
   const options = [];
@@ -5397,15 +5607,27 @@ function buildQuizOptions(question, era, optionCount, sourcePool = quizBank) {
   const pool = Array.isArray(sourcePool) && sourcePool.length ? sourcePool : quizBank;
   const combinedPool = [].concat(quizBank, mediumQuizBank, advancedQuizBank);
 
-  const addOption = (answer) => {
-    if (!answer || seen.has(answer)) return;
-    seen.add(answer);
-    options.push(answer);
+  const addOption = (answer, prefer = false) => {
+    const text = String(answer || "").trim();
+    if (!text) return;
+    const key = normalizeQuizAnswerKey(text);
+    if (!key) return;
+    if (seen.has(key)) {
+      if (prefer) {
+        const existingIndex = options.findIndex((entry) => entry.key === key);
+        if (existingIndex >= 0) {
+          options[existingIndex] = { key, text };
+        }
+      }
+      return;
+    }
+    seen.add(key);
+    options.push({ key, text });
   };
 
-  addOption(question.answer);
+  addOption(question.answer, true);
   if (Array.isArray(question.options) && question.options.length) {
-    uniqueList(question.options).forEach(addOption);
+    uniqueList(question.options).forEach((option) => addOption(option));
   }
 
   const addDistractors = (answers) => {
@@ -5428,7 +5650,7 @@ function buildQuizOptions(question, era, optionCount, sourcePool = quizBank) {
     addDistractors(allAnswers);
   }
 
-  return shuffled(options.slice(0, total));
+  return shuffled(options.slice(0, total).map((entry) => entry.text));
 }
 
 function nearlyOrdered(list) {
@@ -5506,16 +5728,27 @@ function renderSourceVerse(reference) {
 function activityFor(meta) {
   const cacheKey = state.difficulty + ":" + meta.id;
   const cached = state.stageActivities[cacheKey];
-  if (cached && typeof cached === "object") return cached;
+  if (cached && typeof cached === "object") {
+    const cachedMatchingOptions = cached.type === "matching" && Array.isArray(cached.options)
+      ? cached.options.map((option) => normalizeSpellingAnswer(option))
+      : null;
+    const shouldRebuild = cached.type === "exhausted"
+      || Boolean(cachedMatchingOptions && new Set(cachedMatchingOptions).size !== cachedMatchingOptions.length);
+    if (shouldRebuild) {
+      delete state.stageActivities[cacheKey];
+    } else {
+      return cached;
+    }
+  }
 
-  const era = meta.theme.era;
   const difficulty = currentDifficulty();
-  const usedSources = usedQuestionSourcesForDifficulty(state.difficulty);
+  const sourceBucketForKind = (kind) => (kind === "truefalse" || kind === "matching" ? "quiz" : kind);
 
   let activity;
 
   if (meta.stage >= 1 && meta.stage <= 4) {
     for (const kind of stageKindPlan(meta, difficulty)) {
+      const usedSources = usedQuestionSourcesForDifficulty(state.difficulty, sourceBucketForKind(kind), meta.theme);
       if (kind === "truefalse") {
         activity = buildTrueFalseActivity(meta, meta.theme, usedSources);
       } else if (kind === "matching") {
@@ -7141,6 +7374,7 @@ function openStage(stageId) {
   const meta = getStageMeta(stageId);
   if (!meta) return;
 
+  captureHubScrollPosition();
   warmPosterCache(meta.theme.era);
   warmCutsceneMediaCache(meta.theme.era);
   warmNarrationAudioCache(meta.theme.era);
@@ -7470,14 +7704,15 @@ function renderMatching(meta, activity) {
     }
 
     const chosenValues = selects.map(({ select }) => select.value);
-    const uniqueChoices = new Set(chosenValues);
-    if (uniqueChoices.size !== chosenValues.length) {
+    const chosenKeys = chosenValues.map((value) => normalizeQuizAnswerKey(value));
+    const uniqueChoices = new Set(chosenKeys);
+    if (uniqueChoices.size !== chosenKeys.length) {
       feedback.className = "feedback warn";
       feedback.textContent = challengeCopy("Use each answer only once.", "Usa cada respuesta solo una vez.");
       return;
     }
 
-    const isCorrect = selects.every(({ pair, select }) => select.value === pair.right);
+    const isCorrect = selects.every(({ pair, select }) => normalizeQuizAnswerKey(select.value) === normalizeQuizAnswerKey(pair.right));
     if (isCorrect) {
       feedback.className = "feedback ok";
       feedback.textContent = challengeCopy("Great matching. Stage complete.", "Buen trabajo relacionando. Etapa completada.");
