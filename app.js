@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-14-final-v5";
+const CONTENT_VERSION = "2026-03-14-final-v6";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -2266,6 +2266,10 @@ const mediumQuizBank = [
   { era: "genesis", prompt: "What did God do on the seventh day?", options: ["Rested and made it holy", "Made animals", "Created light", "Sent rain"], answer: "Rested and made it holy", sourceRef: "Genesis 2:2-3" },
   { era: "genesis", prompt: "What opened after Adam and Eve ate?", options: ["Their eyes", "The ark door", "The heavens", "The sea"], answer: "Their eyes", sourceRef: "Genesis 3:7" },
   { era: "genesis", prompt: "What did Adam name his wife after the fall?", options: ["Eve", "Naomi", "Sarah", "Hagar"], answer: "Eve", sourceRef: "Genesis 3:20" },
+  { era: "genesis", prompt: "Who shut Noah in when he entered the ark?", options: ["Yahweh", "Shem", "Ham", "An angel"], answer: "Yahweh", sourceRef: "Genesis 7:16" },
+  { era: "genesis", prompt: "How long did rain fall on the earth during the flood?", options: ["Forty days and forty nights", "Seven days", "One hundred days", "Twelve days"], answer: "Forty days and forty nights", sourceRef: "Genesis 7:12" },
+  { era: "genesis", prompt: "What did Noah build after leaving the ark?", options: ["An altar", "A city wall", "A tower", "A vineyard fence"], answer: "An altar", sourceRef: "Genesis 8:20" },
+  { era: "genesis", prompt: "What sign did God set in the cloud for His covenant?", options: ["Rainbow", "Thunder", "Flaming sword", "Morning star"], answer: "Rainbow", sourceRef: "Genesis 9:13" },
   { era: "genesis", prompt: "What bird returned to Noah with a freshly plucked olive leaf?", options: ["Dove", "Raven", "Eagle", "Sparrow"], answer: "Dove", sourceRef: "Genesis 8:11" },
   { era: "genesis", prompt: "Who said, \"Cursed be Canaan; a servant of servants will he be to his brothers\"?", options: ["Noah", "Ham", "Shem", "Japheth"], answer: "Noah", sourceRef: "Genesis 9:25" },
   { era: "genesis", prompt: "What did the people say before making bricks in Genesis 11:3?", options: ["Come, let's make bricks", "Come, let's cross the sea", "Come, let's seek Joseph", "Come, let's build an ark"], answer: "Come, let's make bricks", sourceRef: "Genesis 11:3" },
@@ -2436,7 +2440,11 @@ const mediumOrderBank = [
   { era: "genesis", items: ["Light created", "Sky formed", "Dry land appears"], sourceRef: "Genesis 1:3; 1:6-7; 1:9-10" },
   { era: "genesis", items: ["Man formed from dust", "Garden planted in Eden", "Woman brought to Adam"], sourceRef: "Genesis 2:7; 2:8; 2:22" },
   { era: "genesis", items: ["Serpent speaks", "Eyes opened", "Adam and Eve hide"], sourceRef: "Genesis 3:1-7" },
-  { era: "genesis", items: ["Noah obeys God", "Flood begins", "Rainbow covenant"], sourceRef: "Genesis 6:22; 7:17; 9:13" },
+  { era: "genesis", items: ["Noah obeyed God", "Flood begins", "Rainbow covenant"], sourceRef: "Genesis 6:22; 7:17; 9:13" },
+  { era: "genesis", items: ["God warns Noah", "Ark prepared", "Noah enters the ark"], sourceRef: "Genesis 6:13-14; 6:22; 7:7" },
+  { era: "genesis", items: ["Fountains burst forth", "Rain falls forty days", "Waters cover the mountains"], sourceRef: "Genesis 7:11-12; 7:17; 7:19" },
+  { era: "genesis", items: ["Ark rests on Ararat", "Dove returns with olive leaf", "Ground dries"], sourceRef: "Genesis 8:4; 8:11; 8:14" },
+  { era: "genesis", items: ["God makes covenant", "Rainbow set in cloud", "Promise for every living creature"], sourceRef: "Genesis 9:9; 9:13; 9:16" },
   { era: "genesis", items: ["Nimrod rises", "Kingdom begins at Babel", "Families spread by nations"], sourceRef: "Genesis 10:8-10; 10:32" },
   { era: "genesis", items: ["One language", "Come, let's build", "Languages confused"], sourceRef: "Genesis 11:1; 11:4; 11:7" },
   { era: "patriarchs", items: ["Jacob dreams at Bethel", "Jacob serves Laban", "Jacob returns to Canaan"], sourceRef: "Genesis 28:12; 29:20; 31:3" },
@@ -2459,6 +2467,11 @@ const advancedOrderBank = [
   { era: "genesis", items: ["Adam placed in the garden", "Animals brought to Adam", "Woman built from the rib"], sourceRef: "Genesis 2:15; 2:19-20; 2:21-22" },
   { era: "genesis", items: ["Adam and Eve hide", "God declares the curse", "Cherubim guard Eden"], sourceRef: "Genesis 3:8; 3:14-19; 3:24" },
   { era: "genesis", items: ["Noah enters ark", "Waters prevail", "Ark rests on Ararat"], sourceRef: "Genesis 7:7; 7:24; 8:4" },
+  { era: "genesis", items: ["Noah builds the ark", "Noah enters with his family", "Yahweh shuts him in"], sourceRef: "Genesis 6:22; 7:7; 7:16" },
+  { era: "genesis", items: ["Forty days of rain", "Waters prevail", "God remembered Noah"], sourceRef: "Genesis 7:12; 7:24; 8:1" },
+  { era: "genesis", items: ["Raven sent out", "Dove sent out", "Dove brings olive leaf"], sourceRef: "Genesis 8:7; 8:8; 8:11" },
+  { era: "genesis", items: ["Ark rests on Ararat", "Earth dries", "Noah leaves ark"], sourceRef: "Genesis 8:4; 8:13; 8:18" },
+  { era: "genesis", items: ["God blesses Noah", "Rainbow set in cloud", "Everlasting covenant remembered"], sourceRef: "Genesis 9:1; 9:13; 9:16" },
   { era: "genesis", items: ["People settle in Shinar", "Yahweh comes down", "People scattered abroad"], sourceRef: "Genesis 11:2; 11:5; 11:8" },
   { era: "genesis", items: ["Nimrod's kingdom begins", "City called Babel", "Nations spread abroad"], sourceRef: "Genesis 10:10; 11:9; 10:32" },
   { era: "patriarchs", items: ["Abram leaves Haran", "Covenant promise under the stars", "Isaac offered"], sourceRef: "Genesis 12:4; 15:5-6; 22:10-12" },
@@ -2481,6 +2494,9 @@ const orderBank = [
   { era: "genesis", items: ["Creation", "Fall", "Flood"], sourceRef: "Genesis 1:1; 3:6-7; 7:17" },
   { era: "genesis", items: ["Light", "People created", "God rested"], sourceRef: "Genesis 1:3; 1:27; 2:2-3" },
   { era: "genesis", items: ["Serpent tempts", "Sin enters", "God sends them out"], sourceRef: "Genesis 3:1-6; 3:23" },
+  { era: "genesis", items: ["Noah builds the ark", "Flood waters rise", "Rainbow sign appears"], sourceRef: "Genesis 6:22; 7:17; 9:13" },
+  { era: "genesis", items: ["Animals enter ark", "Rain falls", "Waters recede"], sourceRef: "Genesis 7:9; 7:12; 8:3" },
+  { era: "genesis", items: ["Noah offers burnt offering", "God promises seedtime and harvest", "Covenant sign is given"], sourceRef: "Genesis 8:20-22; 9:13" },
   { era: "genesis", items: ["Flood ends", "Nations spread", "Tower of Babel"], sourceRef: "Genesis 8:13; 10:32; 11:1-9" },
   { era: "genesis", items: ["Whole earth has one language", "People settle in Shinar", "Yahweh scatters them"], sourceRef: "Genesis 11:1; 11:2; 11:8" },
   { era: "genesis", items: ["Bricks made", "Tower planned", "Babel named"], sourceRef: "Genesis 11:3; 11:4; 11:9" },
@@ -2513,7 +2529,11 @@ const mediumFactBank = [
   { era: "genesis", parts: ["The", "serpent", "deceived", "me"], sourceRef: "Genesis 3:13" },
   { era: "genesis", parts: ["Adam", "called", "his", "wife", "Eve"], sourceRef: "Genesis 3:20" },
   { era: "genesis", parts: ["Noah", "found", "favor", "in", "Yahweh's", "eyes"], sourceRef: "Genesis 6:8" },
+  { era: "genesis", parts: ["Noah", "did", "everything", "God", "commanded", "him"], sourceRef: "Genesis 6:22" },
   { era: "genesis", parts: ["God", "shut", "Noah", "in", "the", "ark"], sourceRef: "Genesis 7:16" },
+  { era: "genesis", parts: ["God", "remembered", "Noah"], sourceRef: "Genesis 8:1" },
+  { era: "genesis", parts: ["I", "set", "my", "rainbow", "in", "the", "cloud"], sourceRef: "Genesis 9:13" },
+  { era: "genesis", parts: ["I", "establish", "my", "covenant", "with", "you"], sourceRef: "Genesis 9:9" },
   { era: "genesis", parts: ["Come", "let's", "make", "bricks"], sourceRef: "Genesis 11:3" },
   { era: "genesis", parts: ["Come", "let's", "build", "a", "tower"], sourceRef: "Genesis 11:4" },
   { era: "patriarchs", parts: ["He", "believed", "in", "Yahweh"], sourceRef: "Genesis 15:6" },
@@ -2560,7 +2580,10 @@ const factBank = [
   { era: "genesis", parts: ["Yahweh", "God", "planted", "a", "garden"], sourceRef: "Genesis 2:8" },
   { era: "genesis", parts: ["The", "man", "was", "alone"], sourceRef: "Genesis 2:18" },
   { era: "genesis", parts: ["Yahweh", "God", "made", "garments", "of", "skin"], sourceRef: "Genesis 3:21" },
+  { era: "genesis", parts: ["Noah", "did", "all", "that", "God", "commanded"], sourceRef: "Genesis 6:22" },
   { era: "genesis", parts: ["Only", "Noah", "was", "left", "alive"], sourceRef: "Genesis 7:23" },
+  { era: "genesis", parts: ["God", "remembered", "Noah"], sourceRef: "Genesis 8:1" },
+  { era: "genesis", parts: ["I", "set", "my", "rainbow", "in", "the", "cloud"], sourceRef: "Genesis 9:13" },
   { era: "genesis", parts: ["The", "whole", "earth", "was", "of", "one", "language"], sourceRef: "Genesis 11:1" },
   { era: "genesis", parts: ["Yahweh", "scattered", "them", "abroad", "from", "there"], sourceRef: "Genesis 11:8" },
   { era: "patriarchs", parts: ["All", "families", "of", "the", "earth", "will", "be", "blessed"], sourceRef: "Genesis 12:3" },
@@ -8304,32 +8327,60 @@ function renderRoute(meta, mode, feedback) {
       { dir: "left", icon: "⬅️", label: "Left" }
     ];
 
+  const viewport = window.visualViewport || null;
+  const viewportWidth = Math.round((viewport && viewport.width) || window.innerWidth || 0);
+  const viewportHeight = Math.round((viewport && viewport.height) || window.innerHeight || 0);
+  const compactLayout = viewportWidth <= 430 || viewportHeight <= 760;
+  const ultraCompact = viewportWidth <= 380 || viewportHeight <= 680;
+
   const trail = document.createElement("div");
   trail.style.display = "grid";
-  trail.style.gridTemplateColumns = `repeat(${Math.min(stepMeta.length, 4)}, minmax(110px, 1fr))`;
-  trail.style.gap = "0.75rem";
+  if (compactLayout) {
+    trail.style.gridAutoFlow = "column";
+    trail.style.gridAutoColumns = ultraCompact ? "minmax(84px, 94px)" : "minmax(92px, 108px)";
+    trail.style.gap = ultraCompact ? "0.5rem" : "0.6rem";
+    trail.style.overflowX = "auto";
+    trail.style.overflowY = "hidden";
+    trail.style.webkitOverflowScrolling = "touch";
+    trail.style.scrollSnapType = "x proximity";
+    trail.style.paddingBottom = "0.2rem";
+    trail.style.justifyContent = "start";
+  } else {
+    trail.style.gridTemplateColumns = `repeat(${Math.min(stepMeta.length, 4)}, minmax(110px, 1fr))`;
+    trail.style.gap = "0.75rem";
+  }
   trail.style.marginTop = "0.8rem";
   activityPanel.append(trail);
 
   const stepCards = stepMeta.map((step, index) => {
     const card = document.createElement("div");
-    card.style.borderRadius = "18px";
-    card.style.padding = "0.85rem 0.75rem";
+    card.style.borderRadius = compactLayout ? "14px" : "18px";
+    card.style.padding = compactLayout
+      ? (ultraCompact ? "0.55rem 0.48rem" : "0.65rem 0.55rem")
+      : "0.85rem 0.75rem";
     card.style.border = "1px solid rgba(240, 207, 147, 0.18)";
     card.style.background = "linear-gradient(180deg, rgba(20,27,38,0.98), rgba(11,16,24,0.96))";
     card.style.boxShadow = "0 14px 30px rgba(4,8,12,0.24)";
     card.style.textAlign = "center";
-    card.innerHTML = `<div style="font-size:1.45rem">${step.icon}</div><div style="margin-top:0.35rem;font-weight:700">${index + 1}. ${step.label}</div>`;
+    if (compactLayout) card.style.scrollSnapAlign = "start";
+    card.innerHTML = `<div style="font-size:${compactLayout ? (ultraCompact ? "1.15rem" : "1.25rem") : "1.45rem"}">${step.icon}</div><div style="margin-top:0.3rem;font-weight:700;font-size:${compactLayout ? "0.92rem" : "1rem"}">${index + 1}. ${step.label}</div>`;
     trail.append(card);
     return card;
   });
 
   const controls = document.createElement("div");
   controls.style.display = "grid";
-  controls.style.gridTemplateColumns = "repeat(3, minmax(90px, 120px))";
-  controls.style.gap = "0.7rem";
+  controls.style.gridTemplateColumns = compactLayout
+    ? "repeat(3, minmax(0, 1fr))"
+    : "repeat(3, minmax(90px, 120px))";
+  controls.style.gap = compactLayout ? (ultraCompact ? "0.45rem" : "0.55rem") : "0.7rem";
   controls.style.justifyContent = "center";
-  controls.style.marginTop = "1rem";
+  controls.style.marginTop = compactLayout ? "0.85rem" : "1rem";
+  if (compactLayout) {
+    controls.style.width = "100%";
+    controls.style.maxWidth = ultraCompact ? "320px" : "360px";
+    controls.style.marginInline = "auto";
+  }
   activityPanel.append(controls);
 
   const blankA = document.createElement("div");
@@ -8338,6 +8389,13 @@ function renderRoute(meta, mode, feedback) {
   const leftBtn = routeButton("⬅️ Left");
   const downBtn = routeButton("⬇️ Down");
   const rightBtn = routeButton("➡️ Right");
+  if (compactLayout) {
+    [upBtn, leftBtn, downBtn, rightBtn].forEach((button) => {
+      button.style.minHeight = ultraCompact ? "46px" : "52px";
+      button.style.padding = ultraCompact ? "0.42rem 0.3rem" : "0.5rem 0.35rem";
+      button.style.fontSize = ultraCompact ? "0.95rem" : "1rem";
+    });
+  }
   controls.append(blankA, upBtn, blankB, leftBtn, downBtn, rightBtn);
 
   let index = 0;
@@ -8412,6 +8470,67 @@ function renderRoute(meta, mode, feedback) {
     updateStatus();
   };
 
+  let swipePadCleanup = () => {};
+  if (compactLayout) {
+    const swipeWrap = document.createElement("div");
+    swipeWrap.style.marginTop = "0.65rem";
+
+    const swipePad = document.createElement("div");
+    swipePad.style.borderRadius = "14px";
+    swipePad.style.minHeight = ultraCompact ? "82px" : "94px";
+    swipePad.style.border = "1px solid rgba(240, 207, 147, 0.32)";
+    swipePad.style.background = "linear-gradient(180deg, rgba(21,28,41,0.92), rgba(11,17,26,0.96))";
+    swipePad.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,0.03), 0 10px 24px rgba(0,0,0,0.2)";
+    swipePad.style.display = "grid";
+    swipePad.style.placeItems = "center";
+    swipePad.style.textAlign = "center";
+    swipePad.style.fontWeight = "700";
+    swipePad.style.padding = ultraCompact ? "0.4rem" : "0.55rem";
+    swipePad.style.touchAction = "none";
+    swipePad.textContent = challengeCopy("Touch + swipe here", "Toca y desliza aqui");
+    swipeWrap.append(swipePad);
+    activityPanel.append(swipeWrap);
+
+    let swipeStart = null;
+    const swipeThreshold = ultraCompact ? 18 : 22;
+    const resetSwipePad = () => {
+      swipePad.style.transform = "";
+      swipePad.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,0.03), 0 10px 24px rgba(0,0,0,0.2)";
+    };
+    const onSwipeStart = (event) => {
+      if (!running || !canPlayStage()) return;
+      swipeStart = { x: event.clientX, y: event.clientY };
+      swipePad.style.transform = "translateY(-1px)";
+      swipePad.style.boxShadow = "0 0 0 2px rgba(213,169,72,0.34), 0 12px 24px rgba(213,169,72,0.18)";
+    };
+    const onSwipeEnd = (event) => {
+      if (!swipeStart) return;
+      const dx = event.clientX - swipeStart.x;
+      const dy = event.clientY - swipeStart.y;
+      swipeStart = null;
+      resetSwipePad();
+      if (Math.abs(dx) < swipeThreshold && Math.abs(dy) < swipeThreshold) return;
+      const dir = Math.abs(dx) > Math.abs(dy)
+        ? (dx > 0 ? "right" : "left")
+        : (dy > 0 ? "down" : "up");
+      press(dir);
+    };
+    const onSwipeCancel = () => {
+      swipeStart = null;
+      resetSwipePad();
+    };
+    swipePad.addEventListener("pointerdown", onSwipeStart);
+    swipePad.addEventListener("pointerup", onSwipeEnd);
+    swipePad.addEventListener("pointercancel", onSwipeCancel);
+    swipePad.addEventListener("pointerleave", onSwipeCancel);
+    swipePadCleanup = () => {
+      swipePad.removeEventListener("pointerdown", onSwipeStart);
+      swipePad.removeEventListener("pointerup", onSwipeEnd);
+      swipePad.removeEventListener("pointercancel", onSwipeCancel);
+      swipePad.removeEventListener("pointerleave", onSwipeCancel);
+    };
+  }
+
   const bindings = [
     bindRouteButton(upBtn, "up", press),
     bindRouteButton(leftBtn, "left", press),
@@ -8440,6 +8559,7 @@ function renderRoute(meta, mode, feedback) {
       button.removeEventListener("pointercancel", end);
       button.removeEventListener("pointerleave", end);
     });
+    swipePadCleanup();
   };
 }
 
