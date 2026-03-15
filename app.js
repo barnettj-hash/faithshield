@@ -3207,6 +3207,19 @@ function playSfx(name) {
   } else if (name === "success") {
     playTone(523.25, 0.1, "triangle", 0.18);
     setTimeout(() => playTone(659.25, 0.12, "triangle", 0.18), 90);
+  } else if (name === "badge") {
+    // Badge fanfare: warm trumpet-like rise so players clearly hear unlock moments.
+    const note = (freq, delay, duration, leadVol = 0.13, colorVol = 0.068) => {
+      setTimeout(() => {
+        playTone(freq, duration, "sawtooth", leadVol);
+        playTone(freq * 2, Math.max(0.1, duration - 0.04), "triangle", colorVol);
+      }, delay);
+    };
+    note(392.0, 0, 0.16);
+    note(523.25, 86, 0.18);
+    note(659.25, 178, 0.2, 0.14, 0.072);
+    note(783.99, 280, 0.22, 0.15, 0.076);
+    note(1046.5, 394, 0.42, 0.16, 0.082);
   } else if (name === "fail") {
     playTone(185, 0.12, "square", 0.16);
     setTimeout(() => playTone(138.59, 0.12, "square", 0.14), 100);
@@ -4228,7 +4241,6 @@ function maybeAwardBadges() {
     } else {
       state.lastBadge = `${unlocked[0].icon} ${unlocked[0].name}`;
     }
-    playSfx("success");
   }
 
   return unlocked;
@@ -4254,8 +4266,8 @@ function markDone(stageId, mode) {
   const modeEngine = mode && mode.engine ? mode.engine : "question";
 
   if (isDone(stageId)) {
-    if (unlockedDifficultyBadge) playSfx("success");
-    maybeAwardBadges();
+    const unlockedBadges = maybeAwardBadges();
+    if (unlockedDifficultyBadge || unlockedBadges.length) playSfx("badge");
     persist();
     render();
     window.dispatchEvent(
@@ -4291,7 +4303,7 @@ function markDone(stageId, mode) {
   if (parsed) recordLevelCompletionIfNeeded(parsed.level);
 
   const unlockedBadges = maybeAwardBadges();
-  if (unlockedDifficultyBadge && !unlockedBadges.length) playSfx("success");
+  if (unlockedDifficultyBadge || unlockedBadges.length) playSfx("badge");
   persist();
   render();
   window.dispatchEvent(
