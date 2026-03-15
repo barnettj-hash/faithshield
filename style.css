@@ -550,6 +550,104 @@ h2 {
   margin-top: 0;
 }
 
+.feature-card h3 {
+  margin: 0;
+}
+
+.campaign-map-track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.campaign-divider {
+  color: rgba(248, 223, 180, 0.58);
+  font-weight: 800;
+  padding: 0 0.1rem;
+}
+
+.campaign-node {
+  border: 1px solid rgba(237, 201, 119, 0.3);
+  background: rgba(11, 17, 27, 0.62);
+  border-radius: 12px;
+  color: var(--paper);
+  padding: 0.55rem 0.65rem;
+  min-width: 160px;
+  display: grid;
+  gap: 0.18rem;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.campaign-node:hover,
+.campaign-node:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(237, 201, 119, 0.56);
+  box-shadow: 0 10px 20px rgba(5, 8, 14, 0.25);
+}
+
+.campaign-node.locked {
+  opacity: 0.65;
+}
+
+.campaign-node.done {
+  border-color: rgba(126, 217, 152, 0.52);
+  box-shadow: 0 10px 20px rgba(30, 97, 54, 0.18);
+}
+
+.campaign-era {
+  font-weight: 800;
+}
+
+.campaign-intro,
+.campaign-progress,
+.campaign-boss {
+  font-size: 0.86rem;
+  color: rgba(248, 223, 180, 0.88);
+}
+
+.mastery-bars {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.mastery-row {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.mastery-bar {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 207, 147, 0.24);
+  background: rgba(240, 207, 147, 0.08);
+  overflow: hidden;
+}
+
+.mastery-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(213, 169, 72, 0.95), rgba(126, 217, 152, 0.92));
+}
+
+.weak-area-list {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.weak-chip {
+  font-size: 0.9rem;
+}
+
+.desktop-controls-card.hidden {
+  display: none !important;
+}
+
 .plan-list {
   display: grid;
   gap: 0.34rem;

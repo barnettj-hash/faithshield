@@ -5,12 +5,16 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-14-final-v7";
+const CONTENT_VERSION = "2026-03-15-chapter-campaign-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
 const DIFFICULTY_LEVELS = ["easy", "medium", "advanced"];
 const SUPPORTED_LANGUAGES = ["en", "es"];
+const MASTERY_TARGET_PERCENT = 85;
+const DAILY_DEVOTION_REWARD_XP = 35;
+const DAILY_DEVOTION_REWARD_LIFE = 1;
+const WEEKLY_CHALLENGE_TARGET = 7;
 const MUSIC_LEVELS = {
   low: 0.34,
   medium: 0.46,
@@ -643,7 +647,7 @@ const THEME_KEYWORDS = {
 };
 
 
-const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "spelling", "order", "fact", "truefalse", "matching"]);
+const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
 const USE_LEGACY_CUTSCENE_VIDEO_FALLBACK = false;
 const FORCE_STILL_CUTSCENE_MODE = true;
 const PREFER_SYSTEM_NARRATION_VOICE = false;
@@ -2935,6 +2939,19 @@ function dayStartFromKey(key) {
   return new Date(y, m - 1, d).getTime();
 }
 
+function isoWeekKey(date = new Date()) {
+  const copy = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = copy.getUTCDay() || 7;
+  copy.setUTCDate(copy.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(copy.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((copy - yearStart) / 86400000) + 1) / 7);
+  return `${copy.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+function eraOrderList() {
+  return Array.from(new Set(timelineThemes.map((theme) => theme.era)));
+}
+
 function t(key) {
   const langTable = UI_TEXT_BY_LANGUAGE[state.language] || UI_TEXT_BY_LANGUAGE.en;
   return langTable[key] || UI_TEXT_BY_LANGUAGE.en[key] || key;
@@ -2996,7 +3013,11 @@ const state = {
   questionHistory: JSON.parse(localStorage.getItem("faithQuestionHistory") || "{}"),
   stageActivities: JSON.parse(localStorage.getItem("faithStageActivities") || "{}"),
   language: normalizeLanguage(localStorage.getItem("faithLanguage") || "en"),
-  dailyStrike: JSON.parse(localStorage.getItem("faithDailyStrike") || '{"count":0,"best":0,"lastClaimed":""}')
+  dailyStrike: JSON.parse(localStorage.getItem("faithDailyStrike") || '{"count":0,"best":0,"lastClaimed":""}'),
+  mastery: JSON.parse(localStorage.getItem("faithMastery") || "{}"),
+  dailyDevotion: JSON.parse(localStorage.getItem("faithDailyDevotion") || '{"day":"","challenge":false,"action":false,"reflection":false,"reward":false,"note":""}'),
+  weeklyChallenge: JSON.parse(localStorage.getItem("faithWeeklyChallenge") || '{"weekKey":"","era":"genesis","target":7,"progress":0,"shared":false}'),
+  controls: JSON.parse(localStorage.getItem("faithControls") || '{"hotkeys":true,"controller":false}')
 };
 
 if (launchQueryName) {
@@ -3029,6 +3050,31 @@ state.dailyStrike.best = Math.max(state.dailyStrike.count, Number(state.dailyStr
 state.dailyStrike.lastClaimed = /^\d{4}-\d{2}-\d{2}$/.test(String(state.dailyStrike.lastClaimed || ""))
   ? String(state.dailyStrike.lastClaimed)
   : "";
+if (!state.mastery || typeof state.mastery !== "object" || Array.isArray(state.mastery)) {
+  state.mastery = {};
+}
+if (!state.dailyDevotion || typeof state.dailyDevotion !== "object" || Array.isArray(state.dailyDevotion)) {
+  state.dailyDevotion = { day: "", challenge: false, action: false, reflection: false, reward: false, note: "" };
+}
+state.dailyDevotion.day = /^\d{4}-\d{2}-\d{2}$/.test(String(state.dailyDevotion.day || "")) ? String(state.dailyDevotion.day) : "";
+state.dailyDevotion.challenge = Boolean(state.dailyDevotion.challenge);
+state.dailyDevotion.action = Boolean(state.dailyDevotion.action);
+state.dailyDevotion.reflection = Boolean(state.dailyDevotion.reflection);
+state.dailyDevotion.reward = Boolean(state.dailyDevotion.reward);
+state.dailyDevotion.note = String(state.dailyDevotion.note || "").slice(0, 240);
+if (!state.weeklyChallenge || typeof state.weeklyChallenge !== "object" || Array.isArray(state.weeklyChallenge)) {
+  state.weeklyChallenge = { weekKey: "", era: "genesis", target: WEEKLY_CHALLENGE_TARGET, progress: 0, shared: false };
+}
+state.weeklyChallenge.weekKey = String(state.weeklyChallenge.weekKey || "");
+state.weeklyChallenge.era = String(state.weeklyChallenge.era || "genesis");
+state.weeklyChallenge.target = Math.max(3, Number(state.weeklyChallenge.target || WEEKLY_CHALLENGE_TARGET));
+state.weeklyChallenge.progress = Math.max(0, Number(state.weeklyChallenge.progress || 0));
+state.weeklyChallenge.shared = Boolean(state.weeklyChallenge.shared);
+if (!state.controls || typeof state.controls !== "object" || Array.isArray(state.controls)) {
+  state.controls = { hotkeys: true, controller: false };
+}
+state.controls.hotkeys = state.controls.hotkeys !== false;
+state.controls.controller = Boolean(state.controls.controller);
 
 if ((localStorage.getItem("faithContentVersion") || "") !== CONTENT_VERSION) {
   state.questionHistory = {};
@@ -3052,6 +3098,42 @@ state.stats = {
     advanced: Boolean(state.stats.difficultyPass && state.stats.difficultyPass.advanced)
   }
 };
+
+function ensureDailyDevotionState() {
+  const today = localDayKey();
+  if (state.dailyDevotion.day === today) return;
+  state.dailyDevotion = {
+    day: today,
+    challenge: false,
+    action: false,
+    reflection: false,
+    reward: false,
+    note: ""
+  };
+}
+
+function pickWeeklyEraByKey(weekKey) {
+  const eras = eraOrderList();
+  if (!eras.length) return "genesis";
+  const digits = String(weekKey || "").replace(/\D+/g, "");
+  const hash = digits ? Number(digits.slice(-4)) : 0;
+  return eras[hash % eras.length] || eras[0];
+}
+
+function ensureWeeklyChallengeState() {
+  const currentWeek = isoWeekKey();
+  if (state.weeklyChallenge.weekKey === currentWeek) return;
+  state.weeklyChallenge = {
+    weekKey: currentWeek,
+    era: pickWeeklyEraByKey(currentWeek),
+    target: WEEKLY_CHALLENGE_TARGET,
+    progress: 0,
+    shared: false
+  };
+}
+
+ensureDailyDevotionState();
+ensureWeeklyChallengeState();
 
 const stageGrid = document.getElementById("stageGrid");
 const gameDashboard = document.getElementById("gameDashboard");
@@ -3119,6 +3201,37 @@ const dailyThoughtHeading = document.getElementById("dailyThoughtHeading");
 const dailyThoughtRef = document.getElementById("dailyThoughtRef");
 const dailyThoughtText = document.getElementById("dailyThoughtText");
 const dailyPracticalText = document.getElementById("dailyPracticalText");
+const appRoot = document.querySelector("main.app") || document.querySelector(".app");
+
+let campaignMapSection = null;
+let campaignMapTrack = null;
+let campaignMapSummary = null;
+let campaignMapFinish = null;
+let masterySection = null;
+let masteryOverall = null;
+let masteryBars = null;
+let weakAreaList = null;
+let focusWeakBtn = null;
+let dailyDevotionSection = null;
+let dailyDevotionStatus = null;
+let dailyDevotionPrompt = null;
+let dailyDevotionAction = null;
+let dailyDevotionReflection = null;
+let completeDevotionChallengeBtn = null;
+let completeDevotionActionBtn = null;
+let saveDevotionReflectionBtn = null;
+let claimDevotionRewardBtn = null;
+let weeklyChallengeSection = null;
+let weeklyChallengeMeta = null;
+let weeklyChallengeText = null;
+let shareWeeklyChallengeBtn = null;
+let desktopControlsSection = null;
+let hotkeysToggle = null;
+let controllerToggle = null;
+
+let desktopHotkeysBound = false;
+let controllerPollHandle = 0;
+let controllerPrevState = { left: false, right: false, up: false, down: false, confirm: false, cancel: false };
 
 const audioEngine = {
   ctx: null,
@@ -3136,7 +3249,10 @@ const audioEngine = {
   musicStartedAt: 0,
   musicFilter: null,
   musicCompressor: null,
-  bootMusicHoldUntil: 0
+  bootMusicHoldUntil: 0,
+  musicThemeName: "",
+  musicThemeEra: "",
+  musicProfileKey: ""
 };
 const AUDIO_UNLOCK_EVENTS = ["pointerdown", "touchstart", "mousedown", "click", "keydown"];
 let audioUnlockArmed = false;
@@ -3151,6 +3267,9 @@ function clearAudioNodes() {
   audioEngine.sfxGain = null;
   audioEngine.musicFilter = null;
   audioEngine.musicCompressor = null;
+  audioEngine.musicThemeName = "";
+  audioEngine.musicThemeEra = "";
+  audioEngine.musicProfileKey = "";
 }
 
 function disarmAudioUnlock() {
@@ -3429,14 +3548,372 @@ function playSfx(name) {
   }
 }
 
+const ERA_MUSIC_MODIFIERS = {
+  genesis: {
+    transpose: 0,
+    beatScale: 1.0,
+    filterHz: 4700,
+    energy: 0.98
+  },
+  patriarchs: {
+    transpose: -1,
+    beatScale: 0.98,
+    filterHz: 4300,
+    energy: 0.96,
+    drums: { kickEvery: 2, snareEvery: 4, snareOffset: 2, hatEvery: 2, hatOffset: 1 }
+  },
+  exodus: {
+    transpose: 1,
+    beatScale: 0.95,
+    filterHz: 5200,
+    energy: 1.06
+  },
+  sinai: {
+    transpose: -2,
+    beatScale: 1.04,
+    filterHz: 3600,
+    energy: 0.92
+  },
+  wilderness: {
+    transpose: -3,
+    beatScale: 1.03,
+    filterHz: 3300,
+    energy: 0.9
+  },
+  conquest: {
+    transpose: 2,
+    beatScale: 0.94,
+    filterHz: 5400,
+    energy: 1.08
+  },
+  judges: {
+    transpose: -2,
+    beatScale: 1.01,
+    filterHz: 3900,
+    energy: 0.96
+  },
+  samuel: {
+    transpose: -1,
+    beatScale: 1.0,
+    filterHz: 4500,
+    energy: 0.95
+  },
+  saul: {
+    transpose: -2,
+    beatScale: 0.99,
+    filterHz: 4100,
+    energy: 0.97
+  },
+  david: {
+    transpose: 2,
+    beatScale: 0.93,
+    filterHz: 5600,
+    energy: 1.1
+  }
+};
+
+const SECTION_MUSIC_MODIFIERS = {
+  "Creation Dawn": {
+    transpose: 2,
+    beatScale: 1.06,
+    suiteRotate: 0,
+    motifRotate: 1,
+    filterHz: 5800,
+    energy: 0.95,
+    drums: { kickEvery: 2, snareEvery: 6, snareOffset: 3, hatEvery: 2, hatOffset: 1, hatPower: 0.2 }
+  },
+  "Fall and Mercy": {
+    transpose: -3,
+    beatScale: 0.96,
+    suiteRotate: 1,
+    motifRotate: 2,
+    motifDelta: -2,
+    filterHz: 3200,
+    energy: 0.9,
+    drums: { kickEvery: 2, snareEvery: 4, snareOffset: 1, hatEvery: 3, hatOffset: 1 }
+  },
+  "Flood and Covenant": {
+    transpose: -2,
+    beatScale: 1.01,
+    suiteRotate: 2,
+    motifRotate: 0,
+    filterHz: 3600,
+    energy: 0.95,
+    swellScale: 1.22,
+    drums: { kickEvery: 1, snareEvery: 4, snareOffset: 2, hatEvery: 2, hatOffset: 1, hatPower: 0.24 }
+  },
+  "Nations and Babel": {
+    transpose: 1,
+    beatScale: 0.97,
+    suiteRotate: 1,
+    motifRotate: 3,
+    filterHz: 4300,
+    energy: 1.02,
+    drums: { kickEvery: 1, snareEvery: 2, snareOffset: 1, hatEvery: 1, hatOffset: 0, hatPower: 0.34 }
+  },
+  "Call of Abram": {
+    transpose: 1,
+    beatScale: 0.99,
+    suiteRotate: 0,
+    motifRotate: 1,
+    filterHz: 4700,
+    energy: 0.98
+  },
+  "Promise Family": {
+    transpose: 0,
+    beatScale: 1.04,
+    suiteRotate: 2,
+    motifRotate: 0,
+    filterHz: 5000,
+    energy: 0.94,
+    drums: { kickEvery: 2, snareEvery: 6, snareOffset: 2, hatEvery: 2, hatOffset: 1, hatPower: 0.2 }
+  },
+  "Jacob to Israel": {
+    transpose: -2,
+    beatScale: 0.98,
+    suiteRotate: 1,
+    motifRotate: 2,
+    motifDelta: -1,
+    filterHz: 3600,
+    energy: 0.96,
+    drums: { kickEvery: 1, snareEvery: 3, snareOffset: 1, hatEvery: 2, hatOffset: 1 }
+  },
+  "Joseph in Egypt": {
+    transpose: 2,
+    beatScale: 0.97,
+    suiteRotate: 0,
+    motifRotate: 3,
+    filterHz: 5200,
+    energy: 1.03,
+    drums: { kickEvery: 1, snareEvery: 4, snareOffset: 2, hatEvery: 1, hatOffset: 0, hatPower: 0.28 }
+  },
+  "Burning Bush": {
+    transpose: -1,
+    beatScale: 1.03,
+    suiteRotate: 2,
+    motifRotate: 1,
+    filterHz: 3500,
+    energy: 0.93,
+    swellScale: 1.18,
+    drums: { kickEvery: 2, snareEvery: 8, snareOffset: 4, hatEvery: 2, hatOffset: 1, hatPower: 0.18 }
+  },
+  "Plagues and Passover": {
+    transpose: 2,
+    beatScale: 0.92,
+    suiteRotate: 1,
+    motifRotate: 0,
+    filterHz: 5200,
+    energy: 1.08,
+    drums: { kickEvery: 1, snareEvery: 2, snareOffset: 1, hatEvery: 1, hatOffset: 0, hatPower: 0.38 }
+  },
+  "Sea Crossing": {
+    transpose: 3,
+    beatScale: 0.9,
+    suiteRotate: 0,
+    motifRotate: 2,
+    filterHz: 5600,
+    energy: 1.12,
+    drums: { kickEvery: 1, snareEvery: 2, snareOffset: 1, hatEvery: 1, hatOffset: 0, hatPower: 0.4 }
+  },
+  "Sinai Covenant": {
+    transpose: -3,
+    beatScale: 1.06,
+    suiteRotate: 2,
+    motifRotate: 2,
+    motifDelta: -2,
+    filterHz: 3000,
+    energy: 0.88,
+    drums: { kickEvery: 2, snareEvery: 6, snareOffset: 3, hatEvery: 3, hatOffset: 1, hatPower: 0.16 }
+  },
+  "Wilderness Trust": {
+    transpose: -4,
+    beatScale: 1.02,
+    suiteRotate: 1,
+    motifRotate: 3,
+    motifDelta: -1,
+    filterHz: 3100,
+    energy: 0.9,
+    drums: { kickEvery: 2, snareEvery: 5, snareOffset: 2, hatEvery: 2, hatOffset: 1, hatPower: 0.2 }
+  },
+  "Jordan Crossing": {
+    transpose: 2,
+    beatScale: 0.94,
+    suiteRotate: 0,
+    motifRotate: 1,
+    filterHz: 5100,
+    energy: 1.06,
+    drums: { kickEvery: 1, snareEvery: 3, snareOffset: 1, hatEvery: 1, hatOffset: 0, hatPower: 0.34 }
+  },
+  "Land and Legacy": {
+    transpose: 3,
+    beatScale: 0.93,
+    suiteRotate: 2,
+    motifRotate: 0,
+    filterHz: 5400,
+    energy: 1.08,
+    drums: { kickEvery: 1, snareEvery: 2, snareOffset: 1, hatEvery: 1, hatOffset: 0, hatPower: 0.36 }
+  },
+  "Cycle of Judges": {
+    transpose: -2,
+    beatScale: 0.99,
+    suiteRotate: 1,
+    motifRotate: 2,
+    motifDelta: -1,
+    filterHz: 3700,
+    energy: 0.97,
+    drums: { kickEvery: 1, snareEvery: 3, snareOffset: 1, hatEvery: 2, hatOffset: 1, hatPower: 0.28 }
+  },
+  "Ruth's Faithfulness": {
+    transpose: 0,
+    beatScale: 1.05,
+    suiteRotate: 0,
+    motifRotate: 3,
+    filterHz: 5000,
+    energy: 0.93,
+    drums: { kickEvery: 2, snareEvery: 8, snareOffset: 4, hatEvery: 2, hatOffset: 1, hatPower: 0.18 }
+  },
+  "Samuel's Calling": {
+    transpose: -1,
+    beatScale: 1.03,
+    suiteRotate: 1,
+    motifRotate: 2,
+    motifDelta: -2,
+    filterHz: 3900,
+    energy: 0.91,
+    drums: { kickEvery: 2, snareEvery: 6, snareOffset: 3, hatEvery: 3, hatOffset: 1, hatPower: 0.18 }
+  },
+  "Saul's Kingship": {
+    transpose: -2,
+    beatScale: 0.97,
+    suiteRotate: 2,
+    motifRotate: 1,
+    filterHz: 4000,
+    energy: 1.0,
+    drums: { kickEvery: 1, snareEvery: 3, snareOffset: 1, hatEvery: 2, hatOffset: 1, hatPower: 0.28 }
+  },
+  "David and Courage": {
+    transpose: 4,
+    beatScale: 0.9,
+    suiteRotate: 0,
+    motifRotate: 0,
+    filterHz: 6000,
+    energy: 1.15,
+    drums: { kickEvery: 1, snareEvery: 2, snareOffset: 1, hatEvery: 1, hatOffset: 0, hatPower: 0.42 }
+  }
+};
+
+function clampMusicValue(value, min, max) {
+  return Math.max(min, Math.min(max, Number(value)));
+}
+
+function rotateMusicArray(values, shift) {
+  if (!Array.isArray(values) || !values.length) return [];
+  const offset = ((Number(shift) || 0) % values.length + values.length) % values.length;
+  if (!offset) return values.slice();
+  return values.slice(offset).concat(values.slice(0, offset));
+}
+
+function transposeFrequency(freq, semitoneShift) {
+  if (!Number.isFinite(freq) || freq <= 0) return freq;
+  const semitones = Number(semitoneShift) || 0;
+  return Number((freq * Math.pow(2, semitones / 12)).toFixed(2));
+}
+
+function resolveActiveMusicTheme() {
+  const activeMeta = state.activeStage ? getStageMeta(state.activeStage) : null;
+  if (activeMeta && activeMeta.theme) return activeMeta.theme;
+
+  const lastMeta = state.lastStage ? getStageMeta(state.lastStage) : null;
+  if (lastMeta && lastMeta.theme) return lastMeta.theme;
+
+  const unlockedIndex = Math.max(0, Math.min(stages.length - 1, Number(state.unlocked || 1) - 1));
+  const fallbackMeta = stages[unlockedIndex] || stages[0] || null;
+  return fallbackMeta ? fallbackMeta.theme : (timelineThemes[0] || null);
+}
+
+function resolveMusicModifier(theme) {
+  const eraModifier = (theme && ERA_MUSIC_MODIFIERS[theme.era]) || {};
+  const sectionModifier = (theme && SECTION_MUSIC_MODIFIERS[theme.name]) || {};
+  return {
+    transpose: Number(eraModifier.transpose || 0) + Number(sectionModifier.transpose || 0),
+    beatScale: (Number(eraModifier.beatScale) || 1) * (Number(sectionModifier.beatScale) || 1),
+    suiteRotate: Number(sectionModifier.suiteRotate || 0),
+    motifRotate: Number(sectionModifier.motifRotate || 0),
+    motifDelta: Number(sectionModifier.motifDelta || 0),
+    filterHz: Number(sectionModifier.filterHz || eraModifier.filterHz || 0),
+    energy: (Number(eraModifier.energy) || 1) * (Number(sectionModifier.energy) || 1),
+    swellScale: Number(sectionModifier.swellScale || 1),
+    drums: {
+      ...(eraModifier.drums || {}),
+      ...(sectionModifier.drums || {})
+    }
+  };
+}
+
+function buildThemedSuites(baseSuites, modifier) {
+  const transpose = Number(modifier.transpose || 0);
+  const beatScale = clampMusicValue(Number(modifier.beatScale || 1), 0.78, 1.24);
+  const suiteRotate = Number(modifier.suiteRotate || 0);
+  const motifRotate = Number(modifier.motifRotate || 0);
+  const motifDelta = Number(modifier.motifDelta || 0);
+
+  return rotateMusicArray(baseSuites, suiteRotate).map((suite) => ({
+    beatMs: clampMusicValue(Math.round(suite.beatMs * beatScale), 520, 920),
+    progression: suite.progression.map((step) => ({
+      chord: step.chord.map((freq, idx) => transposeFrequency(freq, transpose + idx * 0.2)),
+      bass: transposeFrequency(step.bass, transpose - 0.3)
+    })),
+    motif: rotateMusicArray(suite.motif, motifRotate).map((freq) => transposeFrequency(freq, transpose + motifDelta))
+  }));
+}
+
+function buildThemedMusicProfile(baseProfile, modifier) {
+  const suites = buildThemedSuites(baseProfile.suites, modifier);
+  const energy = clampMusicValue(Number(modifier.energy || 1), 0.78, 1.25);
+  const swellScale = clampMusicValue(Number(modifier.swellScale || 1), 0.74, 1.32);
+
+  return {
+    ...baseProfile,
+    suiteWindowMs: Math.round(baseProfile.suiteWindowMs * clampMusicValue(1 / (modifier.beatScale || 1), 0.8, 1.22)),
+    swellPeriodMs: Math.round(baseProfile.swellPeriodMs * swellScale),
+    motifShifts: rotateMusicArray(baseProfile.motifShifts, modifier.motifRotate || 0),
+    rootVol: clampMusicValue(baseProfile.rootVol * energy, 0.03, 0.12),
+    thirdVol: clampMusicValue(baseProfile.thirdVol * energy, 0.02, 0.09),
+    fifthVol: clampMusicValue(baseProfile.fifthVol * energy, 0.02, 0.1),
+    bassVol: clampMusicValue(baseProfile.bassVol * energy, 0.04, 0.13),
+    motifVol: clampMusicValue(baseProfile.motifVol * energy, 0.006, 0.04),
+    droneVol: clampMusicValue(baseProfile.droneVol * (0.94 + (energy - 1) * 0.6), 0.015, 0.06),
+    filterHz: clampMusicValue(modifier.filterHz || 4400, 2200, 6800),
+    suites,
+    drums: {
+      ...baseProfile.drums,
+      ...(modifier.drums || {})
+    }
+  };
+}
+
+function applyMusicFilterProfile(ctx, profile) {
+  if (!audioEngine.musicFilter) return;
+  const filterHz = clampMusicValue(profile.filterHz || 4400, 2200, 6800);
+  audioEngine.musicFilter.frequency.cancelScheduledValues(ctx.currentTime);
+  audioEngine.musicFilter.frequency.setValueAtTime(audioEngine.musicFilter.frequency.value, ctx.currentTime);
+  audioEngine.musicFilter.frequency.exponentialRampToValueAtTime(filterHz, ctx.currentTime + 0.34);
+}
+
 function startMusicLoop() {
   ensureAudio();
   if (!audioEngine.ctx) return;
-  if (!state.audio.music || state.activeStage || audioEngine.timer || audioEngine.finaleTimer || audioEngine.creditsTimer || isFinalOpen() || isCreditsOpen()) return;
+  if (!state.audio.music || state.activeStage || audioEngine.finaleTimer || audioEngine.creditsTimer || isFinalOpen() || isCreditsOpen()) return;
   if (audioEngine.ctx.state === "suspended") audioEngine.ctx.resume().catch(() => {});
 
   const ctx = audioEngine.ctx;
+  const activeTheme = resolveActiveMusicTheme();
   const style = resolvedMusicStyle();
+  const musicProfileKey = `${style}|${activeTheme ? activeTheme.era : "genesis"}|${activeTheme ? activeTheme.name : "Creation Dawn"}`;
+  if (audioEngine.timer && audioEngine.musicProfileKey === musicProfileKey) return;
+
+  stopMusicLoop();
+
   const profileByStyle = {
     cinematic: {
       suiteWindowMs: 46000,
@@ -3446,6 +3923,7 @@ function startMusicLoop() {
       swellBase: 0.92,
       swellRange: 0.1,
       swellPeriodMs: 8200,
+      filterHz: 4300,
       motifShifts: [0, 0, -2, 0, 2, 0],
       rootWave: "triangle",
       colorWave: "sine",
@@ -3506,6 +3984,7 @@ function startMusicLoop() {
       swellBase: 0.95,
       swellRange: 0.11,
       swellPeriodMs: 6400,
+      filterHz: 5000,
       motifShifts: [0, 2, 0, -2],
       rootWave: "sine",
       colorWave: "triangle",
@@ -3559,16 +4038,21 @@ function startMusicLoop() {
       }
     }
   };
-  const profile = profileByStyle[style] || profileByStyle.cinematic;
+  const baseProfile = profileByStyle[style] || profileByStyle.cinematic;
+  const modifier = resolveMusicModifier(activeTheme);
+  const profile = buildThemedMusicProfile(baseProfile, modifier);
   const suiteWindowMs = profile.suiteWindowMs;
   const suites = profile.suites;
 
   if (!audioEngine.musicStartedAt) {
     audioEngine.musicStartedAt = Date.now();
   }
-  stopMusicLoop();
+  audioEngine.musicProfileKey = musicProfileKey;
+  audioEngine.musicThemeName = activeTheme ? activeTheme.name : "";
+  audioEngine.musicThemeEra = activeTheme ? activeTheme.era : "";
   audioEngine.musicStartCtx = ctx.currentTime + 0.18;
   audioEngine.nextBeatAt = audioEngine.musicStartCtx;
+  applyMusicFilterProfile(ctx, profile);
 
   const scheduler = () => {
     if (!state.audio.music || state.activeStage || audioEngine.finaleTimer || audioEngine.creditsTimer || isFinalOpen() || isCreditsOpen()) {
@@ -3624,9 +4108,13 @@ function stopMusicLoop() {
     clearInterval(audioEngine.timer);
     audioEngine.timer = null;
   }
+  audioEngine.step = 0;
   audioEngine.musicStartCtx = 0;
   audioEngine.nextBeatAt = 0;
   audioEngine.musicStartedAt = 0;
+  audioEngine.musicThemeName = "";
+  audioEngine.musicThemeEra = "";
+  audioEngine.musicProfileKey = "";
 }
 
 
@@ -3759,6 +4247,10 @@ function persist() {
     stageActivities: state.stageActivities,
     language: state.language,
     dailyStrike: state.dailyStrike,
+    mastery: state.mastery,
+    dailyDevotion: state.dailyDevotion,
+    weeklyChallenge: state.weeklyChallenge,
+    controls: state.controls,
     activeStage: state.activeStage || "",
     lastStage: state.lastStage || "",
     contentVersion: CONTENT_VERSION
@@ -3783,6 +4275,10 @@ function persist() {
   localStorage.setItem("faithStageActivities", JSON.stringify(state.stageActivities));
   localStorage.setItem("faithLanguage", state.language);
   localStorage.setItem("faithDailyStrike", JSON.stringify(state.dailyStrike));
+  localStorage.setItem("faithMastery", JSON.stringify(state.mastery));
+  localStorage.setItem("faithDailyDevotion", JSON.stringify(state.dailyDevotion));
+  localStorage.setItem("faithWeeklyChallenge", JSON.stringify(state.weeklyChallenge));
+  localStorage.setItem("faithControls", JSON.stringify(state.controls));
   localStorage.setItem("faithContentVersion", CONTENT_VERSION);
 
   if (state.activeStage) localStorage.setItem("faithActiveStage", state.activeStage);
@@ -3830,6 +4326,645 @@ function renderDailyThought() {
   if (dailyThoughtRef) dailyThoughtRef.textContent = item.ref;
   if (dailyThoughtText) dailyThoughtText.textContent = item.thought;
   if (dailyPracticalText) dailyPracticalText.textContent = `${t("practicalPrefix")}: ${item.practical}`;
+}
+
+function eraIntroCopy(era) {
+  const map = {
+    genesis: "Creation to Babel",
+    patriarchs: "Abraham to Joseph",
+    exodus: "Deliverance from Egypt",
+    sinai: "Covenant at Sinai",
+    wilderness: "Trust in the wilderness",
+    conquest: "Crossing and conquest",
+    judges: "Judges and mercy",
+    samuel: "The call of Samuel",
+    saul: "Rise and testing of Saul",
+    david: "Courage of David"
+  };
+  return map[era] || era;
+}
+
+function smoothScrollToNode(node) {
+  if (!node) return;
+  try {
+    node.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+  } catch (_) {
+    node.scrollIntoView();
+  }
+}
+
+function jumpToEra(era) {
+  const selector = `.era-section[data-era="${era}"]`;
+  const eraNode = stageGrid ? stageGrid.querySelector(selector) : null;
+  if (eraNode) {
+    smoothScrollToNode(eraNode);
+    return;
+  }
+  smoothScrollToNode(storyPathHeading || gameDashboard || stageGrid);
+}
+
+function firstSourceEntry(sourceRef) {
+  const first = normalizeSourceRef(sourceRef).split(";")[0] || "";
+  return first.trim();
+}
+
+function masteryKeyFor(meta, activity) {
+  const type = activity && activity.type
+    ? activity.type
+    : activity && activity.mode && activity.mode.engine
+      ? activity.mode.engine
+      : "general";
+  const source = firstSourceEntry((activity && activity.sourceRef) || meta.theme.sourceRef || "");
+  return `${meta.theme.era}|${meta.theme.name}|${type}|${source}`;
+}
+
+function masteryTopicFor(meta, activity) {
+  const source = firstSourceEntry((activity && activity.sourceRef) || meta.theme.sourceRef || "");
+  const type = activity && activity.type === "interactive" && activity.mode
+    ? activity.mode.label || activity.mode.engine || "interactive"
+    : activity && activity.type
+      ? activity.type
+      : "quiz";
+  return {
+    era: meta.theme.era,
+    theme: meta.theme.name,
+    label: `${meta.theme.name} • ${type}`,
+    source
+  };
+}
+
+function recordMasteryOutcome(meta, activity, wasCorrect) {
+  if (!meta) return;
+  const key = masteryKeyFor(meta, activity || {});
+  const topic = masteryTopicFor(meta, activity || {});
+  const existing = state.mastery[key] && typeof state.mastery[key] === "object" ? state.mastery[key] : {};
+  const record = {
+    era: topic.era,
+    theme: topic.theme,
+    label: topic.label,
+    source: topic.source,
+    attempts: Math.max(0, Number(existing.attempts || 0)),
+    correct: Math.max(0, Number(existing.correct || 0)),
+    strength: Math.max(0, Math.min(100, Number(existing.strength || 50))),
+    correctStreak: Math.max(0, Number(existing.correctStreak || 0)),
+    wrongStreak: Math.max(0, Number(existing.wrongStreak || 0)),
+    lastSeenDay: String(existing.lastSeenDay || ""),
+    nextReviewDay: String(existing.nextReviewDay || "")
+  };
+
+  record.attempts += 1;
+  record.lastSeenDay = localDayKey();
+
+  if (wasCorrect) {
+    record.correct += 1;
+    record.correctStreak += 1;
+    record.wrongStreak = 0;
+    const gain = 8 + Math.min(6, record.correctStreak);
+    record.strength = Math.min(100, record.strength + gain);
+  } else {
+    record.wrongStreak += 1;
+    record.correctStreak = 0;
+    const drop = 12 + Math.min(8, record.wrongStreak * 2);
+    record.strength = Math.max(0, record.strength - drop);
+  }
+
+  const reviewDays = wasCorrect
+    ? (record.strength >= 90 ? 7 : record.strength >= 75 ? 4 : record.strength >= 60 ? 2 : 1)
+    : 0;
+  const nextReview = new Date();
+  nextReview.setDate(nextReview.getDate() + reviewDays);
+  record.nextReviewDay = localDayKey(nextReview);
+
+  state.mastery[key] = record;
+}
+
+function masteryEntries() {
+  return Object.entries(state.mastery || {})
+    .map(([key, value]) => ({ key, ...(value || {}) }))
+    .filter((entry) => entry && entry.attempts > 0);
+}
+
+function weakestMasteryEntries(limit = 5) {
+  return masteryEntries()
+    .filter((entry) => Number(entry.strength || 0) < 70 || Number(entry.wrongStreak || 0) > 0)
+    .sort((a, b) => {
+      const strengthDiff = Number(a.strength || 0) - Number(b.strength || 0);
+      if (strengthDiff !== 0) return strengthDiff;
+      return Number(b.wrongStreak || 0) - Number(a.wrongStreak || 0);
+    })
+    .slice(0, Math.max(1, limit));
+}
+
+function ensureExperienceSections() {
+  if (!appRoot) return;
+
+  const storySection = storyPathHeading ? storyPathHeading.closest("section") : null;
+  const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
+  const dailyWordCard = document.querySelector(".daily-word-card");
+  const badgeSection = document.querySelector(".badge-section");
+
+  if (!campaignMapSection || !campaignMapSection.isConnected) {
+    campaignMapSection = document.getElementById("campaignMapSection");
+    if (!campaignMapSection) {
+      campaignMapSection = document.createElement("section");
+      campaignMapSection.id = "campaignMapSection";
+      campaignMapSection.className = "feature-card campaign-map-card";
+      campaignMapSection.innerHTML = [
+        '<div class="feature-head">',
+        '  <h2>Chapter Campaign Map</h2>',
+        '  <p id="campaignMapSummary" class="meta">Journey progress</p>',
+        '</div>',
+        '<p class="meta">Chapter intros, boss stages, and a clear finish line.</p>',
+        '<div id="campaignMapTrack" class="campaign-map-track"></div>',
+        '<p id="campaignMapFinish" class="meta"></p>'
+      ].join("");
+      if (storySection && storySection.parentNode) {
+        storySection.parentNode.insertBefore(campaignMapSection, storySection);
+      } else {
+        appRoot.appendChild(campaignMapSection);
+      }
+    }
+    campaignMapTrack = campaignMapSection.querySelector("#campaignMapTrack");
+    campaignMapSummary = campaignMapSection.querySelector("#campaignMapSummary");
+    campaignMapFinish = campaignMapSection.querySelector("#campaignMapFinish");
+  }
+
+  if (!masterySection || !masterySection.isConnected) {
+    masterySection = document.getElementById("masterySection");
+    if (!masterySection) {
+      masterySection = document.createElement("section");
+      masterySection.id = "masterySection";
+      masterySection.className = "feature-card mastery-card";
+      masterySection.innerHTML = [
+        '<div class="feature-head">',
+        '  <h2>Mastery Strength</h2>',
+        '  <p id="masteryOverall" class="meta">Learning strength: 0%</p>',
+        '</div>',
+        '<div id="masteryBars" class="mastery-bars"></div>',
+        '<div class="feature-head">',
+        '  <h3>Weak Areas To Revisit</h3>',
+        '  <button id="focusWeakBtn" class="ghost-btn" type="button">Focus Weak Area</button>',
+        '</div>',
+        '<div id="weakAreaList" class="weak-area-list"></div>'
+      ].join("");
+      if (storySection && storySection.parentNode) {
+        storySection.parentNode.insertBefore(masterySection, storySection);
+      } else {
+        appRoot.appendChild(masterySection);
+      }
+    }
+    masteryOverall = masterySection.querySelector("#masteryOverall");
+    masteryBars = masterySection.querySelector("#masteryBars");
+    weakAreaList = masterySection.querySelector("#weakAreaList");
+    focusWeakBtn = masterySection.querySelector("#focusWeakBtn");
+    if (focusWeakBtn) {
+      focusWeakBtn.onclick = () => {
+        const weak = weakestMasteryEntries(1)[0];
+        if (weak && weak.era) jumpToEra(weak.era);
+      };
+    }
+  }
+
+  if (!dailyDevotionSection || !dailyDevotionSection.isConnected) {
+    dailyDevotionSection = document.getElementById("dailyDevotionSection");
+    if (!dailyDevotionSection) {
+      dailyDevotionSection = document.createElement("section");
+      dailyDevotionSection.id = "dailyDevotionSection";
+      dailyDevotionSection.className = "feature-card devotion-card";
+      dailyDevotionSection.innerHTML = [
+        '<div class="feature-head">',
+        '  <h2>Daily Devotion Quest</h2>',
+        '  <p id="dailyDevotionStatus" class="meta">0/3 completed</p>',
+        '</div>',
+        '<p id="dailyDevotionPrompt" class="meta"></p>',
+        '<p id="dailyDevotionAction" class="meta"></p>',
+        '<textarea id="dailyDevotionReflection" class="journal-input" rows="3" placeholder="One short reflection for today"></textarea>',
+        '<div class="feature-actions">',
+        '  <button id="completeDevotionChallengeBtn" class="ghost-btn" type="button">Complete Daily Challenge</button>',
+        '  <button id="completeDevotionActionBtn" class="ghost-btn" type="button">Complete Practical Action</button>',
+        '  <button id="saveDevotionReflectionBtn" class="ghost-btn" type="button">Save Reflection</button>',
+        '  <button id="claimDevotionRewardBtn" class="cta-btn" type="button">Claim Reward</button>',
+        '</div>'
+      ].join("");
+      if (dailyWordCard && dailyWordCard.parentNode) {
+        dailyWordCard.parentNode.insertBefore(dailyDevotionSection, dailyWordCard.nextSibling);
+      } else if (progressSection && progressSection.parentNode) {
+        progressSection.parentNode.insertBefore(dailyDevotionSection, progressSection.nextSibling);
+      } else {
+        appRoot.appendChild(dailyDevotionSection);
+      }
+    }
+    dailyDevotionStatus = dailyDevotionSection.querySelector("#dailyDevotionStatus");
+    dailyDevotionPrompt = dailyDevotionSection.querySelector("#dailyDevotionPrompt");
+    dailyDevotionAction = dailyDevotionSection.querySelector("#dailyDevotionAction");
+    dailyDevotionReflection = dailyDevotionSection.querySelector("#dailyDevotionReflection");
+    completeDevotionChallengeBtn = dailyDevotionSection.querySelector("#completeDevotionChallengeBtn");
+    completeDevotionActionBtn = dailyDevotionSection.querySelector("#completeDevotionActionBtn");
+    saveDevotionReflectionBtn = dailyDevotionSection.querySelector("#saveDevotionReflectionBtn");
+    claimDevotionRewardBtn = dailyDevotionSection.querySelector("#claimDevotionRewardBtn");
+
+    if (completeDevotionChallengeBtn) {
+      completeDevotionChallengeBtn.onclick = () => {
+        ensureDailyDevotionState();
+        state.dailyDevotion.challenge = true;
+        persist();
+        render();
+      };
+    }
+    if (completeDevotionActionBtn) {
+      completeDevotionActionBtn.onclick = () => {
+        ensureDailyDevotionState();
+        state.dailyDevotion.action = true;
+        persist();
+        render();
+      };
+    }
+    if (saveDevotionReflectionBtn) {
+      saveDevotionReflectionBtn.onclick = () => {
+        ensureDailyDevotionState();
+        const note = String((dailyDevotionReflection && dailyDevotionReflection.value) || "").trim();
+        if (!note) return;
+        state.dailyDevotion.note = note.slice(0, 240);
+        state.dailyDevotion.reflection = true;
+        persist();
+        render();
+      };
+    }
+    if (claimDevotionRewardBtn) {
+      claimDevotionRewardBtn.onclick = () => {
+        ensureDailyDevotionState();
+        const ready = state.dailyDevotion.challenge && state.dailyDevotion.action && state.dailyDevotion.reflection;
+        if (!ready || state.dailyDevotion.reward) return;
+        state.dailyDevotion.reward = true;
+        awardXp(DAILY_DEVOTION_REWARD_XP);
+        state.lives = Math.min(MAX_LIVES, state.lives + DAILY_DEVOTION_REWARD_LIFE);
+        playSfx("success");
+        persist();
+        render();
+      };
+    }
+  }
+
+  if (!weeklyChallengeSection || !weeklyChallengeSection.isConnected) {
+    weeklyChallengeSection = document.getElementById("weeklyChallengeSection");
+    if (!weeklyChallengeSection) {
+      weeklyChallengeSection = document.createElement("section");
+      weeklyChallengeSection.id = "weeklyChallengeSection";
+      weeklyChallengeSection.className = "feature-card weekly-card";
+      weeklyChallengeSection.innerHTML = [
+        '<div class="feature-head">',
+        '  <h2>Weekly Challenge Card</h2>',
+        '  <p id="weeklyChallengeMeta" class="meta"></p>',
+        '</div>',
+        '<p id="weeklyChallengeText" class="meta"></p>',
+        '<div class="feature-actions">',
+        '  <button id="shareWeeklyChallengeBtn" class="ghost-btn" type="button">Share Weekly Card</button>',
+        '</div>'
+      ].join("");
+      if (badgeSection && badgeSection.parentNode) {
+        badgeSection.parentNode.insertBefore(weeklyChallengeSection, badgeSection);
+      } else {
+        appRoot.appendChild(weeklyChallengeSection);
+      }
+    }
+    weeklyChallengeMeta = weeklyChallengeSection.querySelector("#weeklyChallengeMeta");
+    weeklyChallengeText = weeklyChallengeSection.querySelector("#weeklyChallengeText");
+    shareWeeklyChallengeBtn = weeklyChallengeSection.querySelector("#shareWeeklyChallengeBtn");
+    if (shareWeeklyChallengeBtn) {
+      shareWeeklyChallengeBtn.onclick = () => {
+        const text = `FAITHSHIELD weekly challenge: ${state.weeklyChallenge.progress}/${state.weeklyChallenge.target} stages in ${formatEraLabel(state.weeklyChallenge.era)} (${state.weeklyChallenge.weekKey}).`;
+        if (navigator.share) {
+          navigator.share({ title: "FAITHSHIELD Weekly Challenge", text }).catch(() => {});
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).catch(() => {});
+        }
+        state.weeklyChallenge.shared = true;
+        persist();
+        renderWeeklyChallenge();
+      };
+    }
+  }
+
+  if (!desktopControlsSection || !desktopControlsSection.isConnected) {
+    desktopControlsSection = document.getElementById("desktopControlsSection");
+    if (!desktopControlsSection) {
+      desktopControlsSection = document.createElement("section");
+      desktopControlsSection.id = "desktopControlsSection";
+      desktopControlsSection.className = "feature-card desktop-controls-card";
+      desktopControlsSection.innerHTML = [
+        '<div class="feature-head">',
+        '  <h2>Desktop Quality Controls</h2>',
+        '  <p class="meta">Keyboard-first flow + optional controller support</p>',
+        '</div>',
+        '<div class="toggle-list">',
+        '  <label class="toggle-row" for="hotkeysToggle"><input id="hotkeysToggle" type="checkbox" /> Enable global hotkeys</label>',
+        '  <label class="toggle-row" for="controllerToggle"><input id="controllerToggle" type="checkbox" /> Enable controller support (beta)</label>',
+        '</div>',
+        '<p class="meta">Hotkeys: H = hub, P = story path, M = music, Esc = close panel.</p>'
+      ].join("");
+      if (progressSection && progressSection.parentNode) {
+        progressSection.parentNode.insertBefore(desktopControlsSection, progressSection.nextSibling);
+      } else {
+        appRoot.appendChild(desktopControlsSection);
+      }
+    }
+    hotkeysToggle = desktopControlsSection.querySelector("#hotkeysToggle");
+    controllerToggle = desktopControlsSection.querySelector("#controllerToggle");
+
+    if (hotkeysToggle) {
+      hotkeysToggle.onchange = (event) => {
+        state.controls.hotkeys = Boolean(event.target.checked);
+        persist();
+      };
+    }
+    if (controllerToggle) {
+      controllerToggle.onchange = (event) => {
+        state.controls.controller = Boolean(event.target.checked);
+        persist();
+      };
+    }
+  }
+}
+
+function renderCampaignMap() {
+  ensureExperienceSections();
+  if (!campaignMapTrack) return;
+  const sections = buildEraSections();
+  const completedSet = new Set(state.completed);
+  campaignMapTrack.innerHTML = "";
+  if (!sections.length) return;
+
+  sections.forEach((section, index) => {
+    const total = section.items.length;
+    const doneCount = section.items.reduce((sum, item) => sum + (completedSet.has(item.meta.id) ? 1 : 0), 0);
+    const firstIdx = section.items[0] ? section.items[0].index : 0;
+    const unlocked = firstIdx + 1 <= state.unlocked;
+    const bossMeta = [...section.items].reverse().map((item) => item.meta).find((meta) => meta.stage === 5) || section.items[section.items.length - 1].meta;
+    const bossDone = completedSet.has(bossMeta.id);
+
+    const node = document.createElement("button");
+    node.type = "button";
+    node.className = `campaign-node ${doneCount >= total ? "done" : unlocked ? "open" : "locked"}`;
+    node.innerHTML = [
+      `<span class="campaign-era">${formatEraLabel(section.era)}</span>`,
+      `<span class="campaign-intro">${eraIntroCopy(section.era)}</span>`,
+      `<span class="campaign-progress">${doneCount}/${total} stages</span>`,
+      `<span class="campaign-boss">${bossDone ? "Boss cleared" : "Boss stage pending"}</span>`
+    ].join("");
+    node.addEventListener("click", () => jumpToEra(section.era));
+    campaignMapTrack.appendChild(node);
+
+    if (index < sections.length - 1) {
+      const divider = document.createElement("span");
+      divider.className = "campaign-divider";
+      divider.textContent = "➜";
+      campaignMapTrack.appendChild(divider);
+    }
+  });
+
+  if (campaignMapSummary) {
+    const completeEras = sections.filter((section) => section.items.every((item) => completedSet.has(item.meta.id))).length;
+    campaignMapSummary.textContent = `${completeEras}/${sections.length} eras completed`;
+  }
+  if (campaignMapFinish) {
+    const pct = Math.round((state.completed.length / TOTAL_STAGES) * 100);
+    campaignMapFinish.textContent = pct >= 100
+      ? "Finish Line: reached. Shield of Faith ending unlocked."
+      : `Finish Line: ${pct}% of the full campaign complete.`;
+  }
+}
+
+function renderMasteryPanel() {
+  ensureExperienceSections();
+  if (!masteryBars || !weakAreaList) return;
+  const entries = masteryEntries();
+  masteryBars.innerHTML = "";
+  weakAreaList.innerHTML = "";
+
+  if (!entries.length) {
+    if (masteryOverall) masteryOverall.textContent = "Learning strength: 0%";
+    const empty = document.createElement("p");
+    empty.className = "meta";
+    empty.textContent = "Complete stages to build mastery and spaced review targets.";
+    masteryBars.appendChild(empty);
+    return;
+  }
+
+  const average = Math.round(entries.reduce((sum, item) => sum + Number(item.strength || 0), 0) / entries.length);
+  if (masteryOverall) masteryOverall.textContent = `Learning strength: ${average}% (goal ${MASTERY_TARGET_PERCENT}%)`;
+
+  entries
+    .sort((a, b) => Number(b.attempts || 0) - Number(a.attempts || 0))
+    .slice(0, 6)
+    .forEach((entry) => {
+      const row = document.createElement("div");
+      row.className = "mastery-row";
+      const label = document.createElement("p");
+      label.className = "meta";
+      label.textContent = entry.label || entry.theme || "Topic";
+      const bar = document.createElement("div");
+      bar.className = "mastery-bar";
+      const fill = document.createElement("span");
+      fill.style.width = `${Math.max(0, Math.min(100, Number(entry.strength || 0)))}%`;
+      bar.appendChild(fill);
+      row.append(label, bar);
+      masteryBars.appendChild(row);
+    });
+
+  const weak = weakestMasteryEntries(5);
+  if (!weak.length) {
+    const stable = document.createElement("p");
+    stable.className = "meta";
+    stable.textContent = "No weak areas right now. Keep going.";
+    weakAreaList.appendChild(stable);
+    return;
+  }
+
+  weak.forEach((entry) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "ghost-btn weak-chip";
+    const strength = Math.round(Number(entry.strength || 0));
+    chip.textContent = `${entry.theme || "Topic"} • ${strength}%`;
+    chip.addEventListener("click", () => jumpToEra(entry.era));
+    weakAreaList.appendChild(chip);
+  });
+}
+
+function renderDailyDevotionQuest() {
+  ensureExperienceSections();
+  if (!dailyDevotionSection) return;
+  ensureDailyDevotionState();
+
+  const todayWord = dailyThoughtForToday();
+  const completed = [state.dailyDevotion.challenge, state.dailyDevotion.action, state.dailyDevotion.reflection].filter(Boolean).length;
+
+  if (dailyDevotionStatus) dailyDevotionStatus.textContent = `${completed}/3 completed`;
+  if (dailyDevotionPrompt) {
+    dailyDevotionPrompt.textContent = `Daily challenge: ${todayWord ? todayWord.thought : "Read today's thought and respond."}`;
+  }
+  if (dailyDevotionAction) {
+    dailyDevotionAction.textContent = `Practical action: ${todayWord ? todayWord.practical : "Take one practical step today."}`;
+  }
+  if (dailyDevotionReflection && document.activeElement !== dailyDevotionReflection) {
+    dailyDevotionReflection.value = state.dailyDevotion.note || "";
+  }
+
+  if (completeDevotionChallengeBtn) completeDevotionChallengeBtn.disabled = state.dailyDevotion.challenge;
+  if (completeDevotionActionBtn) completeDevotionActionBtn.disabled = state.dailyDevotion.action;
+  if (saveDevotionReflectionBtn) saveDevotionReflectionBtn.disabled = state.dailyDevotion.reflection && Boolean(state.dailyDevotion.note);
+  if (claimDevotionRewardBtn) {
+    const ready = state.dailyDevotion.challenge && state.dailyDevotion.action && state.dailyDevotion.reflection;
+    claimDevotionRewardBtn.disabled = !ready || state.dailyDevotion.reward;
+    claimDevotionRewardBtn.textContent = state.dailyDevotion.reward
+      ? "Reward Claimed"
+      : `Claim Reward (+${DAILY_DEVOTION_REWARD_XP} XP)`;
+  }
+}
+
+function renderWeeklyChallenge() {
+  ensureExperienceSections();
+  if (!weeklyChallengeSection) return;
+  ensureWeeklyChallengeState();
+  const eraLabel = formatEraLabel(state.weeklyChallenge.era);
+  if (weeklyChallengeMeta) {
+    weeklyChallengeMeta.textContent = `${state.weeklyChallenge.weekKey} • ${eraLabel}`;
+  }
+  if (weeklyChallengeText) {
+    weeklyChallengeText.textContent = `I completed ${state.weeklyChallenge.progress}/${state.weeklyChallenge.target} stages in ${eraLabel} this week.`;
+  }
+}
+
+function renderDesktopControls() {
+  ensureExperienceSections();
+  if (!desktopControlsSection) return;
+  const desktop = isDesktopViewport();
+  desktopControlsSection.classList.toggle("hidden", !desktop);
+  if (hotkeysToggle) hotkeysToggle.checked = Boolean(state.controls.hotkeys);
+  if (controllerToggle) controllerToggle.checked = Boolean(state.controls.controller);
+}
+
+function dispatchVirtualKey(key) {
+  const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+  window.dispatchEvent(event);
+}
+
+function closeTopOverlay() {
+  if (isStoryTheaterOpen()) {
+    closeStoryTheater();
+    return;
+  }
+  if (isCreditsOpen()) {
+    hideCreditsOverlay();
+    return;
+  }
+  if (isFinalOpen()) {
+    hideFinalOverlay();
+    return;
+  }
+  if (shareOverlay && !shareOverlay.classList.contains("hidden")) {
+    closeShareOverlay();
+    return;
+  }
+  if (badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden")) {
+    closeBadgeShield();
+    return;
+  }
+  if (activityOverlay && !activityOverlay.classList.contains("hidden")) {
+    closeActivity();
+  }
+}
+
+function handleGlobalHotkeys(event) {
+  if (!state.controls.hotkeys) return;
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  const target = event.target;
+  const tagName = target && target.tagName ? String(target.tagName).toUpperCase() : "";
+  if (tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || (target && target.isContentEditable)) return;
+
+  if (event.key === "h" || event.key === "H") {
+    event.preventDefault();
+    smoothScrollToNode(gameDashboard || appRoot);
+    return;
+  }
+  if (event.key === "p" || event.key === "P") {
+    event.preventDefault();
+    smoothScrollToNode(storyPathHeading || stageGrid);
+    return;
+  }
+  if (event.key === "m" || event.key === "M") {
+    event.preventDefault();
+    state.audio.music = !state.audio.music;
+    updateAudioState();
+    return;
+  }
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeTopOverlay();
+  }
+}
+
+function pollControllerSupport() {
+  controllerPollHandle = window.requestAnimationFrame(pollControllerSupport);
+  if (!state.controls.controller || !isDesktopViewport() || typeof navigator.getGamepads !== "function") return;
+  const pads = navigator.getGamepads();
+  const pad = pads && pads[0];
+  if (!pad) {
+    controllerPrevState = { left: false, right: false, up: false, down: false, confirm: false, cancel: false };
+    return;
+  }
+
+  const axisX = Number((pad.axes && pad.axes[0]) || 0);
+  const axisY = Number((pad.axes && pad.axes[1]) || 0);
+  const nextState = {
+    left: Boolean((pad.buttons[14] && pad.buttons[14].pressed) || axisX < -0.5),
+    right: Boolean((pad.buttons[15] && pad.buttons[15].pressed) || axisX > 0.5),
+    up: Boolean((pad.buttons[12] && pad.buttons[12].pressed) || axisY < -0.5),
+    down: Boolean((pad.buttons[13] && pad.buttons[13].pressed) || axisY > 0.5),
+    confirm: Boolean((pad.buttons[0] && pad.buttons[0].pressed) || (pad.buttons[7] && pad.buttons[7].pressed)),
+    cancel: Boolean((pad.buttons[1] && pad.buttons[1].pressed) || (pad.buttons[9] && pad.buttons[9].pressed))
+  };
+
+  if (nextState.left && !controllerPrevState.left) dispatchVirtualKey("ArrowLeft");
+  if (nextState.right && !controllerPrevState.right) dispatchVirtualKey("ArrowRight");
+  if (nextState.up && !controllerPrevState.up) dispatchVirtualKey("ArrowUp");
+  if (nextState.down && !controllerPrevState.down) dispatchVirtualKey("ArrowDown");
+  if (nextState.confirm && !controllerPrevState.confirm) dispatchVirtualKey("Enter");
+  if (nextState.cancel && !controllerPrevState.cancel) dispatchVirtualKey("Escape");
+
+  controllerPrevState = nextState;
+}
+
+function initDesktopControlBindings() {
+  if (!desktopHotkeysBound) {
+    window.addEventListener("keydown", handleGlobalHotkeys, true);
+    desktopHotkeysBound = true;
+  }
+  if (!controllerPollHandle) {
+    controllerPollHandle = window.requestAnimationFrame(pollControllerSupport);
+  }
+}
+
+function trackDailyAndWeeklyCompletion(meta, replay = false) {
+  ensureDailyDevotionState();
+  ensureWeeklyChallengeState();
+  if (!replay) {
+    state.dailyDevotion.challenge = true;
+    if (meta && meta.theme && meta.theme.era === state.weeklyChallenge.era) {
+      state.weeklyChallenge.progress = Math.min(
+        state.weeklyChallenge.target,
+        Number(state.weeklyChallenge.progress || 0) + 1
+      );
+    }
+  }
+}
+
+function renderExperienceSections() {
+  renderCampaignMap();
+  renderMasteryPanel();
+  renderDailyDevotionQuest();
+  renderWeeklyChallenge();
+  renderDesktopControls();
 }
 
 function updateHud() {
@@ -4412,12 +5547,17 @@ function loseLife() {
   if (parsed) state.levelFailures[String(parsed.level)] = true;
 
   const activeStageId = state.activeStage || "";
+  const activeMeta = getStageMeta(activeStageId);
   const activeActivity = state.stageActivities[state.difficulty + ":" + activeStageId];
   const activityType = activeActivity && activeActivity.type
     ? (activeActivity.type === "interactive" && activeActivity.mode && activeActivity.mode.engine
       ? activeActivity.mode.engine
       : activeActivity.type)
     : "general";
+
+  if (activeMeta && activeActivity) {
+    recordMasteryOutcome(activeMeta, activeActivity, false);
+  }
 
   playSfx("life");
   persist();
@@ -4597,8 +5737,14 @@ function recordLevelCompletionIfNeeded(level) {
 function markDone(stageId, mode) {
   const unlockedDifficultyBadge = markDifficultyPassForCurrentRun();
   const modeEngine = mode && mode.engine ? mode.engine : "question";
+  const meta = getStageMeta(stageId);
+  const stageActivity = state.stageActivities[state.difficulty + ":" + stageId] || null;
 
   if (isDone(stageId)) {
+    if (meta && stageActivity) {
+      recordMasteryOutcome(meta, stageActivity, true);
+      trackDailyAndWeeklyCompletion(meta, true);
+    }
     const unlockedBadges = maybeAwardBadges();
     const celebrationBadge = pickCelebrationBadge(unlockedBadges, unlockedDifficultyBadge);
     if (celebrationBadge) {
@@ -4638,6 +5784,10 @@ function markDone(stageId, mode) {
 
   const parsed = parseStageId(stageId);
   if (parsed) recordLevelCompletionIfNeeded(parsed.level);
+  if (meta && stageActivity) {
+    recordMasteryOutcome(meta, stageActivity, true);
+    trackDailyAndWeeklyCompletion(meta, false);
+  }
 
   const unlockedBadges = maybeAwardBadges();
   const celebrationBadge = pickCelebrationBadge(unlockedBadges, unlockedDifficultyBadge);
@@ -4684,6 +5834,23 @@ function resetProgress() {
   state.finalSeen = false;
   state.questionHistory = {};
   state.stageActivities = {};
+  state.mastery = {};
+  state.dailyDevotion = {
+    day: localDayKey(),
+    challenge: false,
+    action: false,
+    reflection: false,
+    reward: false,
+    note: ""
+  };
+  const currentWeek = isoWeekKey();
+  state.weeklyChallenge = {
+    weekKey: currentWeek,
+    era: pickWeeklyEraByKey(currentWeek),
+    target: WEEKLY_CHALLENGE_TARGET,
+    progress: 0,
+    shared: false
+  };
 
   stopFinaleMusic();
   stopCreditsMusic();
@@ -5226,9 +6393,89 @@ function buildMatchingActivity(meta, theme, usedSources) {
   };
 }
 
+const HEBREW_NAME_MARKERS = [
+  "yahweh",
+  "lord yahweh",
+  "yahweh yireh",
+  "yahweh nissi",
+  "yahweh shalom",
+  "yahweh of armies",
+  "el shaddai",
+  "el elyon",
+  "el roi",
+  "elohim",
+  "god most high",
+  "god almighty",
+  "god who sees"
+];
+
+function isSpeakerQuestion(item) {
+  const prompt = String(item && item.prompt || "").trim();
+  return /^who (said|asked|answered|told|replied|cried)\b/i.test(prompt);
+}
+
+function isHebrewNameQuestion(item) {
+  const prompt = String(item && item.prompt || "").toLowerCase();
+  const answer = normalizeQuizAnswerKey(item && item.answer);
+  if (HEBREW_NAME_MARKERS.some((marker) => answer.includes(marker))) return true;
+  return /name of god|what does|which name|divine name|title of god|hebrew/i.test(prompt);
+}
+
+function quizPoolForDifficulty(difficulty) {
+  if (difficulty.id === "advanced") return advancedQuizBank;
+  if (difficulty.id === "medium") return mediumQuizBank;
+  return quizBank;
+}
+
+function buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind) {
+  const kindFilter = kind === "speaker" ? isSpeakerQuestion : isHebrewNameQuestion;
+  const themeFilter = (item) => itemMatchesTheme(item, theme) && kindFilter(item);
+  const scopeKey = themeScopeKey(theme, kind);
+
+  const preferred = quizPoolForDifficulty(difficulty);
+  const combinedPool = preferred
+    .concat(quizBank)
+    .concat(mediumQuizBank)
+    .concat(advancedQuizBank);
+  const dedupedPool = [];
+  const seen = new Set();
+  combinedPool.forEach((item) => {
+    const key = historyKeyForItem(item, "quiz");
+    if (seen.has(key)) return;
+    seen.add(key);
+    dedupedPool.push(item);
+  });
+
+  const pick = pickWithoutRepeat(dedupedPool, theme.era, kind, {
+    usedSources,
+    allowReuse: false,
+    filter: themeFilter,
+    scopeKey,
+    requireScoped: true
+  });
+  if (!pick.item) return null;
+
+  const q = pick.item;
+  const intro = kind === "speaker"
+    ? challengeCopy("Who-Said-It mode", "Modo ¿Quién lo dijo?")
+    : challengeCopy("Names of God mode", "Modo Nombres de Dios");
+  return {
+    type: kind,
+    prompt: stagePrompt(meta, `${intro}: ${q.prompt}`, pick.reuseCount),
+    options: buildQuizOptions(q, theme.era, difficulty.quizOptions, dedupedPool.filter(themeFilter)),
+    answer: q.answer,
+    sourceRef: q.sourceRef,
+    historySourceRef: q.historySourceRef || historyKeyForItem(q, kind)
+  };
+}
+
 function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, kind);
+
+  if (kind === "speaker" || kind === "hebrew") {
+    return buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind);
+  }
 
   if (kind === "quiz") {
     const quizSource = difficulty.id === "advanced" ? advancedQuizBank : difficulty.id === "medium" ? mediumQuizBank : quizBank;
@@ -5330,10 +6577,10 @@ function rotateKinds(list, steps = 0) {
 
 function stageKindPlan(meta, difficulty) {
   const stageRings = {
-    1: ["quiz", "truefalse", "matching", "order", "fact", "spelling"],
-    2: ["order", "matching", "quiz", "fact", "spelling", "truefalse"],
-    3: ["fact", "spelling", "matching", "quiz", "order", "truefalse"],
-    4: ["spelling", "truefalse", "order", "matching", "quiz", "fact"]
+    1: ["quiz", "speaker", "truefalse", "matching", "order", "fact", "spelling", "hebrew"],
+    2: ["order", "matching", "hebrew", "quiz", "fact", "spelling", "speaker", "truefalse"],
+    3: ["fact", "spelling", "speaker", "matching", "quiz", "order", "hebrew", "truefalse"],
+    4: ["hebrew", "truefalse", "order", "speaker", "quiz", "fact", "matching", "spelling"]
   };
   const baseKinds = stageRings[meta.stage] || [];
   if (!baseKinds.length) return [];
@@ -5346,6 +6593,8 @@ function stageKindPlan(meta, difficulty) {
 function buildQuestionPoolExhaustedActivity(meta, activityKind = "question") {
   const kindLabel = {
     quiz: "quiz questions",
+    speaker: "Who-Said-It questions",
+    hebrew: "Hebrew name questions",
     spelling: "fill-in-the-blank verse questions",
     order: "order challenges",
     fact: "fact builder challenges",
@@ -5866,7 +7115,9 @@ function activityFor(meta) {
   if (meta.stage >= 1 && meta.stage <= 4) {
     for (const kind of stageKindPlan(meta, difficulty)) {
       const usedSources = usedQuestionSourcesForDifficulty(state.difficulty, sourceBucketForKind(kind), meta.theme);
-      if (kind === "truefalse") {
+      if (kind === "speaker" || kind === "hebrew") {
+        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind);
+      } else if (kind === "truefalse") {
         activity = buildTrueFalseActivity(meta, meta.theme, usedSources);
       } else if (kind === "matching") {
         activity = buildMatchingActivity(meta, meta.theme, usedSources);
@@ -6249,6 +7500,7 @@ function render() {
   progressFill.style.width = `${progressPct}%`;
   progressText.textContent = `${t("progressLabel")}: ${completedCount}/${TOTAL_STAGES} ${t("stageWord")} | ${completedLevels}/${TOTAL_LEVELS} ${t("levelWordPlural").toLowerCase()}`;
 
+  renderExperienceSections();
   scheduleStageGridRender();
   scheduleHubMediaWarmup();
 }
@@ -7262,6 +8514,8 @@ function cutsceneNarrative(meta, activity) {
 
   const activityLines = {
     quiz: "Answer with confidence from God's Word.",
+    speaker: "Listen closely and identify who said it in Scripture.",
+    hebrew: "Study God's revealed names and their meaning in context.",
     spelling: "Type carefully. Every letter matters.",
     order: "Set the events in their faithful order.",
     fact: "Build the truth in the right sequence.",
@@ -7283,7 +8537,7 @@ function renderStageActivity(meta, activity) {
     return;
   }
 
-  if (activity.type === "quiz") {
+  if (activity.type === "quiz" || activity.type === "speaker" || activity.type === "hebrew") {
     renderQuiz(meta, activity);
   } else if (activity.type === "truefalse") {
     renderTrueFalse(meta, activity);
@@ -10090,6 +11344,7 @@ if (window.visualViewport) {
 window.setInterval(clampHorizontalScroll, 420);
 
 initPerformanceModeWatcher();
+initDesktopControlBindings();
 render();
 
 updateAudioState();
