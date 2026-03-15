@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-14-final-v6";
+const CONTENT_VERSION = "2026-03-14-final-v7";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -1095,7 +1095,9 @@ const UI_TEXT_BY_LANGUAGE = {
     narrationOn: "narration on",
     tapPlay: "tap Play if needed",
     loadingPreview: "Loading preview...",
-    practicalPrefix: "Practical point"
+    practicalPrefix: "Practical point",
+    badgeUnlockedTitle: "Badge Unlocked",
+    badgeUnlockedNow: "New badge earned."
   },
   es: {
     progressLabel: "Progreso",
@@ -1189,7 +1191,9 @@ const UI_TEXT_BY_LANGUAGE = {
     narrationOn: "narracion activa",
     tapPlay: "toca Play si es necesario",
     loadingPreview: "Cargando vista previa...",
-    practicalPrefix: "Punto practico"
+    practicalPrefix: "Punto practico",
+    badgeUnlockedTitle: "Insignia Desbloqueada",
+    badgeUnlockedNow: "Nueva insignia ganada."
   }
 };
 
@@ -2952,6 +2956,8 @@ const audioEngine = {
 };
 const AUDIO_UNLOCK_EVENTS = ["pointerdown", "touchstart", "mousedown", "click", "keydown"];
 let audioUnlockArmed = false;
+let badgeUnlockToastTimer = 0;
+let badgeUnlockToastNode = null;
 
 function clearAudioNodes() {
   audioEngine.ctx = null;
@@ -3208,18 +3214,21 @@ function playSfx(name) {
     playTone(523.25, 0.1, "triangle", 0.18);
     setTimeout(() => playTone(659.25, 0.12, "triangle", 0.18), 90);
   } else if (name === "badge") {
-    // Badge fanfare: warm trumpet-like rise so players clearly hear unlock moments.
-    const note = (freq, delay, duration, leadVol = 0.13, colorVol = 0.068) => {
+    // Badge fanfare: 4-second trumpet-style celebration for badge unlock moments.
+    const note = (freq, delay, duration, leadVol = 0.12, colorVol = 0.064) => {
       setTimeout(() => {
         playTone(freq, duration, "sawtooth", leadVol);
-        playTone(freq * 2, Math.max(0.1, duration - 0.04), "triangle", colorVol);
+        playTone(freq * 2, Math.max(0.12, duration - 0.05), "triangle", colorVol);
       }, delay);
     };
-    note(392.0, 0, 0.16);
-    note(523.25, 86, 0.18);
-    note(659.25, 178, 0.2, 0.14, 0.072);
-    note(783.99, 280, 0.22, 0.15, 0.076);
-    note(1046.5, 394, 0.42, 0.16, 0.082);
+    note(392.0, 0, 0.24);
+    note(523.25, 460, 0.28);
+    note(587.33, 920, 0.3, 0.125, 0.068);
+    note(659.25, 1380, 0.32, 0.13, 0.07);
+    note(698.46, 1840, 0.34, 0.135, 0.074);
+    note(783.99, 2320, 0.38, 0.14, 0.078);
+    note(880.0, 2840, 0.46, 0.145, 0.082);
+    note(1046.5, 3340, 0.74, 0.155, 0.086);
   } else if (name === "fail") {
     playTone(185, 0.12, "square", 0.16);
     setTimeout(() => playTone(138.59, 0.12, "square", 0.14), 100);
@@ -3793,16 +3802,23 @@ function hasAllDifficultyPasses(sourceState = state) {
 
 function markDifficultyPassForCurrentRun() {
   const difficultyId = normalizeDifficulty(state.difficulty);
-  if (!DIFFICULTY_LEVELS.includes(difficultyId)) return false;
+  if (!DIFFICULTY_LEVELS.includes(difficultyId)) return null;
   if (!state.stats.difficultyPass || typeof state.stats.difficultyPass !== "object") {
     state.stats.difficultyPass = { easy: false, medium: false, advanced: false };
   }
-  if (state.stats.difficultyPass[difficultyId]) return false;
+  if (state.stats.difficultyPass[difficultyId]) return null;
 
   state.stats.difficultyPass[difficultyId] = true;
   const badge = DIFFICULTY_BADGE_META[difficultyId];
-  if (badge) state.lastBadge = `${badge.icon} ${badge.name}`;
-  return true;
+  if (!badge) return null;
+
+  state.lastBadge = `${badge.icon} ${badge.name}`;
+  return {
+    id: badge.id,
+    icon: badge.icon || "🛡️",
+    name: badge.name,
+    accomplishment: badge.accomplishment || ""
+  };
 }
 
 function renderDifficultyBadgeRow() {
@@ -3935,6 +3951,49 @@ function closeBadgeShield() {
   if (!badgeShieldOverlay) return;
   badgeShieldOverlay.classList.add("hidden");
   updateOverlayLock();
+}
+
+function ensureBadgeUnlockToast() {
+  if (badgeUnlockToastNode && badgeUnlockToastNode.isConnected) return badgeUnlockToastNode;
+  if (!document.body) return null;
+
+  const node = document.createElement("aside");
+  node.className = "badge-unlock-toast";
+  node.setAttribute("role", "status");
+  node.setAttribute("aria-live", "polite");
+  node.innerHTML = [
+    '<div class="badge-unlock-card">',
+    '<p class="badge-unlock-kicker"></p>',
+    '<p class="badge-unlock-name"><span class="badge-unlock-icon">🛡️</span><span class="badge-unlock-title"></span></p>',
+    '<p class="badge-unlock-sub"></p>',
+    "</div>"
+  ].join("");
+
+  document.body.appendChild(node);
+  badgeUnlockToastNode = node;
+  return node;
+}
+
+function showBadgeUnlockMoment(badge) {
+  if (!badge) return;
+  const node = ensureBadgeUnlockToast();
+  if (!node) return;
+
+  const kicker = node.querySelector(".badge-unlock-kicker");
+  const icon = node.querySelector(".badge-unlock-icon");
+  const title = node.querySelector(".badge-unlock-title");
+  const sub = node.querySelector(".badge-unlock-sub");
+  if (kicker) kicker.textContent = t("badgeUnlockedTitle");
+  if (icon) icon.textContent = badge.icon || "🛡️";
+  if (title) title.textContent = badge.name || "Badge";
+  if (sub) sub.textContent = badge.accomplishment || t("badgeUnlockedNow");
+
+  node.classList.add("show");
+  if (badgeUnlockToastTimer) window.clearTimeout(badgeUnlockToastTimer);
+  badgeUnlockToastTimer = window.setTimeout(() => {
+    node.classList.remove("show");
+    badgeUnlockToastTimer = 0;
+  }, 4000);
 }
 
 function currentShareBadge() {
@@ -4246,6 +4305,16 @@ function maybeAwardBadges() {
   return unlocked;
 }
 
+function pickCelebrationBadge(unlockedBadges, unlockedDifficultyBadge) {
+  const finalBadge = Array.isArray(unlockedBadges)
+    ? unlockedBadges.find((badge) => badge && badge.id === "final-shield-of-faith")
+    : null;
+  if (finalBadge) return finalBadge;
+  if (Array.isArray(unlockedBadges) && unlockedBadges.length) return unlockedBadges[0];
+  if (unlockedDifficultyBadge) return unlockedDifficultyBadge;
+  return null;
+}
+
 function recordLevelCompletionIfNeeded(level) {
   const levelDone = [1, 2, 3, 4, 5].every((stageNum) => isDone(`l${level}-s${stageNum}`));
   if (!levelDone) return;
@@ -4267,7 +4336,11 @@ function markDone(stageId, mode) {
 
   if (isDone(stageId)) {
     const unlockedBadges = maybeAwardBadges();
-    if (unlockedDifficultyBadge || unlockedBadges.length) playSfx("badge");
+    const celebrationBadge = pickCelebrationBadge(unlockedBadges, unlockedDifficultyBadge);
+    if (celebrationBadge) {
+      showBadgeUnlockMoment(celebrationBadge);
+      playSfx("badge");
+    }
     persist();
     render();
     window.dispatchEvent(
@@ -4303,7 +4376,11 @@ function markDone(stageId, mode) {
   if (parsed) recordLevelCompletionIfNeeded(parsed.level);
 
   const unlockedBadges = maybeAwardBadges();
-  if (unlockedDifficultyBadge || unlockedBadges.length) playSfx("badge");
+  const celebrationBadge = pickCelebrationBadge(unlockedBadges, unlockedDifficultyBadge);
+  if (celebrationBadge) {
+    showBadgeUnlockMoment(celebrationBadge);
+    playSfx("badge");
+  }
   persist();
   render();
   window.dispatchEvent(

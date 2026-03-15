@@ -1620,6 +1620,69 @@ body.has-overlay {
   display: none;
 }
 
+.badge-unlock-toast {
+  position: fixed;
+  top: max(0.65rem, env(safe-area-inset-top));
+  left: 50%;
+  transform: translate(-50%, -12px);
+  width: min(560px, calc(100vw - 1rem));
+  z-index: 72;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease, transform 240ms ease;
+}
+
+.badge-unlock-toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.badge-unlock-card {
+  border-radius: 14px;
+  border: 1px solid rgba(237, 201, 119, 0.55);
+  background: linear-gradient(180deg, rgba(22, 30, 43, 0.98), rgba(10, 16, 25, 0.98));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+  padding: 0.72rem 0.86rem 0.76rem;
+  text-align: center;
+}
+
+.badge-unlock-kicker {
+  margin: 0;
+  color: #f1d495;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.badge-unlock-name {
+  margin: 0.3rem 0 0;
+  color: #fff2d2;
+  font-size: clamp(1rem, 2.7vw, 1.35rem);
+  font-weight: 900;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.badge-unlock-icon {
+  font-size: 1.15em;
+}
+
+.badge-unlock-sub {
+  margin: 0.34rem 0 0;
+  color: #f5dca9;
+  font-size: clamp(0.78rem, 2.15vw, 0.94rem);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+body.performance-lite .badge-unlock-card {
+  box-shadow: none;
+}
+
 .fact {
   margin: 0.45rem 0 0.9rem;
   color: #ffe7bb;
