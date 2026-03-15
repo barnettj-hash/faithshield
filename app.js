@@ -3254,7 +3254,7 @@ const audioEngine = {
   musicThemeEra: "",
   musicProfileKey: ""
 };
-const AUDIO_UNLOCK_EVENTS = ["pointerdown", "touchstart", "mousedown", "click", "keydown"];
+const AUDIO_UNLOCK_EVENTS = ["pointerdown", "pointerup", "touchstart", "touchend", "mousedown", "click", "keydown"];
 let audioUnlockArmed = false;
 let badgeUnlockToastTimer = 0;
 let badgeUnlockToastNode = null;
@@ -3292,13 +3292,17 @@ function handleAudioUnlock() {
   ensureAudio();
   const ctx = audioEngine.ctx;
   if (!ctx) return;
+  const finalize = () => {
+    if (ctx.state === "running") {
+      disarmAudioUnlock();
+    }
+    updateAudioState();
+  };
   if (ctx.state === "suspended") {
-    ctx.resume().catch(() => {});
+    ctx.resume().then(finalize).catch(finalize);
+    return;
   }
-  if (ctx.state === "running") {
-    disarmAudioUnlock();
-  }
-  updateAudioState();
+  finalize();
 }
 
 function buildBadgeCatalog() {
@@ -4363,6 +4367,46 @@ function jumpToEra(era) {
   smoothScrollToNode(storyPathHeading || gameDashboard || stageGrid);
 }
 
+function copyTextToClipboardOrPrompt(text, onCopied = null) {
+  const message = String(text || "").trim();
+  if (!message) return;
+  const notifyCopied = () => {
+    if (typeof onCopied === "function") onCopied(message);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(message).then(notifyCopied).catch(() => {
+      window.prompt("Copy and share this text:", message);
+      notifyCopied();
+    });
+    return;
+  }
+
+  window.prompt("Copy and share this text:", message);
+  notifyCopied();
+}
+
+function nativeShareOrCopy(title, text, onCopied = null) {
+  const message = String(text || "").trim();
+  if (!message) return;
+  const payload = { title: String(title || "FAITHSHIELD"), text: message };
+  if (navigator.share) {
+    try {
+      const canShare = typeof navigator.canShare === "function" ? navigator.canShare(payload) : true;
+      if (canShare) {
+        navigator.share(payload).catch(() => {
+          copyTextToClipboardOrPrompt(message, onCopied);
+        });
+        return;
+      }
+    } catch (_) {
+      // Continue to copy fallback.
+    }
+  }
+
+  copyTextToClipboardOrPrompt(message, onCopied);
+}
+
 function firstSourceEntry(sourceRef) {
   const first = normalizeSourceRef(sourceRef).split(";")[0] || "";
   return first.trim();
@@ -4633,11 +4677,7 @@ function ensureExperienceSections() {
     if (shareWeeklyChallengeBtn) {
       shareWeeklyChallengeBtn.onclick = () => {
         const text = `FAITHSHIELD weekly challenge: ${state.weeklyChallenge.progress}/${state.weeklyChallenge.target} stages in ${formatEraLabel(state.weeklyChallenge.era)} (${state.weeklyChallenge.weekKey}).`;
-        if (navigator.share) {
-          navigator.share({ title: "FAITHSHIELD Weekly Challenge", text }).catch(() => {});
-        } else if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).catch(() => {});
-        }
+        nativeShareOrCopy("FAITHSHIELD Weekly Challenge", text);
         state.weeklyChallenge.shared = true;
         persist();
         renderWeeklyChallenge();
@@ -5415,12 +5455,23 @@ function shareViaSocial() {
   const text = badgeShareMessage(badge);
 
   if (navigator.share) {
-    navigator.share({ title: "FAITHSHIELD Badge", text }).catch(() => {});
+    navigator.share({ title: "FAITHSHIELD Badge", text }).catch(() => {
+      copyTextToClipboardOrPrompt(text, () => {
+        if (shareBadgeText) shareBadgeText.textContent = `${text} (Copied)`;
+      });
+    });
     return;
   }
 
-  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-  window.open(url, "_blank", "noopener,noreferrer");
+  if (isDesktopViewport()) {
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  copyTextToClipboardOrPrompt(text, () => {
+    if (shareBadgeText) shareBadgeText.textContent = `${text} (Copied)`;
+  });
 }
 
 function copyShareText() {
@@ -5428,14 +5479,9 @@ function copyShareText() {
   if (!badge) return;
   const text = badgeShareMessage(badge);
 
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => {
-      if (shareBadgeText) shareBadgeText.textContent = `${text} (Copied)`;
-    });
-    return;
-  }
-
-  window.prompt("Copy your accomplishment text:", text);
+  copyTextToClipboardOrPrompt(text, () => {
+    if (shareBadgeText) shareBadgeText.textContent = `${text} (Copied)`;
+  });
 }
 
 function isFinalOpen() {
@@ -5602,6 +5648,7 @@ function updateOverlayLock() {
 
 function dismissWelcome() {
   if (!welcomeOverlay) return;
+  primeAudioAuto();
   welcomeOverlay.classList.add("hidden");
   updateOverlayLock();
 }
@@ -5872,11 +5919,24 @@ function itemSignature(item) {
   return JSON.stringify(item);
 }
 
+const CROSS_MODE_QUESTION_BUCKETS = new Set(["quiz", "truefalse", "matching", "speaker", "hebrew"]);
+
+function canonicalQuestionBucket(bucket = "item") {
+  return CROSS_MODE_QUESTION_BUCKETS.has(bucket) ? "question" : bucket;
+}
+
+function canonicalizeQuestionUsageRef(value) {
+  const text = normalizeSourceRef(value);
+  if (!text) return "";
+  return text.replace(/::(?:quiz|truefalse|matching|speaker|hebrew)::/g, "::question::");
+}
+
 function historyKeyForItem(item, bucket = "item") {
+  const normalizedBucket = canonicalQuestionBucket(bucket);
   const source = normalizeSourceRef(item && item.sourceRef);
   const signature = itemSignature(item);
-  if (source) return `${source}::${bucket}::${signature}`;
-  return `${bucket}::${signature}`;
+  if (source) return `${source}::${normalizedBucket}::${signature}`;
+  return `${normalizedBucket}::${signature}`;
 }
 
 
@@ -5962,13 +6022,13 @@ function itemMatchesTheme(item, theme) {
 }
 
 function themeScopeKey(theme, bucket) {
-  return `${bucket}:theme:${theme.name}`;
+  return `${canonicalQuestionBucket(bucket)}:theme:${theme.name}`;
 }
 
 function questionSourceGroup(bucket) {
   if (!bucket) return null;
-  if (bucket === "quiz" || bucket === "truefalse" || bucket === "matching") {
-    return new Set(["quiz", "truefalse", "matching"]);
+  if (CROSS_MODE_QUESTION_BUCKETS.has(bucket)) {
+    return new Set(CROSS_MODE_QUESTION_BUCKETS);
   }
   return new Set([bucket]);
 }
@@ -5983,11 +6043,11 @@ function usedQuestionSourcesForDifficulty(difficultyId = state.difficulty, bucke
     if (!String(cacheKey || "").startsWith(cachePrefix)) return;
     if (!activity || !QUESTION_ACTIVITY_TYPES.has(activity.type)) return;
     if (typeGroup && !typeGroup.has(activity.type)) return;
-    const usageRef = normalizeSourceRef(activity.historySourceRef || activity.sourceRef);
+    const usageRef = canonicalizeQuestionUsageRef(activity.historySourceRef || activity.sourceRef);
     if (!usageRef) return;
     usageRef
       .split("||")
-      .map((entry) => normalizeSourceRef(entry))
+      .map((entry) => canonicalizeQuestionUsageRef(entry))
       .filter(Boolean)
       .forEach((entry) => {
         if (!plan.length) {
@@ -6317,7 +6377,7 @@ function buildMatchingActivity(meta, theme, usedSources) {
   pick.items.forEach((item) => tryAdd(item, false));
 
   if (selectedItems.length < desiredCount) {
-    const matchingUsageKey = (item) => normalizeSourceRef(item && (item.historySourceRef || historyKeyForItem(item, "matching")));
+    const matchingUsageKey = (item) => canonicalizeQuestionUsageRef(item && (item.historySourceRef || historyKeyForItem(item, "matching")));
     const scopedUnusedBySource = (usedSources instanceof Set)
       ? scopedPool.filter((item) => {
         const usageKey = matchingUsageKey(item);
@@ -6366,7 +6426,7 @@ function buildMatchingActivity(meta, theme, usedSources) {
   const renderItems = stabilizedItems.slice(0, Math.min(desiredCount, stabilizedItems.length));
 
   if (addedItems.length) {
-    const historyKey = "global:matching:" + scopeKey;
+    const historyKey = "global:" + canonicalQuestionBucket("matching") + ":" + scopeKey;
     const record = historyRecordFor(historyKey);
     addedItems.forEach((item) => {
       record.uses.push(itemSignature(item));
@@ -6681,8 +6741,9 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   const source = scopedPool.length ? scopedPool : pool;
   if (!source.length) return { item: null, reuseCount: 0 };
 
+  const normalizedBucket = canonicalQuestionBucket(bucket);
   const usedSources = options.usedSources instanceof Set ? options.usedSources : null;
-  const usageKeyForItem = (item) => normalizeSourceRef(item && (item.historySourceRef || historyKeyForItem(item, bucket)));
+  const usageKeyForItem = (item) => canonicalizeQuestionUsageRef(item && (item.historySourceRef || historyKeyForItem(item, normalizedBucket)));
 
   const sourceFiltered = usedSources
     ? source.filter((item) => {
@@ -6695,7 +6756,7 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   if (!pickPool.length) return { item: null, reuseCount: 0 };
 
   const historyScope = options.scopeKey || (scopedPool.length ? era : "all");
-  const historyKey = "global:" + bucket + ":" + historyScope;
+  const historyKey = "global:" + normalizedBucket + ":" + historyScope;
   const record = historyRecordFor(historyKey);
   const counts = {};
   const recentSet = recentUseSet(record, options.recentWindow || 3);
@@ -6738,10 +6799,11 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
   const source = scopedPool.length ? scopedPool : pool;
   if (source.length < count) return { items: null, reuseCount: 0 };
 
+  const normalizedBucket = canonicalQuestionBucket(bucket);
   const usedSources = options.usedSources instanceof Set ? options.usedSources : null;
-  const usageKeyForItem = (item) => normalizeSourceRef(item && (item.historySourceRef || historyKeyForItem(item, bucket)));
+  const usageKeyForItem = (item) => canonicalizeQuestionUsageRef(item && (item.historySourceRef || historyKeyForItem(item, normalizedBucket)));
   const historyScope = options.scopeKey || (scopedPool.length ? era : "all");
-  const historyKey = "global:" + bucket + ":" + historyScope;
+  const historyKey = "global:" + normalizedBucket + ":" + historyScope;
   const record = historyRecordFor(historyKey);
   const counts = {};
   const recentSet = recentUseSet(record, options.recentWindow || Math.max(2, count));
@@ -6966,6 +7028,34 @@ function normalizeQuizAnswerKey(value) {
     .trim();
 }
 
+const FALLBACK_QUIZ_DISTRACTORS = [
+  "Abraham",
+  "Isaac",
+  "Jacob",
+  "Joseph",
+  "Moses",
+  "Aaron",
+  "Joshua",
+  "Caleb",
+  "Samuel",
+  "Saul",
+  "David",
+  "Noah",
+  "Jericho",
+  "Sinai",
+  "Canaan",
+  "Passover",
+  "Covenant",
+  "Manna",
+  "Ark",
+  "Judah",
+  "Benjamin",
+  "Levi",
+  "Ephraim",
+  "Boaz",
+  "Ruth"
+];
+
 function buildQuizOptions(question, era, optionCount, sourcePool = quizBank) {
   const total = 4;
   const options = [];
@@ -7014,6 +7104,14 @@ function buildQuizOptions(question, era, optionCount, sourcePool = quizBank) {
   if (options.length < total) {
     const allAnswers = combinedPool.filter((item) => item.answer !== question.answer).map((item) => item.answer);
     addDistractors(allAnswers);
+  }
+
+  if (options.length < total) {
+    addDistractors(FALLBACK_QUIZ_DISTRACTORS);
+  }
+
+  if (options.length < total) {
+    addDistractors(BOOK_OPTIONS);
   }
 
   return shuffled(options.slice(0, total).map((entry) => entry.text));
@@ -7095,11 +7193,27 @@ function activityFor(meta) {
   const cacheKey = state.difficulty + ":" + meta.id;
   const cached = state.stageActivities[cacheKey];
   if (cached && typeof cached === "object") {
+    const cachedQuizLikeOptions = (cached.type === "quiz" || cached.type === "speaker" || cached.type === "hebrew")
+      && Array.isArray(cached.options)
+      ? cached.options.map((option) => normalizeQuizAnswerKey(option))
+      : null;
     const cachedMatchingOptions = cached.type === "matching" && Array.isArray(cached.options)
       ? cached.options.map((option) => normalizeSpellingAnswer(option))
       : null;
+    const cachedQuizHasDuplicateOptions = Boolean(
+      cachedQuizLikeOptions && new Set(cachedQuizLikeOptions.filter(Boolean)).size !== cachedQuizLikeOptions.filter(Boolean).length
+    );
+    const cachedQuizMissingAnswer = Boolean(
+      cachedQuizLikeOptions
+      && normalizeQuizAnswerKey(cached.answer)
+      && !cachedQuizLikeOptions.includes(normalizeQuizAnswerKey(cached.answer))
+    );
+    const cachedQuizTooShort = Boolean(cachedQuizLikeOptions && cachedQuizLikeOptions.length < 4);
     const shouldRebuild = cached.type === "exhausted"
-      || Boolean(cachedMatchingOptions && new Set(cachedMatchingOptions).size !== cachedMatchingOptions.length);
+      || cachedQuizHasDuplicateOptions
+      || cachedQuizMissingAnswer
+      || cachedQuizTooShort
+      || Boolean(cachedMatchingOptions && new Set(cachedMatchingOptions.filter(Boolean)).size !== cachedMatchingOptions.filter(Boolean).length);
     if (shouldRebuild) {
       delete state.stageActivities[cacheKey];
     } else {
@@ -8745,6 +8859,7 @@ function openStage(stageId) {
   const meta = getStageMeta(stageId);
   if (!meta) return;
 
+  primeAudioAuto();
   captureHubScrollPosition();
   warmPosterCache(meta.theme.era);
   warmCutsceneMediaCache(meta.theme.era);
