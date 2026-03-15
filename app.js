@@ -2343,6 +2343,16 @@ const mediumQuizBank = [
   { era: "saul", prompt: "Where did Saul hide when he was chosen as king?", options: ["Among the baggage", "In the temple", "In a cave", "Behind the altar"], answer: "Among the baggage", sourceRef: "1 Samuel 10:22" },
   { era: "david", prompt: "Who sent David with food to his brothers at the battle line?", options: ["Jesse", "Saul", "Samuel", "Jonathan"], answer: "Jesse", sourceRef: "1 Samuel 17:17-18" },
   { era: "david", prompt: "What did David refuse before facing Goliath?", options: ["Saul's armor", "Five stones", "His sling", "A shepherd's staff"], answer: "Saul's armor", sourceRef: "1 Samuel 17:38-39" },
+  { era: "genesis", prompt: "Which divine title did Abraham call on after planting a tamarisk tree in Beersheba?", options: ["Yahweh, the Everlasting God", "El Roi", "Yahweh Nissi", "God Most High"], answer: "Yahweh, the Everlasting God", sourceRef: "Genesis 21:33" },
+  { era: "patriarchs", prompt: "In Genesis 32:28, what idea is attached to the name Israel?", options: ["One who has striven with God", "Prince of Egypt", "Servant of Pharaoh", "Keeper of flocks"], answer: "One who has striven with God", sourceRef: "Genesis 32:28" },
+  { era: "exodus", prompt: "Who said, \"I don't know Yahweh, and moreover I will not let Israel go\"?", options: ["Pharaoh", "Moses", "Aaron", "Joshua"], answer: "Pharaoh", sourceRef: "Exodus 5:2" },
+  { era: "sinai", prompt: "Who said, \"All that Yahweh has spoken we will do, and be obedient\"?", options: ["The people of Israel", "Moses alone", "Aaron and his sons only", "The seventy elders only"], answer: "The people of Israel", sourceRef: "Exodus 24:7" },
+  { era: "wilderness", prompt: "Who said, \"Would that we had died in the land of Egypt\" after the spies' report?", options: ["The congregation of Israel", "Moses and Aaron", "Joshua and Caleb", "The Amalekites"], answer: "The congregation of Israel", sourceRef: "Numbers 14:1-2" },
+  { era: "conquest", prompt: "Who said, \"As for me and my house, we will serve Yahweh\"?", options: ["Joshua", "Caleb", "Eleazar", "Rahab"], answer: "Joshua", sourceRef: "Joshua 24:15" },
+  { era: "judges", prompt: "Who said to his men, \"Look at me, and do likewise\" before the Midianite attack?", options: ["Gideon", "Deborah", "Jephthah", "Samson"], answer: "Gideon", sourceRef: "Judges 7:17" },
+  { era: "samuel", prompt: "To what city did the ark come when the Philistines returned it?", options: ["Beth Shemesh", "Shiloh", "Gibeah", "Ramah"], answer: "Beth Shemesh", sourceRef: "1 Samuel 6:13" },
+  { era: "saul", prompt: "Who said, \"Bring me the burnt offering and the peace offerings\" at Gilgal?", options: ["Saul", "Samuel", "Jonathan", "Abner"], answer: "Saul", sourceRef: "1 Samuel 13:9" },
+  { era: "david", prompt: "After choosing stones, where did David put them before facing Goliath?", options: ["In his shepherd's bag", "In Saul's armor pouch", "In a bronze basket", "In the ark room"], answer: "In his shepherd's bag", sourceRef: "1 Samuel 17:40" },
 ];
 
 const advancedQuizBank = [
@@ -2418,7 +2428,17 @@ const advancedQuizBank = [
   { era: "saul", prompt: "Whom did Saul spare alive when he struck Amalek?", options: ["Agag", "Doeg", "Abner", "Jonathan"], answer: "Agag", sourceRef: "1 Samuel 15:8-9" },
   { era: "saul", prompt: "According to Samuel, why was Saul rejected from being king?", options: ["He rejected Yahweh's word", "He was too short", "He lost one battle", "He left Gibeah"], answer: "He rejected Yahweh's word", sourceRef: "1 Samuel 15:23" },
   { era: "david", prompt: "Who ran quickly toward the battle line to meet the Philistine?", options: ["David", "Saul", "Jonathan", "Abner"], answer: "David", sourceRef: "1 Samuel 17:48" },
-  { era: "david", prompt: "Which name of God did David use when he faced Goliath?", options: ["Yahweh of Armies", "El Roi", "Yahweh Shalom", "El Elyon"], answer: "Yahweh of Armies", sourceRef: "1 Samuel 17:45" }
+  { era: "david", prompt: "Which name of God did David use when he faced Goliath?", options: ["Yahweh of Armies", "El Roi", "Yahweh Shalom", "El Elyon"], answer: "Yahweh of Armies", sourceRef: "1 Samuel 17:45" },
+  { era: "genesis", prompt: "Who named his son Noah, saying, \"This same will comfort us\"?", options: ["Lamech", "Noah", "Seth", "Enoch"], answer: "Lamech", sourceRef: "Genesis 5:29" },
+  { era: "patriarchs", prompt: "Which Hebrew title did Jacob use at Bethel when he vowed, \"Yahweh will be my God\"?", options: ["Elohim", "El Roi", "El Elyon", "Yahweh Nissi"], answer: "Elohim", sourceRef: "Genesis 28:20-21" },
+  { era: "exodus", prompt: "Who said, \"Please, Lord, I am not eloquent... I am slow of speech\"?", options: ["Moses", "Aaron", "Pharaoh", "Joshua"], answer: "Moses", sourceRef: "Exodus 4:10" },
+  { era: "sinai", prompt: "At Sinai, who was told, \"Don't let the priests and the people break through to come up to Yahweh\"?", options: ["Moses", "Aaron", "Joshua", "Nadab"], answer: "Moses", sourceRef: "Exodus 19:24" },
+  { era: "wilderness", prompt: "Who said, \"Would that we had died in this wilderness\" after hearing the spies?", options: ["All the children of Israel", "Joshua and Caleb", "Moses and Aaron", "The Amalekites"], answer: "All the children of Israel", sourceRef: "Numbers 14:2" },
+  { era: "conquest", prompt: "Who told the two spies, \"I know that Yahweh has given you the land\"?", options: ["Rahab", "Achan", "Caleb", "Deborah"], answer: "Rahab", sourceRef: "Joshua 2:9" },
+  { era: "judges", prompt: "Who said, \"If now I have found favor in your eyes, then show me a sign\" before preparing an offering?", options: ["Gideon", "Samson", "Jephthah", "Boaz"], answer: "Gideon", sourceRef: "Judges 6:17" },
+  { era: "samuel", prompt: "Who said, \"Talk no more so exceedingly proudly\" in her song?", options: ["Hannah", "Eli", "Samuel", "Saul"], answer: "Hannah", sourceRef: "1 Samuel 2:3" },
+  { era: "saul", prompt: "Who said, \"Because you have rejected Yahweh's word, he has also rejected you from being king\"?", options: ["Samuel", "Saul", "Jonathan", "Abner"], answer: "Samuel", sourceRef: "1 Samuel 15:23" },
+  { era: "david", prompt: "Who said, \"This day Yahweh will deliver you into my hand\"?", options: ["David", "Goliath", "Saul", "Jonathan"], answer: "David", sourceRef: "1 Samuel 17:46" }
 ];
 
 const spellingBank = [
@@ -2516,7 +2536,17 @@ const mediumOrderBank = [
   { era: "judges", items: ["Othniel delivers Israel", "Deborah judges Israel", "Gideon defeats Midian"], sourceRef: "Judges 3:9-11; 4:4; 7:22" },
   { era: "samuel", items: ["Samuel serves in Shiloh", "Yahweh calls Samuel", "Samuel reports the vision to Eli"], sourceRef: "1 Samuel 2:18; 3:10; 3:18" },
   { era: "saul", items: ["Saul anointed", "Saul chosen by lot", "Saul spares Agag"], sourceRef: "1 Samuel 10:1; 10:20-24; 15:8-9" },
-  { era: "david", items: ["David sent by Jesse", "David rejects Saul's armor", "David strikes Goliath"], sourceRef: "1 Samuel 17:17; 17:39; 17:49" }
+  { era: "david", items: ["David sent by Jesse", "David rejects Saul's armor", "David strikes Goliath"], sourceRef: "1 Samuel 17:17; 17:39; 17:49" },
+  { era: "genesis", items: ["Cain kills Abel", "Yahweh questions Cain", "Cain is driven from the ground"], sourceRef: "Genesis 4:8-12" },
+  { era: "patriarchs", items: ["Abram departs Haran", "Abram builds altar at Shechem", "Lot chooses the Jordan plain"], sourceRef: "Genesis 12:4-7; 13:11" },
+  { era: "exodus", items: ["Moses speaks to Pharaoh", "Nile turns to blood", "Frogs cover Egypt"], sourceRef: "Exodus 5:1; 7:20; 8:6" },
+  { era: "sinai", items: ["Moses writes Yahweh's words", "Offerings are presented", "Blood is sprinkled on the people"], sourceRef: "Exodus 24:4-8" },
+  { era: "wilderness", items: ["People quarrel for water at Rephidim", "Water comes from the rock", "Altar called Yahweh Nissi"], sourceRef: "Exodus 17:1-6,15" },
+  { era: "conquest", items: ["Rahab hides the spies", "Scarlet line marked in the window", "Rahab's household is spared"], sourceRef: "Joshua 2:4,18; 6:25" },
+  { era: "judges", items: ["Israel serves the Baals", "Yahweh gives them into spoilers' hands", "Yahweh raises judges"], sourceRef: "Judges 2:11,14,16" },
+  { era: "samuel", items: ["Hannah lends Samuel to Yahweh", "Samuel ministers before Yahweh", "Yahweh reveals himself at Shiloh"], sourceRef: "1 Samuel 1:28; 2:18; 3:21" },
+  { era: "saul", items: ["Saul is proclaimed king", "Saul offers burnt offering at Gilgal", "Samuel says Saul's kingdom will not continue"], sourceRef: "1 Samuel 10:24; 13:9; 13:14" },
+  { era: "david", items: ["David hears Goliath's challenge", "David picks five smooth stones", "Stone strikes Goliath's forehead"], sourceRef: "1 Samuel 17:23; 17:40; 17:49" }
 ];
 
 
@@ -2675,6 +2705,85 @@ const factBank = [
   { era: "saul", parts: ["Obedience", "is", "better", "than", "sacrifice"], sourceRef: "1 Samuel 15:22" },
   { era: "david", parts: ["The", "battle", "is", "Yahweh's"], sourceRef: "1 Samuel 17:47" }
 ];
+
+function normalizePoolText(value) {
+  return normalizeQuizAnswerKey(String(value || ""));
+}
+
+function poolItemsSignature(items) {
+  if (!Array.isArray(items) || !items.length) return "";
+  return items.map((item) => normalizePoolText(item)).filter(Boolean).join(" | ");
+}
+
+function dedupeBySignature(pool, signatureFor) {
+  const seen = new Set();
+  const output = [];
+  pool.forEach((item) => {
+    const signature = signatureFor(item);
+    if (!signature || seen.has(signature)) return;
+    seen.add(signature);
+    output.push(item);
+  });
+  return output;
+}
+
+function applyTierPoolSanity(basePool, mediumPool, advancedPool, uniqueSignature, overlapSignature) {
+  const baseUnique = dedupeBySignature(basePool, uniqueSignature);
+  const usedOverlap = new Set(baseUnique.map((item) => overlapSignature(item)).filter(Boolean));
+
+  const mediumUnique = dedupeBySignature(mediumPool, uniqueSignature).filter((item) => {
+    const overlapKey = overlapSignature(item);
+    if (!overlapKey || usedOverlap.has(overlapKey)) return false;
+    usedOverlap.add(overlapKey);
+    return true;
+  });
+
+  const advancedUnique = dedupeBySignature(advancedPool, uniqueSignature).filter((item) => {
+    const overlapKey = overlapSignature(item);
+    if (!overlapKey || usedOverlap.has(overlapKey)) return false;
+    usedOverlap.add(overlapKey);
+    return true;
+  });
+
+  basePool.length = 0;
+  basePool.push(...baseUnique);
+  mediumPool.length = 0;
+  mediumPool.push(...mediumUnique);
+  advancedPool.length = 0;
+  advancedPool.push(...advancedUnique);
+}
+
+applyTierPoolSanity(
+  quizBank,
+  mediumQuizBank,
+  advancedQuizBank,
+  (item) => [item.era || "", normalizePoolText(item.prompt), normalizePoolText(item.answer), normalizePoolText(item.sourceRef)].join("::"),
+  (item) => [item.era || "", normalizePoolText(item.prompt)].join("::")
+);
+
+applyTierPoolSanity(
+  spellingBank,
+  mediumSpellingBank,
+  advancedSpellingBank,
+  (item) => [item.era || "", normalizePoolText(item.prompt), normalizePoolText(item.answer), normalizePoolText(item.sourceRef)].join("::"),
+  (item) => [item.era || "", normalizePoolText(item.prompt)].join("::")
+);
+
+applyTierPoolSanity(
+  orderBank,
+  mediumOrderBank,
+  advancedOrderBank,
+  (item) => [item.era || "", poolItemsSignature(item.items), normalizePoolText(item.sourceRef)].join("::"),
+  (item) => [item.era || "", poolItemsSignature(item.items)].join("::")
+);
+
+applyTierPoolSanity(
+  factBank,
+  mediumFactBank,
+  advancedFactBank,
+  (item) => [item.era || "", poolItemsSignature(item.parts), normalizePoolText(item.sourceRef)].join("::"),
+  (item) => [item.era || "", poolItemsSignature(item.parts)].join("::")
+);
 
 const ALL_QUIZ_BANKS = [].concat(quizBank, mediumQuizBank, advancedQuizBank);
 const ALL_SPELLING_BANKS = [].concat(spellingBank, mediumSpellingBank, advancedSpellingBank);
@@ -4707,14 +4816,19 @@ function usedQuestionSourcesForDifficulty(difficultyId = state.difficulty, bucke
     if (!String(cacheKey || "").startsWith(cachePrefix)) return;
     if (!activity || !QUESTION_ACTIVITY_TYPES.has(activity.type)) return;
     if (typeGroup && !typeGroup.has(activity.type)) return;
-    const sourceRef = normalizeSourceRef(activity.historySourceRef || activity.sourceRef);
-    if (!sourceRef) return;
-    sourceRef
+    const usageRef = normalizeSourceRef(activity.historySourceRef || activity.sourceRef);
+    if (!usageRef) return;
+    usageRef
       .split("||")
       .map((entry) => normalizeSourceRef(entry))
       .filter(Boolean)
       .forEach((entry) => {
-        if (plan.length && !sourceRefMatchesPlan(entry, plan)) return;
+        if (!plan.length) {
+          used.add(entry);
+          return;
+        }
+        const looksLikeSourceRef = /^[1-3]?\s?[A-Za-z]/.test(entry) && /\d+:\d+/.test(entry);
+        if (looksLikeSourceRef && !sourceRefMatchesPlan(entry, plan)) return;
         used.add(entry);
       });
   });
@@ -5036,10 +5150,11 @@ function buildMatchingActivity(meta, theme, usedSources) {
   pick.items.forEach((item) => tryAdd(item, false));
 
   if (selectedItems.length < desiredCount) {
+    const matchingUsageKey = (item) => normalizeSourceRef(item && (item.historySourceRef || historyKeyForItem(item, "matching")));
     const scopedUnusedBySource = (usedSources instanceof Set)
       ? scopedPool.filter((item) => {
-        const sourceRef = normalizeSourceRef(item.sourceRef);
-        return !sourceRef || !usedSources.has(sourceRef);
+        const usageKey = matchingUsageKey(item);
+        return !usageKey || !usedSources.has(usageKey);
       })
       : scopedPool;
 
@@ -5318,11 +5433,12 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   if (!source.length) return { item: null, reuseCount: 0 };
 
   const usedSources = options.usedSources instanceof Set ? options.usedSources : null;
+  const usageKeyForItem = (item) => normalizeSourceRef(item && (item.historySourceRef || historyKeyForItem(item, bucket)));
 
   const sourceFiltered = usedSources
     ? source.filter((item) => {
-      const sourceRef = normalizeSourceRef(item.sourceRef);
-      return !sourceRef || !usedSources.has(sourceRef);
+      const usageKey = usageKeyForItem(item);
+      return !usageKey || !usedSources.has(usageKey);
     })
     : source;
 
@@ -5374,6 +5490,7 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
   if (source.length < count) return { items: null, reuseCount: 0 };
 
   const usedSources = options.usedSources instanceof Set ? options.usedSources : null;
+  const usageKeyForItem = (item) => normalizeSourceRef(item && (item.historySourceRef || historyKeyForItem(item, bucket)));
   const historyScope = options.scopeKey || (scopedPool.length ? era : "all");
   const historyKey = "global:" + bucket + ":" + historyScope;
   const record = historyRecordFor(historyKey);
@@ -5386,8 +5503,8 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
 
   const filterBySource = (items) => (usedSources
     ? items.filter((item) => {
-      const sourceRef = normalizeSourceRef(item.sourceRef);
-      return !sourceRef || !usedSources.has(sourceRef);
+      const usageKey = usageKeyForItem(item);
+      return !usageKey || !usedSources.has(usageKey);
     })
     : items);
 
