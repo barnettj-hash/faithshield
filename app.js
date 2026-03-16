@@ -648,6 +648,10 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
+const ACTIVITY_SCHEMA_VERSION = 24;
+const STRICT_SECTION_NO_REPEAT_THEMES = new Set(["Nations and Babel"]);
+const QUIZ_LINKED_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "truefalse", "matching"]);
+const SEQUENCE_LINKED_ACTIVITY_TYPES = new Set(["order", "fact", "spelling"]);
 const USE_LEGACY_CUTSCENE_VIDEO_FALLBACK = false;
 const FORCE_STILL_CUTSCENE_MODE = true;
 const PREFER_SYSTEM_NARRATION_VOICE = false;
@@ -1102,7 +1106,12 @@ const UI_TEXT_BY_LANGUAGE = {
     loadingPreview: "Loading preview...",
     practicalPrefix: "Practical point",
     badgeUnlockedTitle: "Badge Unlocked",
-    badgeUnlockedNow: "New badge earned."
+    badgeUnlockedNow: "New badge earned.",
+    replayBadgeCeremony: "Replay Badge Celebration",
+    exportBadgeCard: "Export Badge Card",
+    downloadCard: "Download Card",
+    autoOpenBadgeShield: "Auto-open Badge Shield",
+    setBonusesLabel: "Set bonuses"
   },
   es: {
     progressLabel: "Progreso",
@@ -1198,7 +1207,12 @@ const UI_TEXT_BY_LANGUAGE = {
     loadingPreview: "Cargando vista previa...",
     practicalPrefix: "Punto practico",
     badgeUnlockedTitle: "Insignia Desbloqueada",
-    badgeUnlockedNow: "Nueva insignia ganada."
+    badgeUnlockedNow: "Nueva insignia ganada.",
+    replayBadgeCeremony: "Repetir celebracion de insignia",
+    exportBadgeCard: "Exportar tarjeta de insignia",
+    downloadCard: "Descargar tarjeta",
+    autoOpenBadgeShield: "Autoabrir escudo de insignias",
+    setBonusesLabel: "Bonos de conjunto"
   }
 };
 
@@ -2201,6 +2215,43 @@ const badgeSymbolThemes = [
   { icon: "🗡️", name: "Sword of Truth" }
 ];
 
+const BADGE_SET_BONUSES = [
+  {
+    id: "story-forger",
+    icon: "🧭",
+    name: "Story Forger",
+    rewardXp: 320,
+    rewardLives: 1,
+    accomplishment: "Completed key level milestones and forged a steady story path.",
+    check: (s) => (s.badges || []).filter((badgeId) => String(badgeId).startsWith("level-")).length >= 6
+  },
+  {
+    id: "skill-mastery",
+    icon: "⚔️",
+    name: "Skill Mastery",
+    rewardXp: 380,
+    rewardLives: 1,
+    accomplishment: "Mastered timing, collecting, dodging, and slingshot challenge paths.",
+    check: (s) => {
+      const owned = new Set(s.badges || []);
+      return owned.has("timing-8")
+        && owned.has("collect-8")
+        && owned.has("dodge-8")
+        && owned.has("slingshot-4");
+    }
+  },
+  {
+    id: "shield-covenant",
+    icon: "✨",
+    name: "Shield Covenant",
+    rewardXp: 500,
+    rewardLives: 2,
+    accomplishment: "Completed all three difficulty seals and reached covenant-level consistency.",
+    check: (s) => hasAllDifficultyPasses(s)
+      && (s.badges || []).filter((badgeId) => String(badgeId).startsWith("flawless-")).length >= 1
+  }
+];
+
 const quizBank = [
   { era: "genesis", prompt: "What did God create in the beginning?", options: ["The heavens and the earth", "The ark", "A city", "The sun and the moon"], answer: "The heavens and the earth", sourceRef: "Genesis 1:1" },
   { era: "genesis", prompt: "How many days are in the creation week, including God's rest?", options: ["7", "6", "10", "8"], answer: "7", sourceRef: "Genesis 2:2-3" },
@@ -2495,7 +2546,7 @@ const mediumSpellingBank = [
   { era: "genesis", prompt: "Spell the mountain region where Noah's ark rested.", answer: "Ararat", sourceRef: "Genesis 8:4" },
   { era: "genesis", prompt: "Spell the kind of wood Noah used for the ark.", answer: "gopher", sourceRef: "Genesis 6:14" },
   { era: "genesis", prompt: "Type the bird Noah sent out first from the ark.", answer: "raven", sourceRef: "Genesis 8:7" },
-  { era: "genesis", prompt: "Spell the plain where the people settled before Babel.", answer: "Shinar", sourceRef: "Genesis 11:2" },
+  { era: "genesis", prompt: "Spell the plain where the people settled before Babel.", answer: "Shinar", acceptedAnswers: ["Shiner"], sourceRef: "Genesis 11:2" },
   { era: "genesis", prompt: "Spell the material used for mortar at Babel.", answer: "Tar", sourceRef: "Genesis 11:3" },
   { era: "patriarchs", prompt: "Spell the place name Jacob gave after his dream of the ladder.", answer: "Bethel", sourceRef: "Genesis 28:19" },
   { era: "patriarchs", prompt: "Spell Joseph's second son.", answer: "Ephraim", sourceRef: "Genesis 41:52" },
@@ -3075,7 +3126,7 @@ const state = {
   mastery: JSON.parse(localStorage.getItem("faithMastery") || "{}"),
   dailyDevotion: JSON.parse(localStorage.getItem("faithDailyDevotion") || '{"day":"","challenge":false,"action":false,"reflection":false,"reward":false,"note":""}'),
   weeklyChallenge: JSON.parse(localStorage.getItem("faithWeeklyChallenge") || '{"weekKey":"","era":"genesis","target":7,"progress":0,"shared":false}'),
-  controls: JSON.parse(localStorage.getItem("faithControls") || '{"hotkeys":true,"controller":false}')
+  controls: JSON.parse(localStorage.getItem("faithControls") || '{"hotkeys":true,"controller":false,"badgeCeremonyAutoOpen":true}')
 };
 
 if (launchQueryName) {
@@ -3129,10 +3180,11 @@ state.weeklyChallenge.target = Math.max(3, Number(state.weeklyChallenge.target |
 state.weeklyChallenge.progress = Math.max(0, Number(state.weeklyChallenge.progress || 0));
 state.weeklyChallenge.shared = Boolean(state.weeklyChallenge.shared);
 if (!state.controls || typeof state.controls !== "object" || Array.isArray(state.controls)) {
-  state.controls = { hotkeys: true, controller: false };
+  state.controls = { hotkeys: true, controller: false, badgeCeremonyAutoOpen: true };
 }
 state.controls.hotkeys = state.controls.hotkeys !== false;
 state.controls.controller = Boolean(state.controls.controller);
+state.controls.badgeCeremonyAutoOpen = state.controls.badgeCeremonyAutoOpen !== false;
 
 if ((localStorage.getItem("faithContentVersion") || "") !== CONTENT_VERSION) {
   state.questionHistory = {};
@@ -3150,6 +3202,9 @@ state.stats = {
   dodgeWins: Number(state.stats.dodgeWins || 0),
   slingshotWins: Number(state.stats.slingshotWins || 0),
   flawlessLevels: Number(state.stats.flawlessLevels || 0),
+  badgeSetBonuses: (state.stats && state.stats.badgeSetBonuses && typeof state.stats.badgeSetBonuses === "object" && !Array.isArray(state.stats.badgeSetBonuses))
+    ? { ...state.stats.badgeSetBonuses }
+    : {},
   difficultyPass: {
     easy: Boolean(state.stats.difficultyPass && state.stats.difficultyPass.easy),
     medium: Boolean(state.stats.difficultyPass && state.stats.difficultyPass.medium),
@@ -3261,6 +3316,10 @@ const dailyThoughtText = document.getElementById("dailyThoughtText");
 const dailyPracticalText = document.getElementById("dailyPracticalText");
 const appRoot = document.querySelector("main.app") || document.querySelector(".app");
 
+let replayLatestBadgeBtn = null;
+let exportLatestBadgeCardBtn = null;
+let exportBadgeCardBtn = null;
+
 let campaignMapSection = null;
 let campaignMapTrack = null;
 let campaignMapSummary = null;
@@ -3286,6 +3345,7 @@ let shareWeeklyChallengeBtn = null;
 let desktopControlsSection = null;
 let hotkeysToggle = null;
 let controllerToggle = null;
+let badgeCeremonyAutoOpenToggle = null;
 
 let desktopHotkeysBound = false;
 let controllerPollHandle = 0;
@@ -4625,6 +4685,234 @@ function nativeShareOrCopy(title, text, onCopied = null) {
   copyTextToClipboardOrPrompt(message, onCopied);
 }
 
+function ensureBadgeSetBonusState() {
+  if (!state.stats || typeof state.stats !== "object") state.stats = {};
+  if (!state.stats.badgeSetBonuses || typeof state.stats.badgeSetBonuses !== "object" || Array.isArray(state.stats.badgeSetBonuses)) {
+    state.stats.badgeSetBonuses = {};
+  }
+}
+
+function countUnlockedBadgeSetBonuses() {
+  ensureBadgeSetBonusState();
+  return BADGE_SET_BONUSES.reduce((count, setBonus) => count + (state.stats.badgeSetBonuses[setBonus.id] ? 1 : 0), 0);
+}
+
+function rewardLabelForSetBonus(setBonus) {
+  const xp = Number(setBonus.rewardXp || 0);
+  const lives = Number(setBonus.rewardLives || 0);
+  const segments = [];
+  if (xp > 0) segments.push(`+${xp} XP`);
+  if (lives > 0) segments.push(`+${lives} life${lives === 1 ? "" : "s"}`);
+  return segments.join(" • ");
+}
+
+function awardBadgeSetBonuses() {
+  ensureBadgeSetBonusState();
+  const unlocked = [];
+
+  BADGE_SET_BONUSES.forEach((setBonus) => {
+    if (!setBonus || !setBonus.id || typeof setBonus.check !== "function") return;
+    if (state.stats.badgeSetBonuses[setBonus.id]) return;
+    if (!setBonus.check(state)) return;
+
+    state.stats.badgeSetBonuses[setBonus.id] = true;
+
+    const rewardXp = Math.max(0, Number(setBonus.rewardXp || 0));
+    const rewardLives = Math.max(0, Number(setBonus.rewardLives || 0));
+    if (rewardXp > 0) awardXp(rewardXp);
+    if (rewardLives > 0) state.lives = Math.min(MAX_LIVES, state.lives + rewardLives);
+
+    unlocked.push({
+      id: `set-bonus-${setBonus.id}`,
+      icon: setBonus.icon || "✨",
+      name: `${setBonus.name} (${t("setBonusesLabel")})`,
+      accomplishment: `${setBonus.accomplishment} ${rewardLabelForSetBonus(setBonus)}`.trim(),
+      skipBoard: true
+    });
+  });
+
+  return unlocked;
+}
+
+function latestOwnedBadge() {
+  return getBadgeById(state.badges[state.badges.length - 1]) || null;
+}
+
+function replayLatestBadgeCelebration() {
+  const badge = latestOwnedBadge();
+  if (!badge) return;
+  showBadgeUnlockMoment(badge);
+  playSfx("badge");
+}
+
+function normalizeFileSlug(value, fallback = "badge") {
+  const clean = String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return clean || fallback;
+}
+
+function badgeCardFileName(badge) {
+  const date = new Date().toISOString().slice(0, 10);
+  const slug = normalizeFileSlug(badge && badge.name ? badge.name : "badge");
+  return `faithshield-${slug}-${date}.png`;
+}
+
+function createBadgeShareCardCanvas(badge) {
+  const width = 1200;
+  const height = 1500;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const bg = ctx.createLinearGradient(0, 0, width, height);
+  bg.addColorStop(0, "#1c2746");
+  bg.addColorStop(0.6, "#0f2143");
+  bg.addColorStop(1, "#07142d");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
+
+  const glow = ctx.createRadialGradient(width * 0.78, height * 0.22, 60, width * 0.78, height * 0.22, 520);
+  glow.addColorStop(0, "rgba(233, 174, 74, 0.28)");
+  glow.addColorStop(1, "rgba(233, 174, 74, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+  ctx.fillRect(70, 110, width - 140, height - 220);
+  ctx.strokeStyle = "rgba(228, 191, 120, 0.55)";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(70, 110, width - 140, height - 220);
+
+  const icon = String((badge && badge.icon) || "🛡️");
+  ctx.font = "700 140px Georgia, 'Times New Roman', serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(icon, width / 2, 330);
+
+  ctx.fillStyle = "#e6d6b3";
+  ctx.font = "700 44px Georgia, 'Times New Roman', serif";
+  ctx.fillText("FAITHSHIELD", width / 2, 150);
+
+  ctx.fillStyle = "#f2e5ca";
+  ctx.font = "700 72px Georgia, 'Times New Roman', serif";
+  const nameText = String((badge && badge.name) || "Badge Unlocked");
+  drawWrappedCenterText(ctx, nameText, width / 2, 470, width - 260, 82, 3);
+
+  ctx.fillStyle = "#eedfbf";
+  ctx.font = "500 42px system-ui, -apple-system, Segoe UI, sans-serif";
+  const bodyText = String((badge && badge.accomplishment) || t("badgeUnlockedNow"));
+  const y = drawWrappedCenterText(ctx, bodyText, width / 2, 700, width - 300, 56, 5);
+
+  ctx.fillStyle = "#d9b56b";
+  ctx.font = "600 34px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.fillText(`Player: ${state.playerName || "Faith Player"}`, width / 2, y + 92);
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+  ctx.font = "500 28px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.fillText(new Date().toLocaleDateString(), width / 2, y + 148);
+
+  return canvas;
+}
+
+function drawWrappedCenterText(ctx, text, x, startY, maxWidth, lineHeight, maxLines) {
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  if (!words.length) return startY;
+
+  const lines = [];
+  let current = words.shift() || "";
+  while (words.length) {
+    const next = words.shift();
+    const trial = `${current} ${next}`;
+    if (ctx.measureText(trial).width <= maxWidth) {
+      current = trial;
+    } else {
+      lines.push(current);
+      current = next;
+      if (lines.length >= maxLines - 1) break;
+    }
+  }
+  if (current) lines.push(current);
+
+  if (lines.length > maxLines) {
+    lines.length = maxLines;
+  }
+  const lastIndex = lines.length - 1;
+  if (lastIndex >= 0 && words.length) {
+    let tail = `${lines[lastIndex]}...`;
+    while (tail.length > 4 && ctx.measureText(tail).width > maxWidth) {
+      tail = `${tail.slice(0, -4)}...`;
+    }
+    lines[lastIndex] = tail;
+  }
+
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, startY + (index * lineHeight));
+  });
+  return startY + ((lines.length - 1) * lineHeight);
+}
+
+function canvasToPngBlob(canvas) {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), "image/png");
+  });
+}
+
+function downloadBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 600);
+}
+
+async function exportBadgeCard(badge) {
+  if (!badge) return false;
+  const canvas = createBadgeShareCardCanvas(badge);
+  if (!canvas) return false;
+
+  const blob = await canvasToPngBlob(canvas);
+  if (!blob) return false;
+
+  const fileName = badgeCardFileName(badge);
+  const file = typeof File !== "undefined"
+    ? new File([blob], fileName, { type: "image/png" })
+    : null;
+
+  if (file && navigator.share && typeof navigator.canShare === "function") {
+    try {
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: `${badge.name} • FAITHSHIELD`,
+          text: badgeShareMessage(badge),
+          files: [file]
+        });
+        return true;
+      }
+    } catch (_) {
+      // Fall through to download.
+    }
+  }
+
+  downloadBlob(blob, fileName);
+  return true;
+}
+
+async function exportCurrentShareCard() {
+  const badge = currentShareBadge();
+  if (!badge) return;
+  const done = await exportBadgeCard(badge);
+  if (done && shareBadgeText) {
+    shareBadgeText.textContent = `${badgeShareMessage(badge)} (${t("downloadCard")})`;
+  }
+}
+
 function firstSourceEntry(sourceRef) {
   const first = normalizeSourceRef(sourceRef).split(";")[0] || "";
   return first.trim();
@@ -4717,6 +5005,62 @@ function weakestMasteryEntries(limit = 5) {
     .slice(0, Math.max(1, limit));
 }
 
+function ensureBadgeActionButtons() {
+  const badgeSection = document.querySelector(".badge-section");
+  const badgeHead = badgeSection ? badgeSection.querySelector(".badge-head") : null;
+  if (!badgeHead) return;
+
+  replayLatestBadgeBtn = badgeHead.querySelector("#replayLatestBadgeBtn");
+  if (!replayLatestBadgeBtn) {
+    replayLatestBadgeBtn = document.createElement("button");
+    replayLatestBadgeBtn.id = "replayLatestBadgeBtn";
+    replayLatestBadgeBtn.className = "ghost-btn";
+    replayLatestBadgeBtn.type = "button";
+    badgeHead.appendChild(replayLatestBadgeBtn);
+  }
+
+  exportLatestBadgeCardBtn = badgeHead.querySelector("#exportLatestBadgeCardBtn");
+  if (!exportLatestBadgeCardBtn) {
+    exportLatestBadgeCardBtn = document.createElement("button");
+    exportLatestBadgeCardBtn.id = "exportLatestBadgeCardBtn";
+    exportLatestBadgeCardBtn.className = "ghost-btn";
+    exportLatestBadgeCardBtn.type = "button";
+    badgeHead.appendChild(exportLatestBadgeCardBtn);
+  }
+
+  replayLatestBadgeBtn.textContent = t("replayBadgeCeremony");
+  exportLatestBadgeCardBtn.textContent = t("exportBadgeCard");
+
+  replayLatestBadgeBtn.onclick = () => {
+    replayLatestBadgeCelebration();
+  };
+  exportLatestBadgeCardBtn.onclick = () => {
+    const badge = latestOwnedBadge();
+    if (!badge) return;
+    exportBadgeCard(badge);
+  };
+}
+
+function ensureShareOverlayEnhancements() {
+  if (!shareOverlay) return;
+  const actions = shareOverlay.querySelector(".share-actions");
+  if (!actions) return;
+
+  exportBadgeCardBtn = actions.querySelector("#exportBadgeCardBtn");
+  if (!exportBadgeCardBtn) {
+    exportBadgeCardBtn = document.createElement("button");
+    exportBadgeCardBtn.id = "exportBadgeCardBtn";
+    exportBadgeCardBtn.className = "ghost-btn";
+    exportBadgeCardBtn.type = "button";
+    actions.appendChild(exportBadgeCardBtn);
+  }
+
+  exportBadgeCardBtn.textContent = t("downloadCard");
+  exportBadgeCardBtn.onclick = () => {
+    exportCurrentShareCard();
+  };
+}
+
 function ensureExperienceSections() {
   if (!appRoot) return;
 
@@ -4724,6 +5068,9 @@ function ensureExperienceSections() {
   const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
   const dailyWordCard = document.querySelector(".daily-word-card");
   const badgeSection = document.querySelector(".badge-section");
+
+  ensureBadgeActionButtons();
+  ensureShareOverlayEnhancements();
 
   if (!campaignMapSection || !campaignMapSection.isConnected) {
     campaignMapSection = document.getElementById("campaignMapSection");
@@ -4917,6 +5264,7 @@ function ensureExperienceSections() {
         '<div class="toggle-list">',
         '  <label class="toggle-row" for="hotkeysToggle"><input id="hotkeysToggle" type="checkbox" /> Enable global hotkeys</label>',
         '  <label class="toggle-row" for="controllerToggle"><input id="controllerToggle" type="checkbox" /> Enable controller support (beta)</label>',
+        '  <label class="toggle-row" for="badgeCeremonyAutoOpenToggle"><input id="badgeCeremonyAutoOpenToggle" type="checkbox" /> Auto-open Badge Shield</label>',
         '</div>',
         '<p class="meta">Hotkeys: H = hub, P = story path, M = music, Esc = close panel.</p>'
       ].join("");
@@ -4928,6 +5276,7 @@ function ensureExperienceSections() {
     }
     hotkeysToggle = desktopControlsSection.querySelector("#hotkeysToggle");
     controllerToggle = desktopControlsSection.querySelector("#controllerToggle");
+    badgeCeremonyAutoOpenToggle = desktopControlsSection.querySelector("#badgeCeremonyAutoOpenToggle");
 
     if (hotkeysToggle) {
       hotkeysToggle.onchange = (event) => {
@@ -4938,6 +5287,12 @@ function ensureExperienceSections() {
     if (controllerToggle) {
       controllerToggle.onchange = (event) => {
         state.controls.controller = Boolean(event.target.checked);
+        persist();
+      };
+    }
+    if (badgeCeremonyAutoOpenToggle) {
+      badgeCeremonyAutoOpenToggle.onchange = (event) => {
+        state.controls.badgeCeremonyAutoOpen = Boolean(event.target.checked);
         persist();
       };
     }
@@ -5100,6 +5455,14 @@ function renderDesktopControls() {
   desktopControlsSection.classList.toggle("hidden", !desktop);
   if (hotkeysToggle) hotkeysToggle.checked = Boolean(state.controls.hotkeys);
   if (controllerToggle) controllerToggle.checked = Boolean(state.controls.controller);
+  if (badgeCeremonyAutoOpenToggle) {
+    badgeCeremonyAutoOpenToggle.checked = state.controls.badgeCeremonyAutoOpen !== false;
+    const label = badgeCeremonyAutoOpenToggle.closest("label");
+    if (label && label.childNodes.length) {
+      const textNode = Array.from(label.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
+      if (textNode) textNode.textContent = ` ${t("autoOpenBadgeShield")}`;
+    }
+  }
 }
 
 function dispatchVirtualKey(key) {
@@ -5227,6 +5590,8 @@ function renderExperienceSections() {
 
 function updateHud() {
   applyLanguageToDocument();
+  ensureBadgeActionButtons();
+  ensureShareOverlayEnhancements();
   xpText.textContent = `${t("xpLabel")}: ${state.xp}`;
   livesText.textContent = `${t("livesLabel")}: ${state.lives}`;
   badgeText.textContent = state.lastBadge
@@ -5260,7 +5625,20 @@ function updateHud() {
     btn.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
 
-  if (shareLatestBadgeBtn) shareLatestBadgeBtn.disabled = state.badges.length === 0;
+  const hasBadges = state.badges.length > 0;
+  if (shareLatestBadgeBtn) shareLatestBadgeBtn.disabled = !hasBadges;
+  if (replayLatestBadgeBtn) {
+    replayLatestBadgeBtn.textContent = t("replayBadgeCeremony");
+    replayLatestBadgeBtn.disabled = !hasBadges;
+  }
+  if (exportLatestBadgeCardBtn) {
+    exportLatestBadgeCardBtn.textContent = t("exportBadgeCard");
+    exportLatestBadgeCardBtn.disabled = !hasBadges;
+  }
+  if (exportBadgeCardBtn) {
+    exportBadgeCardBtn.textContent = t("downloadCard");
+    exportBadgeCardBtn.disabled = !hasBadges;
+  }
   if (openBadgeShieldBtn) {
     openBadgeShieldBtn.textContent = `${t("badgeShieldLabel")} (${state.badges.length}/${MAX_BADGES})`;
   }
@@ -5437,18 +5815,21 @@ function badgeShareMessage(badge) {
 function renderBadgeGallery() {
   if (!badgeGrid) return;
   badgeGrid.innerHTML = "";
+  const setBonusCount = countUnlockedBadgeSetBonuses();
 
   if (!state.badges.length) {
     const empty = document.createElement("article");
     empty.className = "badge-card empty";
     empty.innerHTML = '<span class="badge-symbol">🛡️</span><h3>No badges yet</h3><p>Finish stages and skill challenges to collect Bible-symbol badges.</p>';
     badgeGrid.appendChild(empty);
-    if (badgeHelper) badgeHelper.textContent = "Complete stages to earn Bible-symbol badges.";
+    if (badgeHelper) {
+      badgeHelper.textContent = `Complete stages to earn Bible-symbol badges. ${t("setBonusesLabel")}: ${setBonusCount}/${BADGE_SET_BONUSES.length}.`;
+    }
     return;
   }
 
   if (badgeHelper) {
-    badgeHelper.textContent = `You have earned ${state.badges.length} of ${MAX_BADGES} badges.`;
+    badgeHelper.textContent = `You have earned ${state.badges.length} of ${MAX_BADGES} badges. ${t("setBonusesLabel")}: ${setBonusCount}/${BADGE_SET_BONUSES.length}.`;
   }
 
   state.badges
@@ -5490,11 +5871,12 @@ function renderBadgeShield() {
     const difficultyEarned = DIFFICULTY_LEVELS.filter((difficultyId) => state.stats.difficultyPass && state.stats.difficultyPass[difficultyId]).length;
     const baseBadgeCount = Math.max(0, state.badges.filter((badgeId) => badgeId !== "final-shield-of-faith").length);
     const finalShieldUnlocked = state.badges.includes("final-shield-of-faith");
+    const setBonusCount = countUnlockedBadgeSetBonuses();
     const finalShieldStatus = finalShieldUnlocked
       ? "Final Shield earned"
       : "Final Shield unlocks after 39 badges and all 3 difficulty seals";
     badgeShieldProgress.textContent =
-      `${baseBadgeCount}/${MAX_BADGES - 1} core badges earned | Difficulty seals ${difficultyEarned}/3 | ${finalShieldStatus}`;
+      `${baseBadgeCount}/${MAX_BADGES - 1} core badges earned | Difficulty seals ${difficultyEarned}/3 | ${t("setBonusesLabel")} ${setBonusCount}/${BADGE_SET_BONUSES.length} | ${finalShieldStatus}`;
   }
 
   renderDifficultyBadgeRow();
@@ -5559,12 +5941,16 @@ function showBadgeShieldCeremonyBoard() {
   }, 5000);
 }
 
-function startBadgeCeremonySequence(badge) {
+function startBadgeCeremonySequence(badge, options = {}) {
   if (!badge || !badge.id || !badgeShieldOverlay) return;
 
   clearBadgeCeremonyTimers();
   badgeCeremonyBadgeId = badge.id;
-  badgeCeremonyActive = true;
+  const shouldAutoOpen = options.skipBoard
+    ? false
+    : (options.autoOpen !== undefined ? Boolean(options.autoOpen) : state.controls.badgeCeremonyAutoOpen !== false);
+  badgeCeremonyActive = shouldAutoOpen;
+  if (!shouldAutoOpen) return;
 
   const revealWhenReady = () => {
     if (!badgeCeremonyActive) return;
@@ -5650,10 +6036,12 @@ function ensureBadgeUnlockToast() {
   return node;
 }
 
-function speakBadgePraise() {
+function speakBadgePraise(badge) {
   if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return;
-  const utterance = new SpeechSynthesisUtterance("Good job!");
-  const voice = pickNarrationVoice();
+  const badgeName = String((badge && badge.name) || "this badge").trim();
+  const line = `Good Job, for earning ${badgeName}.`;
+  const utterance = new SpeechSynthesisUtterance(line);
+  const voice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
 
   if (voice) {
     utterance.voice = voice;
@@ -5685,7 +6073,7 @@ function speakBadgePraise() {
     const onVoices = () => {
       window.speechSynthesis.removeEventListener("voiceschanged", onVoices);
       if (badgePraiseUtterance !== utterance) return;
-      const lateVoice = pickNarrationVoice();
+      const lateVoice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
       if (lateVoice) {
         utterance.voice = lateVoice;
         utterance.lang = lateVoice.lang || "en-US";
@@ -5702,7 +6090,7 @@ function speakBadgePraise() {
   speak();
 }
 
-function showBadgeUnlockMoment(badge) {
+function showBadgeUnlockMoment(badge, options = {}) {
   if (!badge) return;
   const node = ensureBadgeUnlockToast();
   if (!node) return;
@@ -5718,13 +6106,13 @@ function showBadgeUnlockMoment(badge) {
   if (sub) sub.textContent = badge.accomplishment || t("badgeUnlockedNow");
 
   node.classList.add("show");
-  speakBadgePraise();
+  speakBadgePraise(badge);
   if (badgeUnlockToastTimer) window.clearTimeout(badgeUnlockToastTimer);
   badgeUnlockToastTimer = window.setTimeout(() => {
     node.classList.remove("show");
     badgeUnlockToastTimer = 0;
   }, 5000);
-  startBadgeCeremonySequence(badge);
+  startBadgeCeremonySequence(badge, options);
 }
 
 function currentShareBadge() {
@@ -6094,6 +6482,14 @@ function maybeAwardBadges() {
     }
   }
 
+  const unlockedSetBonuses = awardBadgeSetBonuses();
+  if (unlockedSetBonuses.length) {
+    if (!unlocked.length) {
+      state.lastBadge = `${unlockedSetBonuses[0].icon} ${unlockedSetBonuses[0].name}`;
+    }
+    unlocked.push(...unlockedSetBonuses);
+  }
+
   return unlocked;
 }
 
@@ -6136,7 +6532,7 @@ function markDone(stageId, mode) {
     const unlockedBadges = maybeAwardBadges();
     const celebrationBadge = pickCelebrationBadge(unlockedBadges, unlockedDifficultyBadge);
     if (celebrationBadge) {
-      showBadgeUnlockMoment(celebrationBadge);
+      showBadgeUnlockMoment(celebrationBadge, { skipBoard: Boolean(celebrationBadge.skipBoard) });
       playSfx("badge");
     }
     persist();
@@ -6180,7 +6576,7 @@ function markDone(stageId, mode) {
   const unlockedBadges = maybeAwardBadges();
   const celebrationBadge = pickCelebrationBadge(unlockedBadges, unlockedDifficultyBadge);
   if (celebrationBadge) {
-    showBadgeUnlockMoment(celebrationBadge);
+    showBadgeUnlockMoment(celebrationBadge, { skipBoard: Boolean(celebrationBadge.skipBoard) });
     playSfx("badge");
   }
   persist();
@@ -6214,6 +6610,7 @@ function resetProgress() {
     dodgeWins: 0,
     slingshotWins: 0,
     flawlessLevels: 0,
+    badgeSetBonuses: {},
     difficultyPass: { easy: false, medium: false, advanced: false }
   };
   state.activeStage = null;
@@ -6260,16 +6657,21 @@ function itemSignature(item) {
   return JSON.stringify(item);
 }
 
-const CROSS_MODE_QUESTION_BUCKETS = new Set(["quiz", "truefalse", "matching", "speaker", "hebrew"]);
-
 function canonicalQuestionBucket(bucket = "item") {
-  return CROSS_MODE_QUESTION_BUCKETS.has(bucket) ? "question" : bucket;
+  return bucket;
 }
 
 function canonicalizeQuestionUsageRef(value) {
-  const text = normalizeSourceRef(value);
-  if (!text) return "";
-  return text.replace(/::(?:quiz|truefalse|matching|speaker|hebrew)::/g, "::question::");
+  const normalized = normalizeSourceRef(value);
+  if (!normalized) return "";
+  const parts = normalized.split("::").map((part) => part.trim()).filter(Boolean);
+  if (parts.length >= 3 && QUESTION_ACTIVITY_TYPES.has(parts[1])) {
+    return [parts[0]].concat(parts.slice(2)).join("::");
+  }
+  if (parts.length >= 2 && QUESTION_ACTIVITY_TYPES.has(parts[0])) {
+    return parts.slice(1).join("::");
+  }
+  return normalized;
 }
 
 function historyKeyForItem(item, bucket = "item") {
@@ -6368,16 +6770,16 @@ function themeScopeKey(theme, bucket) {
 
 function questionSourceGroup(bucket) {
   if (!bucket) return null;
-  if (CROSS_MODE_QUESTION_BUCKETS.has(bucket)) {
-    return new Set(CROSS_MODE_QUESTION_BUCKETS);
-  }
+  if (QUIZ_LINKED_ACTIVITY_TYPES.has(bucket)) return QUIZ_LINKED_ACTIVITY_TYPES;
+  if (SEQUENCE_LINKED_ACTIVITY_TYPES.has(bucket)) return SEQUENCE_LINKED_ACTIVITY_TYPES;
   return new Set([bucket]);
 }
 
 function usedQuestionSourcesForDifficulty(difficultyId = state.difficulty, bucket = null, theme = null) {
   const used = new Set();
   const cachePrefix = `${difficultyId}:`;
-  const typeGroup = questionSourceGroup(bucket);
+  const strictThemeNoRepeat = Boolean(theme && STRICT_SECTION_NO_REPEAT_THEMES.has(theme.name));
+  const typeGroup = strictThemeNoRepeat ? null : questionSourceGroup(bucket);
   const plan = theme ? themeReferencePlan(theme) : [];
 
   Object.entries(state.stageActivities || {}).forEach(([cacheKey, activity]) => {
@@ -6917,6 +7319,7 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       prompt: stagePrompt(meta, s.prompt, pick.reuseCount),
       clue: s.clue || "",
       answer: s.answer,
+      acceptedAnswers: Array.isArray(s.acceptedAnswers) ? s.acceptedAnswers.slice() : [],
       sourceRef: s.sourceRef,
       historySourceRef: s.historySourceRef || historyKeyForItem(s, "spelling")
     };
@@ -7534,6 +7937,7 @@ function activityFor(meta) {
   const cacheKey = state.difficulty + ":" + meta.id;
   const cached = state.stageActivities[cacheKey];
   if (cached && typeof cached === "object") {
+    const cachedVersion = Number(cached.__v || 0);
     const cachedQuizLikeOptions = (cached.type === "quiz" || cached.type === "speaker" || cached.type === "hebrew")
       && Array.isArray(cached.options)
       ? cached.options.map((option) => normalizeQuizAnswerKey(option))
@@ -7551,6 +7955,7 @@ function activityFor(meta) {
     );
     const cachedQuizTooShort = Boolean(cachedQuizLikeOptions && cachedQuizLikeOptions.length < 4);
     const shouldRebuild = cached.type === "exhausted"
+      || cachedVersion !== ACTIVITY_SCHEMA_VERSION
       || cachedQuizHasDuplicateOptions
       || cachedQuizMissingAnswer
       || cachedQuizTooShort
@@ -7563,7 +7968,7 @@ function activityFor(meta) {
   }
 
   const difficulty = currentDifficulty();
-  const sourceBucketForKind = (kind) => (kind === "truefalse" || kind === "matching" ? "quiz" : kind);
+  const sourceBucketForKind = (kind) => kind;
 
   let activity;
 
@@ -7605,6 +8010,9 @@ function activityFor(meta) {
     activity = buildQuestionPoolExhaustedActivity(meta, exhaustedType);
   }
 
+  if (activity && typeof activity === "object") {
+    activity.__v = ACTIVITY_SCHEMA_VERSION;
+  }
   state.stageActivities[cacheKey] = activity;
   return activity;
 }
@@ -8783,10 +9191,43 @@ function narrationScriptForEra(era) {
   return pack[era] || pack.generic || STORY_NARRATION_BY_ERA.generic;
 }
 
+function pickPremiumNarrationVoice(language = "en") {
+  if (!("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+
+  const wantsSpanish = String(language || "").toLowerCase().startsWith("es");
+  const langPattern = wantsSpanish ? /^es[-_]/i : /^en[-_]/i;
+  const preferredPremium = wantsSpanish
+    ? /premium|enhanced|neural|siri|paulina|monica|soledad|isabela|helena|luciana|camila|maria|jorge|diego|reed|evan/i
+    : /premium|enhanced|neural|siri|reed|evan|alex|daniel|ava|allison|victoria|serena|samantha|joanna|emma|olivia|aria|zoe|luna/i;
+
+  const localVoices = voices.filter((voice) => langPattern.test(voice.lang));
+  const pool = localVoices.length ? localVoices : voices;
+  const ranked = pool
+    .map((voice) => {
+      let score = 0;
+      if (langPattern.test(voice.lang)) score += 35;
+      if (wantsSpanish && /^es[-_]ES$/i.test(voice.lang)) score += 20;
+      if (!wantsSpanish && /^en[-_]US$/i.test(voice.lang)) score += 20;
+      if (preferredPremium.test(voice.name)) score += 60;
+      if (/premium|enhanced|neural|siri|reed|evan/i.test(voice.name)) score += 40;
+      if (voice.localService) score += 6;
+      if (voice.default) score += 5;
+      return { voice, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  return ranked.length ? ranked[0].voice : null;
+}
+
 function pickNarrationVoice() {
   if (!("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices() || [];
   if (!voices.length) return null;
+
+  const premium = pickPremiumNarrationVoice(state.language);
+  if (premium) return premium;
 
   if (state.language === "es") {
     const esQualityName = /paulina|monica|soledad|isabela|helena|luciana|camila|maria|jorge|diego|premium|enhanced|neural|siri/i;
@@ -9864,7 +10305,11 @@ function renderSpelling(meta, activity) {
     }
 
     const attempt = normalizeSpellingAnswer(input.value);
-    const answer = normalizeSpellingAnswer(activity.answer);
+    const acceptedAnswers = [activity.answer]
+      .concat(Array.isArray(activity.acceptedAnswers) ? activity.acceptedAnswers : [])
+      .map((entry) => normalizeSpellingAnswer(entry))
+      .filter(Boolean);
+    const isCorrect = acceptedAnswers.includes(attempt);
 
     if (!attempt) {
       feedback.className = "feedback warn";
@@ -9872,7 +10317,7 @@ function renderSpelling(meta, activity) {
       return;
     }
 
-    if (attempt === answer) {
+    if (isCorrect) {
       feedback.className = "feedback ok";
       feedback.textContent = t("correctSpellingComplete");
       playSfx("success");
