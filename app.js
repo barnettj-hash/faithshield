@@ -2237,7 +2237,7 @@ const quizBank = [
   { era: "exodus", prompt: "Who said, \"Don't be afraid. Stand still, and see the salvation of Yahweh\"?", options: ["Moses", "Aaron", "Joshua", "Pharaoh"], answer: "Moses", sourceRef: "Exodus 14:13" },
   { era: "exodus", prompt: "What name did God tell Moses to say forever to all generations?", options: ["Yahweh", "El Roi", "Yahweh Shalom", "El Shaddai"], answer: "Yahweh", sourceRef: "Exodus 3:15" },
   { era: "sinai", prompt: "Where were the Ten Commandments given?", options: ["Mount Sinai", "Mount Carmel", "Mount Zion", "Mount Nebo"], answer: "Mount Sinai", sourceRef: "Exodus 19:20; 20:1" },
-  { era: "sinai", prompt: "What did the people promise after hearing the covenant words?", options: ["We will do all the Lord has spoken", "We will return to Egypt", "We will follow Pharaoh", "We will build a new kingdom"], answer: "We will do all the Lord has spoken", sourceRef: "Exodus 24:7" },
+  { era: "sinai", prompt: "What did the people promise after hearing the covenant words?", options: ["We will do all that Yahweh has spoken", "We will return to Egypt", "We will follow Pharaoh", "We will build a new kingdom"], answer: "We will do all that Yahweh has spoken", sourceRef: "Exodus 24:7" },
   { era: "sinai", prompt: "What did Moses build at the foot of the mountain after writing all Yahweh's words?", options: ["An altar", "A palace", "A bronze serpent", "A city gate"], answer: "An altar", sourceRef: "Exodus 24:4" },
   { era: "wilderness", prompt: "What food did God provide daily?", options: ["Manna", "Figs", "Barley", "Dates"], answer: "Manna", sourceRef: "Exodus 16:14-15" },
   { era: "wilderness", prompt: "Who helped Moses hold up his hands in battle?", options: ["Aaron and Hur", "Joshua and Caleb", "Nadab and Abihu", "Aaron and Miriam"], answer: "Aaron and Hur", sourceRef: "Exodus 17:12" },
@@ -2324,7 +2324,7 @@ const mediumQuizBank = [
   { era: "judges", prompt: "Who said to Barak, \"Hasn't Yahweh, the God of Israel, commanded you?\"", options: ["Deborah", "Jael", "Ruth", "Naomi"], answer: "Deborah", sourceRef: "Judges 4:6" },
   { era: "samuel", prompt: "Who taught Samuel how to answer when the Lord called him?", options: ["Eli", "Saul", "David", "Jonathan"], answer: "Eli", sourceRef: "1 Samuel 3:8-9" },
   { era: "samuel", prompt: "What did Eli think Hannah was when he first saw her praying?", options: ["Drunk", "Singing", "Prophesying", "Sleeping"], answer: "Drunk", sourceRef: "1 Samuel 1:13-14" },
-  { era: "samuel", prompt: "What does the title Yahweh of Armies mean?", options: ["The Lord of armies", "The God who sees me", "Yahweh is peace", "Yahweh will provide"], answer: "The Lord of armies", sourceRef: "1 Samuel 1:3" },
+  { era: "samuel", prompt: "Which title for God appears in 1 Samuel 1:3?", options: ["Yahweh of Armies", "The God who sees me", "Yahweh is peace", "Yahweh will provide"], answer: "Yahweh of Armies", sourceRef: "1 Samuel 1:3" },
   { era: "samuel", prompt: "Who said, \"No, my lord, I am a woman of a sorrowful spirit\"?", options: ["Hannah", "Eli", "Samuel", "Naomi"], answer: "Hannah", sourceRef: "1 Samuel 1:15" },
   { era: "saul", prompt: "From which tribe was Saul?", options: ["Benjamin", "Judah", "Levi", "Ephraim"], answer: "Benjamin", sourceRef: "1 Samuel 9:21" },
   { era: "saul", prompt: "What did Saul do when the Spirit of God came on him after anointing?", options: ["He prophesied", "He built an altar", "He fled to Egypt", "He wrote a psalm"], answer: "He prophesied", sourceRef: "1 Samuel 10:10-11" },
@@ -2405,21 +2405,21 @@ const advancedQuizBank = [
   { era: "conquest", prompt: "Which people are named right after the Canaanites in Joshua 3:10?", options: ["Hittites", "Philistines", "Moabites", "Edomites"], answer: "Hittites", sourceRef: "Joshua 3:10" },
   { era: "conquest", prompt: "Which people secured peace with Israel through deception and a treaty?", options: ["Gibeonites", "Jebusites", "Amalekites", "Amorites"], answer: "Gibeonites", sourceRef: "Joshua 9:6-15" },
   { era: "judges", prompt: "What first sign did Gideon request with the fleece?", options: ["Dew on fleece only, ground dry", "Ground wet, fleece dry", "Fire from heaven", "A rainbow"], answer: "Dew on fleece only, ground dry", sourceRef: "Judges 6:37-38" },
-  { era: "judges", prompt: "In Judges' cycle, what usually happened after Israel cried out?", options: ["The Lord raised a deliverer", "They were exiled to Babylon", "The temple was rebuilt", "A prophet became king"], answer: "The Lord raised a deliverer", sourceRef: "Judges 2:18" },
+  { era: "judges", prompt: "In Judges' cycle, what usually happened after Israel cried out?", options: ["Yahweh raised up judges", "They were exiled to Babylon", "The temple was rebuilt", "A prophet became king"], answer: "Yahweh raised up judges", sourceRef: "Judges 2:18" },
   { era: "judges", prompt: "What phrase summarizes the spiritual condition in the days of Judges?", options: ["Everyone did what was right in his own eyes", "All Israel followed David", "The law was forgotten forever", "No sacrifices were offered"], answer: "Everyone did what was right in his own eyes", sourceRef: "Judges 21:25" },
   { era: "judges", prompt: "Under whose wings did Boaz say Ruth came to take refuge?", options: ["Yahweh's", "Boaz's", "Naomi's", "Bethlehem's"], answer: "Yahweh's", sourceRef: "Ruth 2:12" },
   { era: "judges", prompt: "Which Hebrew name appears on Gideon's altar in Judges 6:24?", options: ["Yahweh Shalom", "Yahweh Nissi", "El Roi", "Yahweh Yireh"], answer: "Yahweh Shalom", sourceRef: "Judges 6:24" },
   { era: "judges", prompt: "Who said to Ruth, \"Don't be afraid. I will do to you all that you ask\"?", options: ["Boaz", "Naomi", "Samuel", "Eli"], answer: "Boaz", sourceRef: "Ruth 3:11" },
   { era: "samuel", prompt: "What did Samuel say when the Lord stood and called him again after Eli instructed him?", options: ["Speak, for your servant hears", "Here I am, send me", "I am not worthy", "Please choose another"], answer: "Speak, for your servant hears", sourceRef: "1 Samuel 3:10" },
-  { era: "samuel", prompt: "What did Hannah vow regarding her son if God gave her one?", options: ["He would be given to the Lord all his life", "He would serve as king", "He would inherit Eli's house", "He would never leave home"], answer: "He would be given to the Lord all his life", sourceRef: "1 Samuel 1:11" },
+  { era: "samuel", prompt: "What did Hannah vow regarding her son if God gave her one?", options: ["He would be given to Yahweh all his life", "He would serve as king", "He would inherit Eli's house", "He would never leave home"], answer: "He would be given to Yahweh all his life", sourceRef: "1 Samuel 1:11" },
   { era: "samuel", prompt: "Who said, \"For this child I prayed, and Yahweh has given me my petition\"?", options: ["Hannah", "Eli", "Samuel", "Naomi"], answer: "Hannah", sourceRef: "1 Samuel 1:27" },
   { era: "samuel", prompt: "Which title of God appears in 1 Samuel 1:3 and 1:11?", options: ["Yahweh of Armies", "Yahweh Nissi", "El Roi", "Yahweh Yireh"], answer: "Yahweh of Armies", sourceRef: "1 Samuel 1:3" },
   { era: "samuel", prompt: "How did Eli respond after hearing Samuel's report?", options: ["It is Yahweh. Let him do what seems good to him", "I will ask Pharaoh for help", "Bring me the ark now", "I will appoint Saul today"], answer: "It is Yahweh. Let him do what seems good to him", sourceRef: "1 Samuel 3:18" },
-  { era: "saul", prompt: "What reason did Saul give for sparing the best Amalekite animals?", options: ["To sacrifice them to the Lord", "To feed his army", "To repay the Kenites", "To sell in Gilgal"], answer: "To sacrifice them to the Lord", sourceRef: "1 Samuel 15:15" },
+  { era: "saul", prompt: "What reason did Saul give for sparing the best Amalekite animals?", options: ["To sacrifice them to Yahweh your God", "To feed his army", "To repay the Kenites", "To sell in Gilgal"], answer: "To sacrifice them to Yahweh your God", sourceRef: "1 Samuel 15:15" },
   { era: "saul", prompt: "What principle did Samuel declare to Saul over ritual?", options: ["To obey is better than sacrifice", "Sacrifice covers all disobedience", "Kings decide their own law", "Victory proves obedience"], answer: "To obey is better than sacrifice", sourceRef: "1 Samuel 15:22" },
   { era: "saul", prompt: "Who said, \"I have sinned; for I have transgressed Yahweh's commandment\"?", options: ["Saul", "Samuel", "David", "Jonathan"], answer: "Saul", sourceRef: "1 Samuel 15:24" },
   { era: "david", prompt: "For how many days did Goliath challenge Israel?", options: ["40 days", "7 days", "12 days", "70 days"], answer: "40 days", sourceRef: "1 Samuel 17:16" },
-  { era: "david", prompt: "What did David say the battle belongs to?", options: ["The Lord", "Israel's army", "Saul's crown", "The strongest warrior"], answer: "The Lord", sourceRef: "1 Samuel 17:47" },
+  { era: "david", prompt: "What did David say the battle belongs to?", options: ["Yahweh", "Israel's army", "Saul's crown", "The strongest warrior"], answer: "Yahweh", sourceRef: "1 Samuel 17:47" },
   { era: "david", prompt: "Who said, \"You come to me with a sword, with a spear, and with a javelin; but I come to you in Yahweh of Armies' name\"?", options: ["David", "Saul", "Goliath", "Samuel"], answer: "David", sourceRef: "1 Samuel 17:45" },
   { era: "david", prompt: "Who said, \"Am I a dog, that you come to me with staffs?\"?", options: ["Goliath", "David", "Saul", "Abner"], answer: "Goliath", sourceRef: "1 Samuel 17:43" },
   { era: "david", prompt: "From where did David take the stones before facing Goliath?", options: ["The stream bed", "Saul's armory", "Bethlehem fields", "Priest's altar"], answer: "The stream bed", sourceRef: "1 Samuel 17:40" },
@@ -2919,6 +2919,7 @@ let hasRenderedStageGridOnce = false;
 let pendingStageFocusId = null;
 let pendingHubReturnTargetId = null;
 let pendingHubReturnScrollY = null;
+let pendingHubReturnStageId = null;
 let lastPersistFingerprint = "";
 const runtimePerformance = {
   reducedMotionQuery: null,
@@ -5897,25 +5898,48 @@ function queueHubReturn(targetId = "storyPathHeading") {
   pendingHubReturnTargetId = targetId;
 }
 
-function captureHubScrollPosition() {
-  if (!Number.isFinite(window.scrollY)) return;
-  pendingHubReturnScrollY = Math.max(0, Math.round(window.scrollY));
+function captureHubScrollPosition(stageId = null) {
+  if (Number.isFinite(window.scrollY)) {
+    pendingHubReturnScrollY = Math.max(0, Math.round(window.scrollY));
+  }
+  pendingHubReturnStageId = stageId || state.activeStage || state.lastStage || null;
 }
 
 function restoreHubScrollPosition() {
-  if (!Number.isFinite(pendingHubReturnScrollY)) return;
-  const y = Math.max(0, pendingHubReturnScrollY);
+  const hasScrollTarget = Number.isFinite(pendingHubReturnScrollY);
+  const hasStageAnchor = Boolean(pendingHubReturnStageId);
+  if (!hasScrollTarget && !hasStageAnchor) return;
+  const y = hasScrollTarget ? Math.max(0, pendingHubReturnScrollY) : 0;
+  const stageId = pendingHubReturnStageId;
   pendingHubReturnScrollY = null;
+  pendingHubReturnStageId = null;
+
   const restore = () => {
+    if (!hasScrollTarget) return;
     try {
       window.scrollTo({ top: y, left: 0, behavior: "auto" });
     } catch (_) {
       window.scrollTo(0, y);
     }
   };
+  const restoreStageAnchor = () => {
+    if (!stageId) return;
+    const card = stageGrid.querySelector(`[data-stage-id="${stageId}"]`);
+    if (!card) return;
+    card.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+  };
+
   restore();
   window.requestAnimationFrame(restore);
   window.setTimeout(restore, 80);
+  window.setTimeout(restore, 180);
+  window.setTimeout(restore, 360);
+  window.setTimeout(restore, 520);
+  if (hasStageAnchor) {
+    window.requestAnimationFrame(restoreStageAnchor);
+    window.setTimeout(restoreStageAnchor, 180);
+    window.setTimeout(restoreStageAnchor, 420);
+  }
 }
 
 function flushQueuedHubReturn() {
@@ -5933,11 +5957,13 @@ function flushQueuedHubReturn() {
     target.scrollIntoView({ block: "start", inline: "nearest", behavior: "smooth" });
   });
   pendingHubReturnScrollY = null;
+  pendingHubReturnStageId = null;
   return true;
 }
 
 function completeStage(meta, mode, options = {}) {
   // Keep player at current scroll position unless an explicit return target is requested.
+  captureHubScrollPosition(state.activeStage || meta.id);
   if (options.returnTarget) queueHubReturn(options.returnTarget);
   markDone(meta.id, mode);
   queueStageAutoClose(meta.id, options.delayMs || 850);
@@ -9324,7 +9350,8 @@ function openStage(stageId) {
   if (!meta) return;
 
   primeAudioAuto();
-  captureHubScrollPosition();
+  captureHubScrollPosition(stageId);
+  pendingStageFocusId = null;
   warmPosterCache(meta.theme.era);
   warmCutsceneMediaCache(meta.theme.era);
   warmNarrationAudioCache(meta.theme.era);
