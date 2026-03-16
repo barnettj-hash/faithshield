@@ -2217,7 +2217,7 @@ const quizBank = [
   { era: "genesis", prompt: "Who said, \"Am I my brother's keeper?\"", options: ["Cain", "Abel", "Adam", "Noah"], answer: "Cain", sourceRef: "Genesis 4:9" },
   { era: "genesis", prompt: "Before Babel, what did the whole earth have?", options: ["One language", "Many kingdoms", "Different laws", "Many alphabets"], answer: "One language", sourceRef: "Genesis 11:1" },
   { era: "genesis", prompt: "Where did the people settle before building the tower?", options: ["Shinar", "Eden", "Ararat", "Hebron"], answer: "Shinar", sourceRef: "Genesis 11:2" },
-  { era: "genesis", prompt: "What did the builders use for mortar at Babel?", options: ["Asphalt", "Clay", "Sand", "Straw"], answer: "Asphalt", sourceRef: "Genesis 11:3" },
+  { era: "genesis", prompt: "What did the builders use for mortar at Babel?", options: ["Tar", "Clay", "Sand", "Straw"], answer: "Tar", sourceRef: "Genesis 11:3" },
   { era: "genesis", prompt: "Why did the people say, let's make a name?", options: ["So they would not be scattered", "So they could cross the sea", "So they could find manna", "So they could defeat Egypt"], answer: "So they would not be scattered", sourceRef: "Genesis 11:4" },
   { era: "genesis", prompt: "What happened after Yahweh confused the language at Babel?", options: ["People were scattered", "The flood began", "Noah built an ark", "Abram left Haran"], answer: "People were scattered", sourceRef: "Genesis 11:8" },
   { era: "genesis", prompt: "Why was the city called Babel?", options: ["Yahweh confused the language", "It was where Noah lived", "A king named Babel ruled there", "It had twelve gates"], answer: "Yahweh confused the language", sourceRef: "Genesis 11:9" },
@@ -2496,7 +2496,7 @@ const mediumSpellingBank = [
   { era: "genesis", prompt: "Spell the kind of wood Noah used for the ark.", answer: "gopher", sourceRef: "Genesis 6:14" },
   { era: "genesis", prompt: "Type the bird Noah sent out first from the ark.", answer: "raven", sourceRef: "Genesis 8:7" },
   { era: "genesis", prompt: "Spell the plain where the people settled before Babel.", answer: "Shinar", sourceRef: "Genesis 11:2" },
-  { era: "genesis", prompt: "Spell the material used for mortar at Babel.", answer: "Asphalt", sourceRef: "Genesis 11:3" },
+  { era: "genesis", prompt: "Spell the material used for mortar at Babel.", answer: "Tar", sourceRef: "Genesis 11:3" },
   { era: "patriarchs", prompt: "Spell the place name Jacob gave after his dream of the ladder.", answer: "Bethel", sourceRef: "Genesis 28:19" },
   { era: "patriarchs", prompt: "Spell Joseph's second son.", answer: "Ephraim", sourceRef: "Genesis 41:52" },
   { era: "exodus", prompt: "Spell the title of Egypt's ruler whom Moses confronted.", answer: "Pharaoh", sourceRef: "Exodus 5:1" },
@@ -3863,8 +3863,73 @@ const SECTION_MUSIC_MODIFIERS = {
   }
 };
 
+const MUSIC_SCALE_LIBRARY = [
+  [0, 2, 4, 5, 7, 9, 11], // major
+  [0, 2, 3, 5, 7, 9, 10], // dorian
+  [0, 1, 3, 5, 7, 8, 10], // phrygian
+  [0, 2, 3, 5, 7, 8, 10], // natural minor
+  [0, 2, 4, 6, 7, 9, 11] // lydian
+];
+const MUSIC_ROOT_LIBRARY = [174.61, 185.0, 196.0, 207.65, 220.0, 233.08, 246.94, 261.63, 277.18, 293.66];
+const MUSIC_PROGRESSIONS = [
+  [0, 2, 4, 5],
+  [0, 3, 5, 2],
+  [0, 4, 2, 5],
+  [0, 1, 4, 3],
+  [0, 5, 3, 4],
+  [0, 2, 5, 3]
+];
+const MUSIC_MOTIFS = [
+  [0, 2, 4, 2],
+  [0, 3, 5, 3],
+  [0, 1, 4, 2],
+  [0, 4, 5, 4],
+  [0, 2, 3, 5],
+  [0, 5, 4, 2]
+];
+const MUSIC_SHIFT_PATTERNS = [
+  [0, 2, 0, -2],
+  [0, 0, 3, -2],
+  [0, 5, 2, -3],
+  [0, -2, 0, 2],
+  [0, 3, 0, -3],
+  [0, 4, 1, -2]
+];
+const MUSIC_WAVE_PACKS = [
+  { rootWave: "triangle", colorWave: "sine", bassWave: "triangle", motifWave: "triangle", droneWave: "sine" },
+  { rootWave: "sine", colorWave: "triangle", bassWave: "sine", motifWave: "triangle", droneWave: "triangle" },
+  { rootWave: "triangle", colorWave: "sawtooth", bassWave: "triangle", motifWave: "sine", droneWave: "sine" },
+  { rootWave: "sawtooth", colorWave: "triangle", bassWave: "sine", motifWave: "triangle", droneWave: "triangle" },
+  { rootWave: "sine", colorWave: "sine", bassWave: "triangle", motifWave: "sawtooth", droneWave: "sine" }
+];
+const MUSIC_DRUM_PACKS = [
+  { kickEvery: 1, kickPower: 0.9, snareEvery: 2, snareOffset: 1, snarePower: 0.52, hatEvery: 1, hatOffset: 0, hatPower: 0.34 },
+  { kickEvery: 1, kickPower: 0.86, snareEvery: 3, snareOffset: 1, snarePower: 0.48, hatEvery: 2, hatOffset: 1, hatPower: 0.28 },
+  { kickEvery: 2, kickPower: 0.8, snareEvery: 4, snareOffset: 2, snarePower: 0.44, hatEvery: 2, hatOffset: 1, hatPower: 0.24 },
+  { kickEvery: 1, kickPower: 0.93, snareEvery: 2, snareOffset: 1, snarePower: 0.54, hatEvery: 1, hatOffset: 0, hatPower: 0.38 },
+  { kickEvery: 2, kickPower: 0.78, snareEvery: 6, snareOffset: 3, snarePower: 0.4, hatEvery: 3, hatOffset: 1, hatPower: 0.2 }
+];
+const ADVENTURE_ERA_BOOST = {
+  conquest: 1.18,
+  david: 1.16,
+  exodus: 1.14,
+  judges: 1.1,
+  saul: 1.08,
+  samuel: 1.04,
+  patriarchs: 1.0,
+  genesis: 0.98,
+  wilderness: 0.94,
+  sinai: 0.92
+};
+
 function clampMusicValue(value, min, max) {
   return Math.max(min, Math.min(max, Number(value)));
+}
+
+function musicSeed(text) {
+  return String(text || "faithshield")
+    .split("")
+    .reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
 }
 
 function rotateMusicArray(values, shift) {
@@ -3874,10 +3939,84 @@ function rotateMusicArray(values, shift) {
   return values.slice(offset).concat(values.slice(0, offset));
 }
 
+function scaleDegreeSemitone(scale, degree) {
+  const safeScale = Array.isArray(scale) && scale.length ? scale : MUSIC_SCALE_LIBRARY[0];
+  const len = safeScale.length;
+  const wrapped = ((degree % len) + len) % len;
+  const octaves = Math.floor(degree / len);
+  return safeScale[wrapped] + octaves * 12;
+}
+
 function transposeFrequency(freq, semitoneShift) {
   if (!Number.isFinite(freq) || freq <= 0) return freq;
   const semitones = Number(semitoneShift) || 0;
   return Number((freq * Math.pow(2, semitones / 12)).toFixed(2));
+}
+
+function buildSectionSignature(theme, style, baseProfile) {
+  if (!theme || !theme.name) return {};
+  const seed = musicSeed(`${theme.name}|${theme.era}|${style}`);
+  const scale = MUSIC_SCALE_LIBRARY[seed % MUSIC_SCALE_LIBRARY.length];
+  const root = MUSIC_ROOT_LIBRARY[seed % MUSIC_ROOT_LIBRARY.length];
+  const progression = MUSIC_PROGRESSIONS[(seed >> 2) % MUSIC_PROGRESSIONS.length];
+  const motif = MUSIC_MOTIFS[(seed >> 4) % MUSIC_MOTIFS.length];
+  const shifts = MUSIC_SHIFT_PATTERNS[(seed >> 6) % MUSIC_SHIFT_PATTERNS.length];
+  const wavePack = MUSIC_WAVE_PACKS[(seed >> 5) % MUSIC_WAVE_PACKS.length];
+  const drumPack = MUSIC_DRUM_PACKS[(seed >> 7) % MUSIC_DRUM_PACKS.length];
+
+  const styleTempo = style === "energetic" ? 0.92 : 1.03;
+  const adventure = ADVENTURE_ERA_BOOST[theme.era] || 1;
+  const beatBase = Math.round((style === "energetic" ? 650 : 740) / adventure * styleTempo);
+  const beatVariants = [-38, -14, 22];
+
+  const buildSuite = (suiteIdx) => {
+    const degreeShift = suiteIdx + (seed % 3);
+    const suiteProgression = rotateMusicArray(progression, suiteIdx).map((degree) => {
+      const base = degree + degreeShift;
+      const rootSemi = scaleDegreeSemitone(scale, base);
+      const thirdSemi = scaleDegreeSemitone(scale, base + 2);
+      const fifthSemi = scaleDegreeSemitone(scale, base + 4);
+      return {
+        chord: [
+          transposeFrequency(root, rootSemi),
+          transposeFrequency(root, thirdSemi),
+          transposeFrequency(root, fifthSemi)
+        ],
+        bass: transposeFrequency(root, rootSemi - 12)
+      };
+    });
+
+    const motifLine = rotateMusicArray(motif, suiteIdx).map((degree) => {
+      const semi = scaleDegreeSemitone(scale, degree + degreeShift) + (style === "energetic" ? 12 : 10);
+      return transposeFrequency(root, semi);
+    });
+
+    return {
+      beatMs: clampMusicValue(beatBase + beatVariants[suiteIdx % beatVariants.length], 520, 900),
+      progression: suiteProgression,
+      motif: motifLine
+    };
+  };
+
+  return {
+    suites: [buildSuite(0), buildSuite(1), buildSuite(2)],
+    motifShifts: shifts.slice(),
+    rootWave: wavePack.rootWave,
+    colorWave: wavePack.colorWave,
+    bassWave: wavePack.bassWave,
+    motifWave: wavePack.motifWave,
+    droneWave: wavePack.droneWave,
+    lookAheadSeconds: clampMusicValue((baseProfile.lookAheadSeconds || 0.34) + (((seed % 5) - 2) * 0.012), 0.24, 0.48),
+    tickMs: clampMusicValue((baseProfile.tickMs || 78) + ((((seed >> 3) % 5) - 2) * 4), 56, 96),
+    offBeatFactor: clampMusicValue((baseProfile.offBeatFactor || 0.5) + ((((seed >> 1) % 5) - 2) * 0.03), 0.36, 0.66),
+    swellRange: clampMusicValue((baseProfile.swellRange || 0.1) + ((adventure - 1) * 0.05), 0.07, 0.18),
+    drums: {
+      ...drumPack,
+      hatPower: clampMusicValue(drumPack.hatPower * adventure, 0.18, 0.44),
+      kickPower: clampMusicValue(drumPack.kickPower * adventure, 0.68, 1.08),
+      snarePower: clampMusicValue(drumPack.snarePower * adventure, 0.34, 0.72)
+    }
+  };
 }
 
 function resolveActiveMusicTheme() {
@@ -3928,16 +4067,31 @@ function buildThemedSuites(baseSuites, modifier) {
   }));
 }
 
-function buildThemedMusicProfile(baseProfile, modifier) {
-  const suites = buildThemedSuites(baseProfile.suites, modifier);
+function buildThemedMusicProfile(baseProfile, modifier, signature = {}) {
+  const sourceSuites = Array.isArray(signature.suites) && signature.suites.length
+    ? signature.suites
+    : baseProfile.suites;
+  const suites = buildThemedSuites(sourceSuites, modifier);
   const energy = clampMusicValue(Number(modifier.energy || 1), 0.78, 1.25);
   const swellScale = clampMusicValue(Number(modifier.swellScale || 1), 0.74, 1.32);
+  const sourceMotifShifts = Array.isArray(signature.motifShifts) && signature.motifShifts.length
+    ? signature.motifShifts
+    : baseProfile.motifShifts;
 
   return {
     ...baseProfile,
+    lookAheadSeconds: clampMusicValue(Number(signature.lookAheadSeconds || baseProfile.lookAheadSeconds || 0.34), 0.24, 0.48),
+    tickMs: clampMusicValue(Number(signature.tickMs || baseProfile.tickMs || 78), 56, 96),
+    offBeatFactor: clampMusicValue(Number(signature.offBeatFactor || baseProfile.offBeatFactor || 0.5), 0.36, 0.66),
+    rootWave: signature.rootWave || baseProfile.rootWave || "triangle",
+    colorWave: signature.colorWave || baseProfile.colorWave || "sine",
+    bassWave: signature.bassWave || baseProfile.bassWave || "triangle",
+    motifWave: signature.motifWave || baseProfile.motifWave || "triangle",
+    droneWave: signature.droneWave || baseProfile.droneWave || "sine",
     suiteWindowMs: Math.round(baseProfile.suiteWindowMs * clampMusicValue(1 / (modifier.beatScale || 1), 0.8, 1.22)),
     swellPeriodMs: Math.round(baseProfile.swellPeriodMs * swellScale),
-    motifShifts: rotateMusicArray(baseProfile.motifShifts, modifier.motifRotate || 0),
+    swellRange: clampMusicValue(Number(signature.swellRange || baseProfile.swellRange || 0.1), 0.07, 0.18),
+    motifShifts: rotateMusicArray(sourceMotifShifts, modifier.motifRotate || 0),
     rootVol: clampMusicValue(baseProfile.rootVol * energy, 0.03, 0.12),
     thirdVol: clampMusicValue(baseProfile.thirdVol * energy, 0.02, 0.09),
     fifthVol: clampMusicValue(baseProfile.fifthVol * energy, 0.02, 0.1),
@@ -3948,6 +4102,7 @@ function buildThemedMusicProfile(baseProfile, modifier) {
     suites,
     drums: {
       ...baseProfile.drums,
+      ...(signature.drums || {}),
       ...(modifier.drums || {})
     }
   };
@@ -4101,7 +4256,8 @@ function startMusicLoop() {
   };
   const baseProfile = profileByStyle[style] || profileByStyle.cinematic;
   const modifier = resolveMusicModifier(activeTheme);
-  const profile = buildThemedMusicProfile(baseProfile, modifier);
+  const signature = buildSectionSignature(activeTheme, style, baseProfile);
+  const profile = buildThemedMusicProfile(baseProfile, modifier, signature);
   const suiteWindowMs = profile.suiteWindowMs;
   const suites = profile.suites;
 
@@ -4139,10 +4295,10 @@ function startMusicLoop() {
       playTone(root, 0.62, profile.rootWave, profile.rootVol * swell, "music", beatTime);
       playTone(third, 0.56, profile.colorWave, profile.thirdVol * swell, "music", beatTime);
       playTone(fifth, 0.54, profile.colorWave, profile.fifthVol * swell, "music", beatTime);
-      playTone(chordStep.bass, 0.78, "triangle", profile.bassVol * swell, "music", beatTime);
-      playTone(shiftedMotif, 0.18, "triangle", profile.motifVol * swell, "music", offBeatTime);
+      playTone(chordStep.bass, 0.78, profile.bassWave || "triangle", profile.bassVol * swell, "music", beatTime);
+      playTone(shiftedMotif, 0.18, profile.motifWave || "triangle", profile.motifVol * swell, "music", offBeatTime);
       if (audioEngine.step % 4 === 0) {
-        playTone(chordStep.bass / 2, beatSeconds * 1.6, "sine", profile.droneVol * swell, "music", beatTime);
+        playTone(chordStep.bass / 2, beatSeconds * 1.6, profile.droneWave || "sine", profile.droneVol * swell, "music", beatTime);
       }
 
       if (audioEngine.step % profile.drums.kickEvery === 0) {
@@ -7397,13 +7553,96 @@ function themeLevelOrdinal(meta) {
   return ordinal;
 }
 
-const NON_DIRECTIONAL_STAGE_FIVE_ENGINES = new Set(["pattern", "discern", "timing"]);
+const NON_DIRECTIONAL_STAGE_FIVE_ENGINES = new Set(["pattern", "discern", "timing", "slingshot"]);
 const STAGE_FIVE_PATTERN_FALLBACK_PADS = [
   { icon: "📜", label: "Word" },
   { icon: "🕯️", label: "Light" },
   { icon: "🛡️", label: "Faith" },
   { icon: "🙏", label: "Trust" }
 ];
+const STAGE_FIVE_PATTERN_SEQUENCE_LIBRARY = [
+  [[0, 1, 2], [0, 1, 2, 3], [1, 3, 2, 0], [0, 2, 1, 3, 0]],
+  [[0, 2, 1], [0, 2, 1, 3], [2, 0, 3, 1], [1, 2, 3, 0, 1]],
+  [[1, 0, 2], [1, 0, 2, 3], [3, 1, 0, 2], [2, 1, 3, 0, 2]],
+  [[2, 0, 1], [2, 0, 1, 3], [1, 3, 0, 2], [0, 2, 3, 1, 0]]
+];
+const STAGE_FIVE_DISCERN_VARIANTS = [
+  {
+    cards: [
+      { icon: "📖", label: "Obey God" },
+      { icon: "🙏", label: "Trust Him" },
+      { icon: "⚡", label: "Act in panic" },
+      { icon: "👑", label: "Seek glory" }
+    ],
+    rounds: [
+      { prompt: "Which response fits faithful obedience in this moment?", correctIndex: 0 },
+      { prompt: "Which response shows dependence on God over self?", correctIndex: 1 },
+      { prompt: "Which reaction should be rejected in this story?", correctIndex: 2 },
+      { prompt: "Which motive turns the heart away from God?", correctIndex: 3 }
+    ]
+  },
+  {
+    cards: [
+      { icon: "🕊️", label: "Wait on God" },
+      { icon: "🧭", label: "Follow truth" },
+      { icon: "🏃", label: "Run in fear" },
+      { icon: "🗿", label: "Trust idols" }
+    ],
+    rounds: [
+      { prompt: "Which choice reflects patient faith in this Bible scene?", correctIndex: 0 },
+      { prompt: "Which choice aligns with God's word in this story?", correctIndex: 1 },
+      { prompt: "Which response shows fear without trust?", correctIndex: 2 },
+      { prompt: "Which response rejects God's way for substitutes?", correctIndex: 3 }
+    ]
+  },
+  {
+    cards: [
+      { icon: "🛡️", label: "Stand firm" },
+      { icon: "🤝", label: "Keep covenant" },
+      { icon: "💬", label: "Complain" },
+      { icon: "🔥", label: "Harden heart" }
+    ],
+    rounds: [
+      { prompt: "Which response pictures steadfast faith here?", correctIndex: 0 },
+      { prompt: "Which response keeps covenant loyalty with God?", correctIndex: 1 },
+      { prompt: "Which response shows distrust instead of worship?", correctIndex: 2 },
+      { prompt: "Which response resists God's warning?", correctIndex: 3 }
+    ]
+  }
+];
+const STAGE_FIVE_BATTLE_THEME_NAMES = new Set([
+  "Sea Crossing",
+  "Jordan Crossing",
+  "Land and Legacy",
+  "Cycle of Judges",
+  "Saul's Kingship",
+  "David and Courage"
+]);
+const STAGE_FIVE_SLINGSHOT_KEYWORDS = [
+  "battle",
+  "duel",
+  "giant",
+  "shield",
+  "strike",
+  "war",
+  "army",
+  "march",
+  "jericho",
+  "conquest",
+  "chariot",
+  "fortress",
+  "wall"
+];
+
+function stageFiveHashSeed(base, themeName = "") {
+  const seed = `${themeName}::${base?.id || ""}::${base?.label || ""}::${base?.sourceRef || ""}`;
+  return seed.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+}
+
+function stageFiveThemeCue(themeName = "") {
+  if (!themeName) return "Bible";
+  return String(themeName).replace(/[^A-Za-z0-9' ]+/g, " ").trim() || "Bible";
+}
 
 function stageFivePatternPadsFromRoute(base) {
   const routeSteps = Array.isArray(base.routeSteps) ? base.routeSteps : [];
@@ -7431,8 +7670,10 @@ function stageFivePatternPadsFromRoute(base) {
   return pads.slice(0, 4);
 }
 
-function stageFivePatternFromRoute(base) {
+function stageFivePatternFromRoute(base, themeName = "") {
+  const hash = stageFiveHashSeed(base, themeName);
   const pads = stageFivePatternPadsFromRoute(base);
+  const sequenceSet = STAGE_FIVE_PATTERN_SEQUENCE_LIBRARY[hash % STAGE_FIVE_PATTERN_SEQUENCE_LIBRARY.length];
   return {
     id: `${base.id || "stage5-route"}-pattern`,
     engine: "pattern",
@@ -7445,14 +7686,14 @@ function stageFivePatternFromRoute(base) {
     secondaryPrompt: "Repeat the story sequence in order.",
     keyboardHint: "Keyboard: press 1-4 to repeat the sequence.",
     pads,
-    sequences: [[0, 1, 2], [0, 1, 2, 3], [1, 3, 2, 0], [0, 2, 1, 3, 0]]
+    sequences: sequenceSet.map((sequence) => sequence.slice())
   };
 }
 
-function stageFiveTimingFromDirectional(base) {
-  const seed = String(base.id || base.label || "stage5");
-  const hash = seed.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+function stageFiveTimingFromDirectional(base, themeName = "") {
+  const hash = stageFiveHashSeed(base, themeName);
   const paceOffset = (hash % 5) * 18;
+  const cue = stageFiveThemeCue(themeName);
   return {
     id: `${base.id || "stage5-direction"}-timing`,
     engine: "timing",
@@ -7461,27 +7702,81 @@ function stageFiveTimingFromDirectional(base) {
     maxMisses: Math.max(2, Math.min(5, Number(base.maxMisses) || 4)),
     speed: Math.max(620, 860 - paceOffset),
     sourceRef: base.sourceRef,
-    storyPrompt: base.storyPrompt || "Stay focused and strike with precise timing.",
+    storyPrompt: base.storyPrompt || `Stay focused in this ${cue} moment and strike with precise timing.`,
     secondaryPrompt: "Press Strike when the marker enters the gold zone.",
     keyboardHint: "Keyboard: press Space or Enter to strike in the gold zone."
   };
 }
 
-function toNonDirectionalStageFiveMode(base) {
-  if (!base || typeof base !== "object") return null;
-  if (NON_DIRECTIONAL_STAGE_FIVE_ENGINES.has(base.engine)) return { ...base };
-  if (base.engine === "route") return stageFivePatternFromRoute(base);
-  if (base.engine === "balance" || base.engine === "dodge" || base.engine === "collect" || base.engine === "slingshot") {
-    return stageFiveTimingFromDirectional(base);
-  }
-  return { ...base };
+function stageFiveDiscernFromDirectional(base, themeName = "") {
+  const hash = stageFiveHashSeed(base, themeName);
+  const cue = stageFiveThemeCue(themeName);
+  const variant = STAGE_FIVE_DISCERN_VARIANTS[hash % STAGE_FIVE_DISCERN_VARIANTS.length];
+  const rounds = variant.rounds.map((round) => ({
+    prompt: `${round.prompt} (${cue})`,
+    correctIndex: round.correctIndex
+  }));
+  return {
+    id: `${base.id || "stage5-action"}-discern`,
+    engine: "discern",
+    label: `${base.label || cue} Discernment`,
+    maxMisses: Math.max(2, Math.min(4, Number(base.maxMisses) || 3)),
+    sourceRef: base.sourceRef,
+    storyPrompt: base.storyPrompt || `Discern the faithful response in this ${cue} story moment.`,
+    secondaryPrompt: "Choose the strongest response each round.",
+    keyboardHint: "Keyboard: press 1-4 to choose your answer.",
+    cards: variant.cards.map((card) => ({ ...card })),
+    targets: rounds
+  };
 }
 
-function normalizedStageFivePool(rawPool) {
+function stageFiveSlingshotFromDirectional(base, themeName = "") {
+  const hash = stageFiveHashSeed(base, themeName);
+  const cue = stageFiveThemeCue(themeName);
+  const radiusScale = 18 - Math.min(4, hash % 3);
+  return {
+    id: `${base.id || "stage5-action"}-slingshot`,
+    engine: "slingshot",
+    label: `${base.label || cue} Precision`,
+    targetRadius: Math.max(14, radiusScale),
+    maxPull: 80 + ((hash % 4) * 3),
+    pullPowerScale: 0.13 + ((hash % 3) * 0.01),
+    sourceRef: base.sourceRef,
+    storyPrompt: base.storyPrompt || `Take one bold, precise shot in this ${cue} battle moment.`,
+    secondaryPrompt: "Aim carefully, then release one decisive strike.",
+    keyboardHint: "Keyboard: arrows adjust aim, Space/Enter launches, R resets."
+  };
+}
+
+function shouldUseStageFiveSlingshot(base, themeName = "") {
+  if (STAGE_FIVE_BATTLE_THEME_NAMES.has(themeName)) return true;
+  const text = `${base?.label || ""} ${base?.storyPrompt || ""} ${base?.sourceRef || ""}`.toLowerCase();
+  return STAGE_FIVE_SLINGSHOT_KEYWORDS.some((keyword) => text.includes(keyword));
+}
+
+function toNonDirectionalStageFiveMode(base, themeName = "") {
+  if (!base || typeof base !== "object") return null;
+  if (base.engine === "pattern" || base.engine === "discern" || base.engine === "timing") return { ...base };
+  if (base.engine === "slingshot") return stageFiveSlingshotFromDirectional(base, themeName);
+  if (base.engine === "route") return stageFivePatternFromRoute(base, themeName);
+  if (base.engine === "collect") return stageFiveDiscernFromDirectional(base, themeName);
+  if (base.engine === "balance") return stageFiveTimingFromDirectional(base, themeName);
+  if (base.engine === "dodge") {
+    return shouldUseStageFiveSlingshot(base, themeName)
+      ? stageFiveSlingshotFromDirectional(base, themeName)
+      : stageFiveDiscernFromDirectional(base, themeName);
+  }
+  if (NON_DIRECTIONAL_STAGE_FIVE_ENGINES.has(base.engine)) {
+    return { ...base };
+  }
+  return stageFiveTimingFromDirectional(base, themeName);
+}
+
+function normalizedStageFivePool(rawPool, themeName = "") {
   const seen = new Set();
   const converted = [];
   (Array.isArray(rawPool) ? rawPool : []).forEach((mode) => {
-    const normalized = toNonDirectionalStageFiveMode(mode);
+    const normalized = toNonDirectionalStageFiveMode(mode, themeName);
     if (!normalized || !NON_DIRECTIONAL_STAGE_FIVE_ENGINES.has(normalized.engine)) return;
     const id = String(normalized.id || `${normalized.engine}-${normalized.label || converted.length}`);
     if (seen.has(id)) return;
@@ -7502,8 +7797,8 @@ function stageFiveBaseSelection(level) {
   const themedModes = THEMED_INTERACTIVE_MODE_SETS[theme.name];
   const useThemedModes = Array.isArray(themedModes) && themedModes.length;
   const rawPool = useThemedModes ? themedModes : interactiveModes;
-  const normalizedPrimaryPool = normalizedStageFivePool(rawPool);
-  const normalizedFallbackPool = normalizedStageFivePool(interactiveModes);
+  const normalizedPrimaryPool = normalizedStageFivePool(rawPool, theme.name);
+  const normalizedFallbackPool = normalizedStageFivePool(interactiveModes, theme.name);
   const emergencyMode = {
     id: "stage5-emergency-timing",
     engine: "timing",
