@@ -1585,6 +1585,18 @@ body.has-overlay {
   opacity: 0.35;
 }
 
+#badgeShieldOverlay.ceremony-mode .shield-card {
+  animation: badgeBoardReveal 340ms ease both;
+}
+
+.shield-badge.ceremony-focus {
+  border-color: rgba(255, 227, 161, 0.92);
+  background: linear-gradient(180deg, rgba(255, 226, 160, 0.32), rgba(193, 141, 45, 0.26));
+  box-shadow: 0 0 0 2px rgba(255, 226, 160, 0.34), 0 16px 30px rgba(0, 0, 0, 0.35);
+  transform: scale(1.04);
+  animation: badgeCeremonyPulse 1.2s ease-in-out infinite;
+}
+
 .share-card p,
 .final-card p {
   line-height: 1.5;
@@ -1733,6 +1745,7 @@ body.has-overlay {
 .badge-unlock-toast.show {
   opacity: 1;
   transform: translate(-50%, -50%);
+  pointer-events: auto;
 }
 
 .badge-unlock-card {
@@ -1742,6 +1755,7 @@ body.has-overlay {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
   padding: 0.72rem 0.86rem 0.76rem;
   text-align: center;
+  pointer-events: auto;
 }
 
 .badge-unlock-kicker {
@@ -1777,8 +1791,43 @@ body.has-overlay {
   line-height: 1.35;
 }
 
+.badge-unlock-actions {
+  margin-top: 0.66rem;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.badge-unlock-actions .ghost-btn,
+.badge-unlock-actions .cta-btn {
+  width: 100%;
+  min-height: 42px;
+}
+
 body.performance-lite .badge-unlock-card {
   box-shadow: none;
+}
+
+@keyframes badgeCeremonyPulse {
+  0%, 100% {
+    transform: scale(1.03);
+    filter: saturate(1);
+  }
+  50% {
+    transform: scale(1.06);
+    filter: saturate(1.12);
+  }
+}
+
+@keyframes badgeBoardReveal {
+  from {
+    transform: translateY(8px) scale(0.985);
+    opacity: 0.4;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 .fact {

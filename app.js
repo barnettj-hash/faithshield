@@ -3317,6 +3317,10 @@ let audioUnlockArmed = false;
 let badgeUnlockToastTimer = 0;
 let badgeUnlockToastNode = null;
 let badgePraiseUtterance = null;
+let badgeCeremonyRevealTimer = 0;
+let badgeCeremonyCloseTimer = 0;
+let badgeCeremonyBadgeId = null;
+let badgeCeremonyActive = false;
 
 function clearAudioNodes() {
   audioEngine.ctx = null;
@@ -5500,6 +5504,7 @@ function renderBadgeShield() {
 
     const cell = document.createElement("article");
     cell.className = `shield-badge ${unlocked ? "unlocked" : "locked"}`;
+    cell.dataset.badgeId = badge.id;
     cell.title = unlocked ? `${badge.icon || "🛡️"} ${badge.name}` : "Locked";
 
     const symbol = document.createElement("span");
@@ -5515,17 +5520,94 @@ function renderBadgeShield() {
   });
 }
 
-function openBadgeShield() {
+function clearBadgeShieldCeremonyFocus() {
+  if (!badgeShieldGrid) return;
+  badgeShieldGrid
+    .querySelectorAll(".shield-badge.ceremony-focus")
+    .forEach((node) => node.classList.remove("ceremony-focus"));
+}
+
+function focusBadgeShieldCell(badgeId, options = {}) {
+  if (!badgeShieldGrid || !badgeId) return;
+  clearBadgeShieldCeremonyFocus();
+  const cell = badgeShieldGrid.querySelector(`.shield-badge[data-badge-id="${badgeId}"]`);
+  if (!cell) return;
+  if (options.ceremony) cell.classList.add("ceremony-focus");
+  const behavior = options.ceremony ? "auto" : "smooth";
+  cell.scrollIntoView({ block: "center", inline: "nearest", behavior });
+}
+
+function clearBadgeCeremonyTimers() {
+  if (badgeCeremonyRevealTimer) {
+    window.clearTimeout(badgeCeremonyRevealTimer);
+    badgeCeremonyRevealTimer = 0;
+  }
+  if (badgeCeremonyCloseTimer) {
+    window.clearTimeout(badgeCeremonyCloseTimer);
+    badgeCeremonyCloseTimer = 0;
+  }
+}
+
+function showBadgeShieldCeremonyBoard() {
+  if (!badgeCeremonyBadgeId) return;
+  badgeCeremonyActive = true;
+  clearBadgeCeremonyTimers();
+  openBadgeShield({ ceremony: true, focusBadgeId: badgeCeremonyBadgeId });
+  badgeCeremonyCloseTimer = window.setTimeout(() => {
+    badgeCeremonyCloseTimer = 0;
+    closeBadgeShield({ fromCeremony: true });
+  }, 5000);
+}
+
+function startBadgeCeremonySequence(badge) {
+  if (!badge || !badge.id || !badgeShieldOverlay) return;
+
+  clearBadgeCeremonyTimers();
+  badgeCeremonyBadgeId = badge.id;
+  badgeCeremonyActive = true;
+
+  const revealWhenReady = () => {
+    if (!badgeCeremonyActive) return;
+    const shareOpen = shareOverlay && !shareOverlay.classList.contains("hidden");
+    if (state.activeStage || isStoryTheaterOpen() || isFinalOpen() || isCreditsOpen() || shareOpen) {
+      badgeCeremonyRevealTimer = window.setTimeout(revealWhenReady, 700);
+      return;
+    }
+    badgeCeremonyRevealTimer = 0;
+    showBadgeShieldCeremonyBoard();
+  };
+
+  badgeCeremonyRevealTimer = window.setTimeout(revealWhenReady, 5050);
+}
+
+function openBadgeShield(options = {}) {
   if (!badgeShieldOverlay) return;
   renderBadgeShield();
+  const ceremonyMode = Boolean(options.ceremony);
+  badgeShieldOverlay.classList.toggle("ceremony-mode", ceremonyMode);
   badgeShieldOverlay.classList.remove("hidden");
   if (badgeShieldOverlay.scrollTo) badgeShieldOverlay.scrollTo({ top: 0, behavior: "auto" });
+  if (options.focusBadgeId) {
+    window.requestAnimationFrame(() => focusBadgeShieldCell(options.focusBadgeId, { ceremony: ceremonyMode }));
+  } else {
+    clearBadgeShieldCeremonyFocus();
+  }
   updateOverlayLock();
 }
 
-function closeBadgeShield() {
+function closeBadgeShield(options = {}) {
   if (!badgeShieldOverlay) return;
   badgeShieldOverlay.classList.add("hidden");
+  badgeShieldOverlay.classList.remove("ceremony-mode");
+  clearBadgeShieldCeremonyFocus();
+  if (!options.fromCeremony) {
+    clearBadgeCeremonyTimers();
+    badgeCeremonyActive = false;
+    badgeCeremonyBadgeId = null;
+  } else {
+    badgeCeremonyActive = false;
+    badgeCeremonyBadgeId = null;
+  }
   updateOverlayLock();
 }
 
@@ -5542,10 +5624,28 @@ function ensureBadgeUnlockToast() {
     '<p class="badge-unlock-kicker"></p>',
     '<p class="badge-unlock-name"><span class="badge-unlock-icon">🛡️</span><span class="badge-unlock-title"></span></p>',
     '<p class="badge-unlock-sub"></p>',
+    '<div class="badge-unlock-actions">',
+    '<button class="ghost-btn badge-unlock-share-btn" type="button">Share Badge</button>',
+    '<button class="cta-btn badge-unlock-board-btn" type="button">View Badge Board</button>',
+    "</div>",
     "</div>"
   ].join("");
 
   document.body.appendChild(node);
+  const shareBtn = node.querySelector(".badge-unlock-share-btn");
+  if (shareBtn) {
+    shareBtn.addEventListener("click", () => {
+      if (!badgeCeremonyBadgeId) return;
+      openShareOverlay(badgeCeremonyBadgeId);
+    });
+  }
+  const boardBtn = node.querySelector(".badge-unlock-board-btn");
+  if (boardBtn) {
+    boardBtn.addEventListener("click", () => {
+      if (!badgeCeremonyBadgeId) return;
+      showBadgeShieldCeremonyBoard();
+    });
+  }
   badgeUnlockToastNode = node;
   return node;
 }
@@ -5606,12 +5706,13 @@ function showBadgeUnlockMoment(badge) {
   if (!badge) return;
   const node = ensureBadgeUnlockToast();
   if (!node) return;
+  badgeCeremonyBadgeId = badge.id || null;
 
   const kicker = node.querySelector(".badge-unlock-kicker");
   const icon = node.querySelector(".badge-unlock-icon");
   const title = node.querySelector(".badge-unlock-title");
   const sub = node.querySelector(".badge-unlock-sub");
-  if (kicker) kicker.textContent = t("badgeUnlockedTitle");
+  if (kicker) kicker.textContent = `Good job! ${t("badgeUnlockedTitle")}`;
   if (icon) icon.textContent = badge.icon || "🛡️";
   if (title) title.textContent = badge.name || "Badge";
   if (sub) sub.textContent = badge.accomplishment || t("badgeUnlockedNow");
@@ -5623,6 +5724,7 @@ function showBadgeUnlockMoment(badge) {
     node.classList.remove("show");
     badgeUnlockToastTimer = 0;
   }, 5000);
+  startBadgeCeremonySequence(badge);
 }
 
 function currentShareBadge() {
