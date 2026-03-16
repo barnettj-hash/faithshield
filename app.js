@@ -648,7 +648,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 24;
+const ACTIVITY_SCHEMA_VERSION = 25;
 const STRICT_SECTION_NO_REPEAT_THEMES = new Set(["Nations and Babel"]);
 const QUIZ_LINKED_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "truefalse", "matching"]);
 const SEQUENCE_LINKED_ACTIVITY_TYPES = new Set(["order", "fact", "spelling"]);
@@ -7646,6 +7646,19 @@ const VERSE_FILL_STOP_WORDS = new Set([
   "i", "in", "into", "is", "it", "its", "me", "my", "of", "on", "or", "our", "that", "the",
   "their", "them", "they", "to", "us", "was", "we", "were", "will", "with", "yahweh", "god"
 ]);
+const VERSE_FILL_PRIORITY_WORDS = [
+  "flood",
+  "rainbow",
+  "covenant",
+  "ark",
+  "noah",
+  "dove",
+  "raven",
+  "language",
+  "babel",
+  "shinar",
+  "nimrod"
+];
 
 function normalizeVerseFillWord(word) {
   return normalizeSpellingAnswer(String(word || "").replace(/[.,;:!?()\[\]"“”]/g, " "));
@@ -7662,27 +7675,54 @@ function verseFillWordCandidates(parts = []) {
   );
 }
 
+function prioritizeVerseFillCandidates(candidates = []) {
+  if (!Array.isArray(candidates) || !candidates.length) return [];
+  const baseOrder = new Map();
+  candidates.forEach((word, index) => {
+    if (!baseOrder.has(word)) baseOrder.set(word, index);
+  });
+  const priorityRank = new Map();
+  VERSE_FILL_PRIORITY_WORDS.forEach((word, index) => {
+    priorityRank.set(word, index);
+  });
+
+  let ordered = candidates.slice().sort((a, b) => {
+    const rankA = priorityRank.has(a) ? priorityRank.get(a) : Number.POSITIVE_INFINITY;
+    const rankB = priorityRank.has(b) ? priorityRank.get(b) : Number.POSITIVE_INFINITY;
+    if (rankA !== rankB) return rankA - rankB;
+    return (baseOrder.get(a) || 0) - (baseOrder.get(b) || 0);
+  });
+
+  if (ordered.includes("flood")) {
+    ordered = ordered.filter((word) => !["waters", "become", "more"].includes(word));
+    ordered = ["flood"].concat(ordered.filter((word) => word !== "flood"));
+  }
+
+  return ordered;
+}
+
 function buildVerseFillPoolFromFactItem(item) {
   const parts = Array.isArray(item.parts) ? item.parts.map((part) => String(part || "").trim()) : [];
   if (parts.length < 3) return [];
 
-  const candidates = verseFillWordCandidates(parts).slice(0, 3);
+  const candidates = prioritizeVerseFillCandidates(verseFillWordCandidates(parts)).slice(0, 3);
   return candidates.map((answer, index) => {
     const blankIndex = parts.findIndex((part) => normalizeVerseFillWord(part) === answer);
     if (blankIndex === -1) return null;
     const clueParts = parts.slice();
-    clueParts[blankIndex] = "____";
-    return {
+      clueParts[blankIndex] = "____";
+      return {
       era: item.era,
       prompt: challengeCopy(
         "Fill in the missing Bible word from this verse.",
         "Completa la palabra bíblica que falta en este versículo."
       ),
-      clue: clueParts.join(" "),
-      answer: parts[blankIndex],
-      sourceRef: item.sourceRef,
-      historySourceRef: `${item.sourceRef}::versefill::${answer}::${index + 1}`
-    };
+        clue: clueParts.join(" "),
+        answer: parts[blankIndex],
+        acceptedAnswers: normalizeSpellingAnswer(parts[blankIndex]) === "flood" ? ["flooding"] : [],
+        sourceRef: item.sourceRef,
+        historySourceRef: `${item.sourceRef}::versefill::${answer}::${index + 1}`
+      };
   }).filter(Boolean);
 }
 
@@ -7763,6 +7803,18 @@ function normalizeSpellingAnswer(value) {
     .toLowerCase()
     .replace(/\s+/g, " ")
     .replace(/[’`]/g, "'");
+}
+
+function spellingAnswerAliases(value) {
+  const normalized = normalizeSpellingAnswer(value);
+  if (!normalized) return [];
+
+  if (normalized === "flood") return ["flooding"];
+  if (normalized === "flooding") return ["flood"];
+  if (normalized === "floodwaters" || normalized === "flood waters") {
+    return ["flood", "flooding", "flood waters", "floodwaters"];
+  }
+  return [];
 }
 
 function normalizeQuizAnswerKey(value) {
@@ -10306,10 +10358,18 @@ function renderSpelling(meta, activity) {
 
     const attempt = normalizeSpellingAnswer(input.value);
     const acceptedAnswers = [activity.answer]
-      .concat(Array.isArray(activity.acceptedAnswers) ? activity.acceptedAnswers : [])
-      .map((entry) => normalizeSpellingAnswer(entry))
-      .filter(Boolean);
-    const isCorrect = acceptedAnswers.includes(attempt);
+      .concat(Array.isArray(activity.acceptedAnswers) ? activity.acceptedAnswers : []);
+    const acceptedSet = new Set();
+    acceptedAnswers.forEach((entry) => {
+      const normalized = normalizeSpellingAnswer(entry);
+      if (!normalized) return;
+      acceptedSet.add(normalized);
+      spellingAnswerAliases(normalized).forEach((alias) => {
+        const aliasNormalized = normalizeSpellingAnswer(alias);
+        if (aliasNormalized) acceptedSet.add(aliasNormalized);
+      });
+    });
+    const isCorrect = acceptedSet.has(attempt);
 
     if (!attempt) {
       feedback.className = "feedback warn";
