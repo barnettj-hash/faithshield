@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-15-no-repeat-audio-share-v2";
+const CONTENT_VERSION = "2026-03-16-stage5-non-direction-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -7340,6 +7340,100 @@ function themeLevelOrdinal(meta) {
   return ordinal;
 }
 
+const NON_DIRECTIONAL_STAGE_FIVE_ENGINES = new Set(["pattern", "discern", "timing"]);
+const STAGE_FIVE_PATTERN_FALLBACK_PADS = [
+  { icon: "📜", label: "Word" },
+  { icon: "🕯️", label: "Light" },
+  { icon: "🛡️", label: "Faith" },
+  { icon: "🙏", label: "Trust" }
+];
+
+function stageFivePatternPadsFromRoute(base) {
+  const routeSteps = Array.isArray(base.routeSteps) ? base.routeSteps : [];
+  const pads = [];
+  const seen = new Set();
+  routeSteps.forEach((step) => {
+    if (pads.length >= 4) return;
+    const icon = String((step && step.icon) || "📜").trim() || "📜";
+    const label = String((step && step.label) || "Step").trim() || "Step";
+    const key = `${icon}::${label.toLowerCase()}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    pads.push({ icon, label });
+  });
+  STAGE_FIVE_PATTERN_FALLBACK_PADS.forEach((pad) => {
+    if (pads.length >= 4) return;
+    const key = `${pad.icon}::${pad.label.toLowerCase()}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    pads.push({ ...pad });
+  });
+  while (pads.length < 4) {
+    pads.push({ icon: "✨", label: `Step ${pads.length + 1}` });
+  }
+  return pads.slice(0, 4);
+}
+
+function stageFivePatternFromRoute(base) {
+  const pads = stageFivePatternPadsFromRoute(base);
+  return {
+    id: `${base.id || "stage5-route"}-pattern`,
+    engine: "pattern",
+    label: `${base.label || "Story Path"} Sequence`,
+    rounds: 4,
+    maxMisses: Math.max(2, Math.min(4, Number(base.maxMisses) || 3)),
+    playbackMs: 500,
+    sourceRef: base.sourceRef,
+    storyPrompt: base.storyPrompt || "Remember the Bible story sequence in the right order.",
+    secondaryPrompt: "Repeat the story sequence in order.",
+    keyboardHint: "Keyboard: press 1-4 to repeat the sequence.",
+    pads,
+    sequences: [[0, 1, 2], [0, 1, 2, 3], [1, 3, 2, 0], [0, 2, 1, 3, 0]]
+  };
+}
+
+function stageFiveTimingFromDirectional(base) {
+  const seed = String(base.id || base.label || "stage5");
+  const hash = seed.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  const paceOffset = (hash % 5) * 18;
+  return {
+    id: `${base.id || "stage5-direction"}-timing`,
+    engine: "timing",
+    label: `${base.label || "Story Focus"} Focus`,
+    target: Math.max(5, Math.min(10, Number(base.target) || 7)),
+    maxMisses: Math.max(2, Math.min(5, Number(base.maxMisses) || 4)),
+    speed: Math.max(620, 860 - paceOffset),
+    sourceRef: base.sourceRef,
+    storyPrompt: base.storyPrompt || "Stay focused and strike with precise timing.",
+    secondaryPrompt: "Press Strike when the marker enters the gold zone.",
+    keyboardHint: "Keyboard: press Space or Enter to strike in the gold zone."
+  };
+}
+
+function toNonDirectionalStageFiveMode(base) {
+  if (!base || typeof base !== "object") return null;
+  if (NON_DIRECTIONAL_STAGE_FIVE_ENGINES.has(base.engine)) return { ...base };
+  if (base.engine === "route") return stageFivePatternFromRoute(base);
+  if (base.engine === "balance" || base.engine === "dodge" || base.engine === "collect" || base.engine === "slingshot") {
+    return stageFiveTimingFromDirectional(base);
+  }
+  return { ...base };
+}
+
+function normalizedStageFivePool(rawPool) {
+  const seen = new Set();
+  const converted = [];
+  (Array.isArray(rawPool) ? rawPool : []).forEach((mode) => {
+    const normalized = toNonDirectionalStageFiveMode(mode);
+    if (!normalized || !NON_DIRECTIONAL_STAGE_FIVE_ENGINES.has(normalized.engine)) return;
+    const id = String(normalized.id || `${normalized.engine}-${normalized.label || converted.length}`);
+    if (seen.has(id)) return;
+    seen.add(id);
+    converted.push(normalized);
+  });
+  return converted;
+}
+
 const stageFiveSelectionCache = new Map();
 
 function stageFiveBaseSelection(level) {
@@ -7350,7 +7444,25 @@ function stageFiveBaseSelection(level) {
   const theme = levelThemeSequence[level - 1] || timelineThemes[timelineThemes.length - 1];
   const themedModes = THEMED_INTERACTIVE_MODE_SETS[theme.name];
   const useThemedModes = Array.isArray(themedModes) && themedModes.length;
-  const pool = useThemedModes ? themedModes : interactiveModes;
+  const rawPool = useThemedModes ? themedModes : interactiveModes;
+  const normalizedPrimaryPool = normalizedStageFivePool(rawPool);
+  const normalizedFallbackPool = normalizedStageFivePool(interactiveModes);
+  const emergencyMode = {
+    id: "stage5-emergency-timing",
+    engine: "timing",
+    label: "Faith Focus",
+    target: 7,
+    maxMisses: 4,
+    speed: 780,
+    sourceRef: theme.sourceRef,
+    storyPrompt: "Stay focused and strike with precision.",
+    secondaryPrompt: "Press Strike when the marker enters the gold zone.",
+    keyboardHint: "Keyboard: press Space or Enter to strike in the gold zone."
+  };
+  const pool = normalizedPrimaryPool.length
+    ? normalizedPrimaryPool
+    : (normalizedFallbackPool.length ? normalizedFallbackPool : [emergencyMode]);
+
   const ordinal = useThemedModes
     ? levelThemeSequence.slice(0, Math.max(0, level - 1)).filter((entry) => (entry || {}).name === theme.name).length
     : (level - 1);
