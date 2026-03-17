@@ -648,7 +648,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 28;
+const ACTIVITY_SCHEMA_VERSION = 29;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -3276,7 +3276,8 @@ const state = {
   mastery: JSON.parse(localStorage.getItem("faithMastery") || "{}"),
   dailyDevotion: JSON.parse(localStorage.getItem("faithDailyDevotion") || '{"day":"","challenge":false,"action":false,"reflection":false,"reward":false,"note":""}'),
   weeklyChallenge: JSON.parse(localStorage.getItem("faithWeeklyChallenge") || '{"weekKey":"","era":"genesis","target":7,"progress":0,"shared":false}'),
-  controls: JSON.parse(localStorage.getItem("faithControls") || '{"hotkeys":true,"controller":false,"badgeCeremonyAutoOpen":true}')
+  controls: JSON.parse(localStorage.getItem("faithControls") || '{"hotkeys":true,"controller":false,"badgeCeremonyAutoOpen":true}'),
+  reviewFocus: JSON.parse(localStorage.getItem("faithReviewFocus") || "null")
 };
 
 if (launchQueryName) {
@@ -3335,6 +3336,9 @@ if (!state.controls || typeof state.controls !== "object" || Array.isArray(state
 state.controls.hotkeys = state.controls.hotkeys !== false;
 state.controls.controller = Boolean(state.controls.controller);
 state.controls.badgeCeremonyAutoOpen = state.controls.badgeCeremonyAutoOpen !== false;
+if (!state.reviewFocus || typeof state.reviewFocus !== "object" || Array.isArray(state.reviewFocus)) {
+  state.reviewFocus = null;
+}
 
 if ((localStorage.getItem("faithContentVersion") || "") !== CONTENT_VERSION) {
   state.questionHistory = {};
@@ -3359,7 +3363,10 @@ state.stats = {
     easy: Boolean(state.stats.difficultyPass && state.stats.difficultyPass.easy),
     medium: Boolean(state.stats.difficultyPass && state.stats.difficultyPass.medium),
     advanced: Boolean(state.stats.difficultyPass && state.stats.difficultyPass.advanced)
-  }
+  },
+  eraFinalesSeen: (state.stats && state.stats.eraFinalesSeen && typeof state.stats.eraFinalesSeen === "object" && !Array.isArray(state.stats.eraFinalesSeen))
+    ? { ...state.stats.eraFinalesSeen }
+    : {}
 };
 
 function ensureDailyDevotionState() {
@@ -3479,6 +3486,8 @@ let masteryOverall = null;
 let masteryBars = null;
 let weakAreaList = null;
 let focusWeakBtn = null;
+let startSmartReviewBtn = null;
+let reviewDueTodayBtn = null;
 let dailyDevotionSection = null;
 let dailyDevotionStatus = null;
 let dailyDevotionPrompt = null;
@@ -3520,17 +3529,32 @@ const audioEngine = {
   bootMusicHoldUntil: 0,
   musicThemeName: "",
   musicThemeEra: "",
-  musicProfileKey: ""
+  musicProfileKey: "",
+  duckTimer: 0,
+  duckUntil: 0,
+  duckLevel: 1
 };
 const AUDIO_UNLOCK_EVENTS = ["pointerdown", "pointerup", "touchstart", "touchend", "mousedown", "click", "keydown"];
 let audioUnlockArmed = false;
 let badgeUnlockToastTimer = 0;
 let badgeUnlockToastNode = null;
+let stageCompleteToastTimer = 0;
+let stageCompleteToastNode = null;
 let badgePraiseUtterance = null;
 let badgeCeremonyRevealTimer = 0;
 let badgeCeremonyCloseTimer = 0;
 let badgeCeremonyBadgeId = null;
 let badgeCeremonyActive = false;
+let pendingEraFinaleEra = null;
+let eraFinaleOverlay = null;
+let eraFinaleTitle = null;
+let eraFinaleMessage = null;
+let eraFinaleReflection = null;
+let eraFinaleProgress = null;
+let eraFinaleVerse = null;
+let eraFinaleContinueBtn = null;
+let eraFinaleReviewBtn = null;
+let eraFinaleBadgeBtn = null;
 
 function clearAudioNodes() {
   audioEngine.ctx = null;
@@ -3542,6 +3566,12 @@ function clearAudioNodes() {
   audioEngine.musicThemeName = "";
   audioEngine.musicThemeEra = "";
   audioEngine.musicProfileKey = "";
+  if (audioEngine.duckTimer) {
+    window.clearTimeout(audioEngine.duckTimer);
+    audioEngine.duckTimer = 0;
+  }
+  audioEngine.duckUntil = 0;
+  audioEngine.duckLevel = 1;
 }
 
 function disarmAudioUnlock() {
@@ -3772,6 +3802,23 @@ function playDrumPulse(kind, when, intensity = 1) {
   playTone(1244.51, 0.032, "triangle", 0.0018 * intensity, "music", beatTime);
 }
 
+function duckMusicTemporarily(level = 0.42, durationMs = 1500) {
+  audioEngine.duckLevel = Math.max(0.14, Math.min(1, Number(level) || 0.42));
+  audioEngine.duckUntil = Date.now() + Math.max(160, Number(durationMs) || 0);
+  if (audioEngine.duckTimer) {
+    window.clearTimeout(audioEngine.duckTimer);
+    audioEngine.duckTimer = 0;
+  }
+  updateAudioState();
+  audioEngine.duckTimer = window.setTimeout(() => {
+    audioEngine.duckTimer = 0;
+    if (Date.now() < audioEngine.duckUntil) return;
+    audioEngine.duckUntil = 0;
+    audioEngine.duckLevel = 1;
+    updateAudioState();
+  }, Math.max(220, durationMs + 120));
+}
+
 function playSfx(name) {
   if (!state.audio.sfx) return;
   ensureAudio();
@@ -3793,6 +3840,17 @@ function playSfx(name) {
   } else if (name === "success") {
     playTone(523.25, 0.1, "triangle", 0.18);
     setTimeout(() => playTone(659.25, 0.12, "triangle", 0.18), 90);
+  } else if (name === "stage-clear") {
+    playTone(392.0, 0.08, "triangle", 0.12);
+    setTimeout(() => playTone(523.25, 0.1, "triangle", 0.13), 68);
+    setTimeout(() => playTone(659.25, 0.12, "triangle", 0.14), 144);
+    setTimeout(() => playTone(783.99, 0.2, "triangle", 0.13), 224);
+  } else if (name === "era-finale") {
+    playTone(392.0, 0.12, "triangle", 0.1);
+    setTimeout(() => playTone(523.25, 0.16, "triangle", 0.11), 120);
+    setTimeout(() => playTone(659.25, 0.18, "triangle", 0.115), 260);
+    setTimeout(() => playTone(783.99, 0.22, "triangle", 0.12), 430);
+    setTimeout(() => playTone(1046.5, 0.4, "triangle", 0.125), 660);
   } else if (name === "badge") {
     // Badge fanfare: 5-second trumpet-style celebration for badge unlock moments.
     const note = (freq, delay, duration, leadVol = 0.12, colorVol = 0.064) => {
@@ -4683,6 +4741,7 @@ function persist() {
     dailyDevotion: state.dailyDevotion,
     weeklyChallenge: state.weeklyChallenge,
     controls: state.controls,
+    reviewFocus: state.reviewFocus,
     activeStage: state.activeStage || "",
     lastStage: state.lastStage || "",
     contentVersion: CONTENT_VERSION
@@ -4711,6 +4770,8 @@ function persist() {
   localStorage.setItem("faithDailyDevotion", JSON.stringify(state.dailyDevotion));
   localStorage.setItem("faithWeeklyChallenge", JSON.stringify(state.weeklyChallenge));
   localStorage.setItem("faithControls", JSON.stringify(state.controls));
+  if (state.reviewFocus) localStorage.setItem("faithReviewFocus", JSON.stringify(state.reviewFocus));
+  else localStorage.removeItem("faithReviewFocus");
   localStorage.setItem("faithContentVersion", CONTENT_VERSION);
 
   if (state.activeStage) localStorage.setItem("faithActiveStage", state.activeStage);
@@ -4774,6 +4835,89 @@ function eraIntroCopy(era) {
     david: "Courage of David"
   };
   return map[era] || era;
+}
+
+function eraFinaleCopy(era) {
+  const map = {
+    genesis: {
+      title: "Genesis Complete",
+      body: "You walked from creation, through the fall, the flood, and Babel. God remained faithful through every beginning.",
+      reflection: "Take a moment to remember how God's purpose held steady from the very first pages of Scripture."
+    },
+    patriarchs: {
+      title: "Patriarch Journey Complete",
+      body: "You followed God's covenant promises from Abram through Joseph. The promise line kept moving forward by faith.",
+      reflection: "Notice how God kept His word across generations, even through waiting, weakness, and hardship."
+    },
+    exodus: {
+      title: "Exodus Complete",
+      body: "You saw God deliver His people with power, mercy, and remembrance. Redemption defined this journey.",
+      reflection: "Remember that God not only rescues, but also teaches His people how to trust Him."
+    },
+    sinai: {
+      title: "Sinai Complete",
+      body: "You reached the covenant mountain and traced God's holy words. Sinai shows both God's nearness and His holiness.",
+      reflection: "Let this era remind you that God's commands are meant to shape a faithful people."
+    },
+    wilderness: {
+      title: "Wilderness Complete",
+      body: "You crossed the hard places of testing and provision. God remained patient even when His people struggled to trust.",
+      reflection: "Wilderness stories teach that daily dependence on God matters more than quick confidence."
+    },
+    conquest: {
+      title: "Conquest Complete",
+      body: "You crossed into the land and watched God go before His people. Courage and obedience mattered at every step.",
+      reflection: "This era shows that victory in Scripture is tied to God's presence, not human strength alone."
+    },
+    judges: {
+      title: "Judges Complete",
+      body: "You moved through cycles of failure, mercy, and deliverance. Even in instability, God kept raising help.",
+      reflection: "Judges reminds us how much God's people need both repentance and faithful leadership."
+    },
+    samuel: {
+      title: "Samuel Complete",
+      body: "You listened through call, leadership, and transition. God's voice shaped the future when His servants listened.",
+      reflection: "Stay attentive. The Lord still teaches His people to hear and obey."
+    },
+    saul: {
+      title: "Saul Complete",
+      body: "You traced the rise of kingship and the cost of disobedience. Authority without submission to God does not last.",
+      reflection: "This era warns that outward position never replaces inward obedience."
+    },
+    david: {
+      title: "David Complete",
+      body: "You followed courage, worship, and trust in the Lord. David's path shows that faith can stand firm in battle and weakness alike.",
+      reflection: "Carry this lesson forward: the Lord looks at the heart and strengthens those who trust Him."
+    }
+  };
+  return map[era] || {
+    title: `${formatEraLabel(era)} Complete`,
+    body: "You completed this chapter of the Bible journey.",
+    reflection: "Keep going. God's Word is building the whole shield one section at a time."
+  };
+}
+
+function compareDayKeys(a, b) {
+  return String(a || "").localeCompare(String(b || ""));
+}
+
+function entryDueToday(entry) {
+  const nextReviewDay = String(entry && entry.nextReviewDay || "");
+  if (!nextReviewDay) return false;
+  return compareDayKeys(nextReviewDay, localDayKey()) <= 0;
+}
+
+function reviewDueEntries(limit = 5) {
+  return masteryEntries()
+    .filter((entry) => entryDueToday(entry) || Number(entry.wrongStreak || 0) > 0)
+    .sort((a, b) => {
+      const dueDiff = compareDayKeys(String(a.nextReviewDay || ""), String(b.nextReviewDay || ""));
+      if (dueDiff !== 0) return dueDiff;
+      const strengthDiff = Number(a.strength || 0) - Number(b.strength || 0);
+      if (strengthDiff !== 0) return strengthDiff;
+      return Number(b.wrongStreak || 0) - Number(a.wrongStreak || 0);
+    })
+    .slice(0, Math.max(1, limit));
 }
 
 function smoothScrollToNode(node) {
@@ -5079,9 +5223,14 @@ function masteryKeyFor(meta, activity) {
 }
 
 function masteryTopicFor(meta, activity) {
+  const kind = activity && activity.type === "interactive" && activity.mode
+    ? activity.mode.engine || "interactive"
+    : activity && activity.type
+      ? activity.type
+      : "quiz";
   const source = firstSourceEntry((activity && activity.sourceRef) || meta.theme.sourceRef || "");
   const type = activity && activity.type === "interactive" && activity.mode
-    ? activity.mode.label || activity.mode.engine || "interactive"
+    ? activity.mode.label || kind || "interactive"
     : activity && activity.type
       ? activity.type
       : "quiz";
@@ -5089,7 +5238,8 @@ function masteryTopicFor(meta, activity) {
     era: meta.theme.era,
     theme: meta.theme.name,
     label: `${meta.theme.name} • ${type}`,
-    source
+    source,
+    kind
   };
 }
 
@@ -5103,6 +5253,7 @@ function recordMasteryOutcome(meta, activity, wasCorrect) {
     theme: topic.theme,
     label: topic.label,
     source: topic.source,
+    kind: topic.kind,
     attempts: Math.max(0, Number(existing.attempts || 0)),
     correct: Math.max(0, Number(existing.correct || 0)),
     strength: Math.max(0, Math.min(100, Number(existing.strength || 50))),
@@ -5153,6 +5304,117 @@ function weakestMasteryEntries(limit = 5) {
       return Number(b.wrongStreak || 0) - Number(a.wrongStreak || 0);
     })
     .slice(0, Math.max(1, limit));
+}
+
+function reviewKindFromEntry(entry) {
+  if (entry && entry.kind) return String(entry.kind);
+  const parts = String(entry && entry.key || "").split("|");
+  return parts[2] || "quiz";
+}
+
+function sourceRefIncludesReference(sourceRef, reference) {
+  const target = referenceEntriesFromSourceRef(reference)[0];
+  if (!target) return normalizeSourceRef(sourceRef).includes(normalizeSourceRef(reference));
+  return parseSourceRefSegments(sourceRef).some((segment) => {
+    if (segment.book !== target.book) return false;
+    if (target.chapter < segment.startChapter || target.chapter > segment.endChapter) return false;
+    if (target.chapter === segment.startChapter && target.verse < segment.startVerse) return false;
+    if (target.chapter === segment.endChapter && target.verse > segment.endVerse) return false;
+    return true;
+  });
+}
+
+function itemMatchesReviewFocus(item, focus) {
+  if (!focus) return true;
+  if (focus.theme && item && item.sourceRef && focus.source) {
+    return sourceRefIncludesReference(item.sourceRef, focus.source);
+  }
+  return true;
+}
+
+function clearReviewFocus(options = {}) {
+  if (!state.reviewFocus) return;
+  state.reviewFocus = null;
+  if (!options.silent) persist();
+}
+
+function recommendedStageForReview(entry) {
+  if (!entry) return null;
+  const preferredKind = reviewKindFromEntry(entry);
+  const themedStages = stages.filter((meta, index) => {
+    if (meta.theme.name !== entry.theme) return false;
+    if (meta.stage > 4) return false;
+    return index + 1 <= state.unlocked;
+  });
+  if (!themedStages.length) return null;
+
+  const scored = themedStages.map((meta) => {
+    const plan = stageKindPlan(meta, currentDifficulty());
+    const kindIndex = plan.indexOf(preferredKind);
+    return {
+      meta,
+      score: kindIndex === -1 ? 99 : kindIndex
+    };
+  }).sort((a, b) => {
+    if (a.score !== b.score) return a.score - b.score;
+    return a.meta.stage - b.meta.stage;
+  });
+
+  return scored[0] ? scored[0].meta : themedStages[0];
+}
+
+function nextSmartReviewEntry(mode = "smart") {
+  const due = reviewDueEntries(5);
+  const weak = weakestMasteryEntries(5);
+  const source = mode === "due"
+    ? due
+    : due.length
+      ? due.concat(weak.filter((entry) => !due.some((dueEntry) => dueEntry.key === entry.key)))
+      : weak;
+  const filtered = source.filter((entry) => !["interactive", "timing", "pattern", "collect", "balance", "route", "discern", "slingshot"].includes(reviewKindFromEntry(entry)));
+  return filtered[0] || source[0] || null;
+}
+
+function beginSmartReviewFromEntry(entry, mode = "smart") {
+  if (!entry) return false;
+  const targetStage = recommendedStageForReview(entry);
+  if (!targetStage) return false;
+
+  state.reviewFocus = {
+    mode,
+    era: entry.era,
+    theme: entry.theme,
+    source: entry.source,
+    label: entry.label || entry.theme,
+    kind: reviewKindFromEntry(entry),
+    stageId: targetStage.id,
+    day: localDayKey()
+  };
+
+  const cacheKey = `${state.difficulty}:${targetStage.id}`;
+  delete state.stageActivities[cacheKey];
+  persist();
+  render();
+  jumpToEra(entry.era);
+  window.setTimeout(() => {
+    focusStageCard(targetStage.id);
+    openStage(targetStage.id);
+  }, 180);
+  return true;
+}
+
+function beginSmartReview(mode = "smart") {
+  return beginSmartReviewFromEntry(nextSmartReviewEntry(mode), mode);
+}
+
+function activeReviewFocusForMeta(meta, kind = "") {
+  const focus = state.reviewFocus;
+  if (!focus || typeof focus !== "object") return null;
+  if (focus.stageId && focus.stageId !== meta.id) return null;
+  if (focus.era && focus.era !== meta.theme.era) return null;
+  if (focus.theme && focus.theme !== meta.theme.name) return null;
+  if (kind && focus.kind && focus.kind !== kind) return null;
+  return focus;
 }
 
 function ensureBadgeActionButtons() {
@@ -5265,7 +5527,11 @@ function ensureExperienceSections() {
         '<div id="masteryBars" class="mastery-bars"></div>',
         '<div class="feature-head">',
         '  <h3>Weak Areas To Revisit</h3>',
-        '  <button id="focusWeakBtn" class="ghost-btn" type="button">Focus Weak Area</button>',
+        '  <div class="feature-actions">',
+        '    <button id="startSmartReviewBtn" class="ghost-btn" type="button">Start Smart Review</button>',
+        '    <button id="reviewDueTodayBtn" class="ghost-btn" type="button">Review Due Today</button>',
+        '    <button id="focusWeakBtn" class="ghost-btn" type="button">Focus Weak Area</button>',
+        '  </div>',
         '</div>',
         '<div id="weakAreaList" class="weak-area-list"></div>'
       ].join("");
@@ -5280,11 +5546,23 @@ function ensureExperienceSections() {
     masteryOverall = masterySection.querySelector("#masteryOverall");
     masteryBars = masterySection.querySelector("#masteryBars");
     weakAreaList = masterySection.querySelector("#weakAreaList");
+    startSmartReviewBtn = masterySection.querySelector("#startSmartReviewBtn");
+    reviewDueTodayBtn = masterySection.querySelector("#reviewDueTodayBtn");
     focusWeakBtn = masterySection.querySelector("#focusWeakBtn");
+    if (startSmartReviewBtn) {
+      startSmartReviewBtn.onclick = () => {
+        beginSmartReview("smart");
+      };
+    }
+    if (reviewDueTodayBtn) {
+      reviewDueTodayBtn.onclick = () => {
+        beginSmartReview("due");
+      };
+    }
     if (focusWeakBtn) {
       focusWeakBtn.onclick = () => {
         const weak = weakestMasteryEntries(1)[0];
-        if (weak && weak.era) jumpToEra(weak.era);
+        if (weak) beginSmartReview("weak");
       };
     }
   }
@@ -5510,8 +5788,22 @@ function renderMasteryPanel() {
   ensureExperienceSections();
   if (!masteryBars || !weakAreaList) return;
   const entries = masteryEntries();
+  const dueEntries = reviewDueEntries(5);
   masteryBars.innerHTML = "";
   weakAreaList.innerHTML = "";
+
+  if (startSmartReviewBtn) {
+    startSmartReviewBtn.textContent = "Start Smart Review";
+    startSmartReviewBtn.disabled = !entries.length;
+  }
+  if (reviewDueTodayBtn) {
+    reviewDueTodayBtn.textContent = dueEntries.length ? `Review Due Today (${dueEntries.length})` : "Review Due Today";
+    reviewDueTodayBtn.disabled = !dueEntries.length;
+  }
+  if (focusWeakBtn) {
+    focusWeakBtn.textContent = "Focus Weak Area";
+    focusWeakBtn.disabled = !weakestMasteryEntries(1).length;
+  }
 
   if (!entries.length) {
     if (masteryOverall) masteryOverall.textContent = "Learning strength: 0%";
@@ -5557,8 +5849,12 @@ function renderMasteryPanel() {
     chip.type = "button";
     chip.className = "ghost-btn weak-chip";
     const strength = Math.round(Number(entry.strength || 0));
-    chip.textContent = `${entry.theme || "Topic"} • ${strength}%`;
-    chip.addEventListener("click", () => jumpToEra(entry.era));
+    const dueLabel = entryDueToday(entry) ? " • Review now" : "";
+    chip.textContent = `${entry.theme || "Topic"} • ${strength}%${dueLabel}`;
+    chip.addEventListener("click", () => {
+      clearReviewFocus({ silent: true });
+      beginSmartReviewFromEntry(entry, "weak");
+    });
     weakAreaList.appendChild(chip);
   });
 }
@@ -6254,6 +6550,7 @@ function showBadgeUnlockMoment(badge, options = {}) {
   const node = ensureBadgeUnlockToast();
   if (!node) return;
   badgeCeremonyBadgeId = badge.id || null;
+  if (stageCompleteToastNode) stageCompleteToastNode.classList.remove("show");
 
   const kicker = node.querySelector(".badge-unlock-kicker");
   const icon = node.querySelector(".badge-unlock-icon");
@@ -6272,6 +6569,202 @@ function showBadgeUnlockMoment(badge, options = {}) {
     badgeUnlockToastTimer = 0;
   }, 5000);
   startBadgeCeremonySequence(badge, options);
+}
+
+function ensureStageCompleteToast() {
+  if (stageCompleteToastNode && stageCompleteToastNode.isConnected) return stageCompleteToastNode;
+  if (!document.body) return null;
+
+  const node = document.createElement("aside");
+  node.className = "badge-unlock-toast stage-complete-toast";
+  node.setAttribute("role", "status");
+  node.setAttribute("aria-live", "polite");
+  node.innerHTML = [
+    '<div class="badge-unlock-card">',
+    '<p class="badge-unlock-kicker"></p>',
+    '<p class="badge-unlock-name"><span class="badge-unlock-icon">✓</span><span class="badge-unlock-title"></span></p>',
+    '<p class="badge-unlock-sub"></p>',
+    "</div>"
+  ].join("");
+
+  document.body.appendChild(node);
+  stageCompleteToastNode = node;
+  return node;
+}
+
+function stageCompletionSummary(result) {
+  if (!result || !result.meta) return "";
+  const sourceRef = normalizeSourceRef((result.stageActivity && result.stageActivity.sourceRef) || result.meta.theme.sourceRef);
+  const sourceLine = sourceRef ? `${challengeCopy("Confirmed in", "Confirmado en")} ${sourceRef.split(";")[0].trim()}.` : "";
+  if (result.reviewFocus && result.reviewFocus.label) {
+    return [sourceLine, `${challengeCopy("Review strengthened", "Repaso fortalecido")}: ${result.reviewFocus.label}.`].filter(Boolean).join(" ");
+  }
+  if (result.replay) {
+    return [sourceLine, challengeCopy("You strengthened this Bible section again.", "Fortaleciste esta seccion biblica otra vez.")].filter(Boolean).join(" ");
+  }
+  if (result.nextMeta) {
+    return [
+      sourceLine,
+      `${challengeCopy("Next unlocked", "Siguiente desbloqueado")}: ${result.nextMeta.theme.name} - ${t("stageLabel")} ${result.nextMeta.stage}.`
+    ].filter(Boolean).join(" ");
+  }
+  return [sourceLine, challengeCopy("This section is complete. Keep moving through the story path.", "Esta seccion esta completa. Sigue avanzando por el camino de la historia.")].filter(Boolean).join(" ");
+}
+
+function showStageCompleteMoment(result) {
+  if (!result || !result.meta) return;
+  const node = ensureStageCompleteToast();
+  if (!node) return;
+
+  const kicker = node.querySelector(".badge-unlock-kicker");
+  const icon = node.querySelector(".badge-unlock-icon");
+  const title = node.querySelector(".badge-unlock-title");
+  const sub = node.querySelector(".badge-unlock-sub");
+
+  if (kicker) {
+    kicker.textContent = result.replay
+      ? challengeCopy("Verse Confirmed Again", "Verso confirmado otra vez")
+      : challengeCopy("Stage Complete", "Etapa completada");
+  }
+  if (icon) icon.textContent = result.replay ? "✓" : "✦";
+  if (title) title.textContent = `${result.meta.theme.name} - ${t("stageLabel")} ${result.meta.stage}`;
+  if (sub) sub.textContent = stageCompletionSummary(result);
+
+  node.classList.add("show");
+  duckMusicTemporarily(0.36, 1800);
+  playSfx("stage-clear");
+  if (stageCompleteToastTimer) window.clearTimeout(stageCompleteToastTimer);
+  stageCompleteToastTimer = window.setTimeout(() => {
+    node.classList.remove("show");
+    stageCompleteToastTimer = 0;
+  }, 1500);
+}
+
+function eraReviewEntry(era) {
+  const due = reviewDueEntries(24);
+  const weak = weakestMasteryEntries(24);
+  const combined = due.concat(weak.filter((entry) => !due.some((dueEntry) => dueEntry.key === entry.key)));
+  return combined.find((entry) => entry && entry.era === era && !["interactive", "timing", "pattern", "collect", "balance", "route", "discern", "slingshot"].includes(reviewKindFromEntry(entry))) || null;
+}
+
+function firstUnlockedStageForEra(era) {
+  return stages.find((meta, index) => meta.theme.era === era && index + 1 <= state.unlocked)
+    || stages.find((meta) => meta.theme.era === era)
+    || null;
+}
+
+function hideEraFinale() {
+  if (!eraFinaleOverlay) return;
+  eraFinaleOverlay.classList.add("hidden");
+  updateOverlayLock();
+}
+
+function ensureEraFinaleOverlay() {
+  if (eraFinaleOverlay && eraFinaleOverlay.isConnected) return eraFinaleOverlay;
+  if (!document.body) return null;
+
+  const overlay = document.createElement("div");
+  overlay.id = "eraFinaleOverlay";
+  overlay.className = "welcome-overlay hidden";
+  overlay.innerHTML = [
+    '<div class="welcome-card final-card">',
+    `<p class="eyebrow">${challengeCopy("Era Complete", "Era completada")}</p>`,
+    '<h2 class="era-finale-title"></h2>',
+    '<p class="era-finale-message"></p>',
+    '<p class="era-finale-reflection meta"></p>',
+    '<p class="era-finale-progress meta"></p>',
+    '<p class="era-finale-verse meta"></p>',
+    '<div class="final-actions">',
+    `<button class="cta-btn era-finale-continue-btn" type="button">${challengeCopy("Continue Journey", "Continuar")}</button>`,
+    `<button class="ghost-btn era-finale-review-btn" type="button">${challengeCopy("Review This Era", "Repasar esta era")}</button>`,
+    `<button class="ghost-btn era-finale-badge-btn" type="button">${challengeCopy("View Badge Board", "Ver tablero de insignias")}</button>`,
+    "</div>",
+    "</div>"
+  ].join("");
+
+  document.body.appendChild(overlay);
+  eraFinaleOverlay = overlay;
+  eraFinaleTitle = overlay.querySelector(".era-finale-title");
+  eraFinaleMessage = overlay.querySelector(".era-finale-message");
+  eraFinaleReflection = overlay.querySelector(".era-finale-reflection");
+  eraFinaleProgress = overlay.querySelector(".era-finale-progress");
+  eraFinaleVerse = overlay.querySelector(".era-finale-verse");
+  eraFinaleContinueBtn = overlay.querySelector(".era-finale-continue-btn");
+  eraFinaleReviewBtn = overlay.querySelector(".era-finale-review-btn");
+  eraFinaleBadgeBtn = overlay.querySelector(".era-finale-badge-btn");
+
+  if (eraFinaleContinueBtn) {
+    eraFinaleContinueBtn.addEventListener("click", () => {
+      hideEraFinale();
+    });
+  }
+  if (eraFinaleReviewBtn) {
+    eraFinaleReviewBtn.addEventListener("click", () => {
+      const era = eraFinaleOverlay && eraFinaleOverlay.dataset ? eraFinaleOverlay.dataset.era : "";
+      hideEraFinale();
+      const reviewEntry = eraReviewEntry(era);
+      if (reviewEntry) {
+        beginSmartReviewFromEntry(reviewEntry, "weak");
+        return;
+      }
+      const firstStage = firstUnlockedStageForEra(era);
+      if (!firstStage) return;
+      jumpToEra(era);
+      window.setTimeout(() => focusStageCard(firstStage.id), 180);
+    });
+  }
+  if (eraFinaleBadgeBtn) {
+    eraFinaleBadgeBtn.addEventListener("click", () => {
+      hideEraFinale();
+      openBadgeShield();
+    });
+  }
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) hideEraFinale();
+  });
+
+  return overlay;
+}
+
+function showEraFinale(era) {
+  const overlay = ensureEraFinaleOverlay();
+  if (!overlay) return;
+
+  const copy = eraFinaleCopy(era);
+  const eraStages = stages.filter((meta) => meta.theme.era === era);
+  const completedCount = eraStages.filter((meta) => isDone(meta.id)).length;
+  const firstStage = eraStages[0] || null;
+  const reviewEntry = eraReviewEntry(era);
+
+  overlay.dataset.era = era;
+  if (eraFinaleTitle) eraFinaleTitle.textContent = copy.title;
+  if (eraFinaleMessage) eraFinaleMessage.textContent = copy.body;
+  if (eraFinaleReflection) eraFinaleReflection.textContent = copy.reflection;
+  if (eraFinaleProgress) {
+    eraFinaleProgress.textContent = `${completedCount}/${eraStages.length || 0} ${challengeCopy("stages completed in this chapter of the journey.", "etapas completadas en este capitulo del viaje.")}`;
+  }
+  if (eraFinaleVerse) {
+    eraFinaleVerse.textContent = `${challengeCopy("Key range", "Rango clave")}: ${(firstStage && firstStage.theme && firstStage.theme.sourceRef) || formatEraLabel(era)}`;
+  }
+  if (eraFinaleReviewBtn) {
+    eraFinaleReviewBtn.disabled = !reviewEntry && !firstUnlockedStageForEra(era);
+  }
+
+  overlay.classList.remove("hidden");
+  updateOverlayLock();
+  duckMusicTemporarily(0.34, 2200);
+  playSfx("era-finale");
+}
+
+function maybeShowQueuedEraFinale() {
+  if (!pendingEraFinaleEra) return false;
+  if (state.activeStage || isStoryTheaterOpen() || isFinalOpen() || isCreditsOpen()) return false;
+  const era = pendingEraFinaleEra;
+  pendingEraFinaleEra = null;
+  window.setTimeout(() => {
+    if (!state.activeStage && !isFinalOpen() && !isCreditsOpen()) showEraFinale(era);
+  }, 180);
+  return true;
 }
 
 function currentShareBadge() {
@@ -6502,10 +6995,11 @@ function updateOverlayLock() {
   const welcomeOpen = welcomeOverlay && !welcomeOverlay.classList.contains("hidden");
   const shareOpen = shareOverlay && !shareOverlay.classList.contains("hidden");
   const shieldOpen = badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden");
+  const eraFinaleOpen = eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden");
   const finalOpen = finalOverlay && !finalOverlay.classList.contains("hidden");
   const creditsOpen = creditsOverlay && !creditsOverlay.classList.contains("hidden");
   const theaterOpen = storyTheaterOverlay && !storyTheaterOverlay.classList.contains("hidden");
-  document.body.classList.toggle("has-overlay", Boolean(activityOpen || welcomeOpen || shareOpen || shieldOpen || finalOpen || creditsOpen || theaterOpen));
+  document.body.classList.toggle("has-overlay", Boolean(activityOpen || welcomeOpen || shareOpen || shieldOpen || eraFinaleOpen || finalOpen || creditsOpen || theaterOpen));
 
 }
 
@@ -6529,6 +7023,7 @@ function closeActivity() {
   updateOverlayLock();
   const queuedReturnHandled = flushQueuedHubReturn();
   if (!queuedReturnHandled) restoreHubScrollPosition();
+  maybeShowQueuedEraFinale();
 
   updateAudioState();
 }
@@ -6614,8 +7109,13 @@ function completeStage(meta, mode, options = {}) {
   // Keep player at current scroll position unless an explicit return target is requested.
   captureHubScrollPosition(state.activeStage || meta.id);
   if (options.returnTarget) queueHubReturn(options.returnTarget);
-  markDone(meta.id, mode);
-  queueStageAutoClose(meta.id, options.delayMs || 850);
+  const result = markDone(meta.id, mode);
+  if (result && !result.celebrationBadge) {
+    showStageCompleteMoment(result);
+  }
+  const delayMs = options.delayMs || (result && result.celebrationBadge ? 1120 : 1680);
+  queueStageAutoClose(meta.id, delayMs);
+  return result;
 }
 
 function maybeAwardBadges() {
@@ -6682,12 +7182,17 @@ function markDone(stageId, mode) {
   const modeEngine = mode && mode.engine ? mode.engine : "question";
   const meta = getStageMeta(stageId);
   const stageActivity = state.stageActivities[state.difficulty + ":" + stageId] || null;
+  const nextMeta = meta ? nextStageMeta(meta) : null;
+  const completedReviewFocus = state.reviewFocus && state.reviewFocus.stageId === stageId && stageActivity && stageActivity.reviewFocus
+    ? { ...state.reviewFocus }
+    : null;
 
   if (isDone(stageId)) {
     if (meta && stageActivity) {
       recordMasteryOutcome(meta, stageActivity, true);
       trackDailyAndWeeklyCompletion(meta, true);
     }
+    if (completedReviewFocus) clearReviewFocus({ silent: true });
     const unlockedBadges = maybeAwardBadges();
     const celebrationBadge = pickCelebrationBadge(unlockedBadges, unlockedDifficultyBadge);
     if (celebrationBadge) {
@@ -6702,11 +7207,23 @@ function markDone(stageId, mode) {
           stageId,
           modeEngine,
           replay: true,
-          difficulty: state.difficulty
+          difficulty: state.difficulty,
+          eraFinaleEra: null
         }
       })
     );
-    return;
+    return {
+      stageId,
+      meta,
+      stageActivity,
+      modeEngine,
+      replay: true,
+      difficulty: state.difficulty,
+      celebrationBadge,
+      nextMeta,
+      eraFinaleEra: null,
+      reviewFocus: completedReviewFocus
+    };
   }
 
   state.completed.push(stageId);
@@ -6731,6 +7248,19 @@ function markDone(stageId, mode) {
     recordMasteryOutcome(meta, stageActivity, true);
     trackDailyAndWeeklyCompletion(meta, false);
   }
+  if (completedReviewFocus) clearReviewFocus({ silent: true });
+
+  let eraFinaleEra = null;
+  if (meta && meta.theme && meta.theme.era) {
+    const era = meta.theme.era;
+    const eraStages = stages.filter((stage) => stage.theme.era === era);
+    const eraComplete = eraStages.length > 0 && eraStages.every((stage) => isDone(stage.id));
+    if (eraComplete && !state.stats.eraFinalesSeen[era]) {
+      state.stats.eraFinalesSeen[era] = true;
+      pendingEraFinaleEra = era;
+      eraFinaleEra = era;
+    }
+  }
 
   const unlockedBadges = maybeAwardBadges();
   const celebrationBadge = pickCelebrationBadge(unlockedBadges, unlockedDifficultyBadge);
@@ -6741,15 +7271,28 @@ function markDone(stageId, mode) {
   persist();
   render();
   window.dispatchEvent(
-    new CustomEvent("faith:stage-complete", {
-      detail: {
-        stageId,
-        modeEngine,
-        replay: false,
-        difficulty: state.difficulty
-      }
-    })
-  );
+      new CustomEvent("faith:stage-complete", {
+        detail: {
+          stageId,
+          modeEngine,
+          replay: false,
+          difficulty: state.difficulty,
+          eraFinaleEra
+        }
+      })
+    );
+  return {
+    stageId,
+    meta,
+    stageActivity,
+    modeEngine,
+    replay: false,
+    difficulty: state.difficulty,
+    celebrationBadge,
+    nextMeta,
+    eraFinaleEra,
+    reviewFocus: completedReviewFocus
+  };
 }
 
 function resetProgress() {
@@ -6770,7 +7313,8 @@ function resetProgress() {
     slingshotWins: 0,
     flawlessLevels: 0,
     badgeSetBonuses: {},
-    difficultyPass: { easy: false, medium: false, advanced: false }
+    difficultyPass: { easy: false, medium: false, advanced: false },
+    eraFinalesSeen: {}
   };
   state.activeStage = null;
   state.lastStage = null;
@@ -6779,6 +7323,7 @@ function resetProgress() {
   state.questionHistory = {};
   state.stageActivities = {};
   state.mastery = {};
+  state.reviewFocus = null;
   state.dailyDevotion = {
     day: localDayKey(),
     challenge: false,
@@ -6800,6 +7345,13 @@ function resetProgress() {
   stopCreditsMusic();
   closeShareOverlay();
   closeBadgeShield();
+  hideEraFinale();
+  pendingEraFinaleEra = null;
+  if (stageCompleteToastTimer) {
+    window.clearTimeout(stageCompleteToastTimer);
+    stageCompleteToastTimer = 0;
+  }
+  if (stageCompleteToastNode) stageCompleteToastNode.classList.remove("show");
   if (finalOverlay) finalOverlay.classList.add("hidden");
   if (creditsOverlay) creditsOverlay.classList.add("hidden");
 
@@ -6925,6 +7477,16 @@ function itemMatchesTheme(item, theme) {
 
 function themeScopeKey(theme, bucket) {
   return `${canonicalQuestionBucket(bucket)}:theme:${theme.name}`;
+}
+
+function reviewScopeKey(theme, bucket, focus) {
+  const sourceKey = canonicalizeQuestionUsageRef(focus && focus.source);
+  if (!sourceKey) return `${themeScopeKey(theme, bucket)}:review`;
+  return `${themeScopeKey(theme, bucket)}:review:${sourceKey}`;
+}
+
+function themeItemFilter(theme, focus = null) {
+  return (item) => itemMatchesTheme(item, theme) && itemMatchesReviewFocus(item, focus);
 }
 
 function questionSourceGroup(bucket) {
@@ -7115,17 +7677,18 @@ function nextFallbackReferenceSet(theme, bucket, usedSources, count) {
   return null;
 }
 
-function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
-  const themeFilter = (item) => itemMatchesTheme(item, theme);
-  const scopeKey = themeScopeKey(theme, "quiz");
+function buildFallbackQuizActivity(meta, theme, difficulty, usedSources, focus = null) {
+  const themeFilter = themeItemFilter(theme, focus);
+  const scopeKey = focus ? reviewScopeKey(theme, "quiz", focus) : themeScopeKey(theme, "quiz");
+  const scopedUsedSources = focus ? null : usedSources;
   const authoredQuizPool = shouldIsolateThemeByDifficulty(theme)
     ? quizPoolForDifficulty(difficulty)
     : ALL_QUIZ_BANKS;
   const quizPool = dedupeActivityPool(authoredQuizPool.concat(derivedQuizPoolForTheme(theme, difficulty)), "quiz");
   const scopedQuizPool = quizPool.filter(themeFilter);
   const pick = pickWithoutRepeat(quizPool, theme.era, "quiz", {
-    usedSources,
-    allowReuse: false,
+    usedSources: scopedUsedSources,
+    allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
     requireScoped: true
@@ -7143,17 +7706,18 @@ function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
   };
 }
 
-function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources) {
-  const themeFilter = (item) => itemMatchesTheme(item, theme);
-  const scopeKey = themeScopeKey(theme, "spelling");
+function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources, focus = null) {
+  const themeFilter = themeItemFilter(theme, focus);
+  const scopeKey = focus ? reviewScopeKey(theme, "spelling", focus) : themeScopeKey(theme, "spelling");
+  const scopedUsedSources = focus ? null : usedSources;
   const verseFillPool = derivedSpellingPoolForTheme(theme, difficulty);
   const authoredPool = shouldIsolateThemeByDifficulty(theme)
     ? spellingBankForDifficulty(difficulty).filter(themeFilter)
     : ALL_SPELLING_BANKS.filter(themeFilter);
   const pool = dedupeActivityPool(verseFillPool.concat(authoredPool), "spelling");
   const pick = pickWithoutRepeat(pool, theme.era, "spelling", {
-    usedSources,
-    allowReuse: false,
+    usedSources: scopedUsedSources,
+    allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
     requireScoped: true
@@ -7170,16 +7734,17 @@ function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources) {
   };
 }
 
-function buildFallbackOrderActivity(meta, theme, difficulty, usedSources) {
-  const themeFilter = (item) => itemMatchesTheme(item, theme);
-  const scopeKey = themeScopeKey(theme, "order");
+function buildFallbackOrderActivity(meta, theme, difficulty, usedSources, focus = null) {
+  const themeFilter = themeItemFilter(theme, focus);
+  const scopeKey = focus ? reviewScopeKey(theme, "order", focus) : themeScopeKey(theme, "order");
+  const scopedUsedSources = focus ? null : usedSources;
   const authoredOrderPool = shouldIsolateThemeByDifficulty(theme)
     ? orderBankForDifficulty(difficulty)
     : ALL_ORDER_BANKS;
   const orderPool = dedupeActivityPool(authoredOrderPool.concat(derivedOrderSetsForTheme(theme, difficulty)), "order");
   const pick = pickWithoutRepeat(orderPool, theme.era, "order", {
-    usedSources,
-    allowReuse: false,
+    usedSources: scopedUsedSources,
+    allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
     requireScoped: true
@@ -7197,16 +7762,17 @@ function buildFallbackOrderActivity(meta, theme, difficulty, usedSources) {
   };
 }
 
-function buildFallbackFactActivity(meta, theme, difficulty, usedSources) {
-  const themeFilter = (item) => itemMatchesTheme(item, theme);
-  const scopeKey = themeScopeKey(theme, "fact");
+function buildFallbackFactActivity(meta, theme, difficulty, usedSources, focus = null) {
+  const themeFilter = themeItemFilter(theme, focus);
+  const scopeKey = focus ? reviewScopeKey(theme, "fact", focus) : themeScopeKey(theme, "fact");
+  const scopedUsedSources = focus ? null : usedSources;
   const authoredFactPool = shouldIsolateThemeByDifficulty(theme)
     ? factBankForDifficulty(difficulty)
     : ALL_FACT_BANKS;
   const factPool = dedupeActivityPool(authoredFactPool.concat(derivedFactPoolForTheme(theme, difficulty)), "fact");
   const pick = pickWithoutRepeat(factPool, theme.era, "fact", {
-    usedSources,
-    allowReuse: false,
+    usedSources: scopedUsedSources,
+    allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
     requireScoped: true
@@ -7225,15 +7791,16 @@ function buildFallbackFactActivity(meta, theme, difficulty, usedSources) {
   };
 }
 
-function buildTrueFalseActivity(meta, theme, difficulty, usedSources) {
-  const themeFilter = (item) => itemMatchesTheme(item, theme);
-  const scopeKey = themeScopeKey(theme, "truefalse");
+function buildTrueFalseActivity(meta, theme, difficulty, usedSources, focus = null) {
+  const themeFilter = themeItemFilter(theme, focus);
+  const scopeKey = focus ? reviewScopeKey(theme, "truefalse", focus) : themeScopeKey(theme, "truefalse");
+  const scopedUsedSources = focus ? null : usedSources;
   const quizPool = shouldIsolateThemeByDifficulty(theme)
     ? quizPoolForDifficulty(difficulty)
     : ALL_QUIZ_BANKS;
   const pick = pickWithoutRepeat(quizPool, theme.era, "truefalse", {
-    usedSources,
-    allowReuse: false,
+    usedSources: scopedUsedSources,
+    allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
     requireScoped: true
@@ -7256,17 +7823,18 @@ function buildTrueFalseActivity(meta, theme, difficulty, usedSources) {
   };
 }
 
-function buildMatchingActivity(meta, theme, difficulty, usedSources) {
-  const themeFilter = (item) => itemMatchesTheme(item, theme);
-  const scopeKey = themeScopeKey(theme, "matching");
+function buildMatchingActivity(meta, theme, difficulty, usedSources, focus = null) {
+  const themeFilter = themeItemFilter(theme, focus);
+  const scopeKey = focus ? reviewScopeKey(theme, "matching", focus) : themeScopeKey(theme, "matching");
+  const scopedUsedSources = focus ? null : usedSources;
   const quizPool = shouldIsolateThemeByDifficulty(theme)
     ? quizPoolForDifficulty(difficulty)
     : ALL_QUIZ_BANKS;
   const scopedPool = quizPool.filter(themeFilter);
   const desiredCount = scopedPool.length >= 3 ? 3 : 2;
   const pick = pickManyWithoutRepeat(quizPool, theme.era, "matching", desiredCount, {
-    usedSources,
-    allowReuse: false,
+    usedSources: scopedUsedSources,
+    allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
     requireScoped: true
@@ -7426,10 +7994,11 @@ function factBankForDifficulty(difficulty) {
   return factBank;
 }
 
-function buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind) {
+function buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind, focus = null) {
   const kindFilter = kind === "speaker" ? isSpeakerQuestion : isHebrewNameQuestion;
-  const themeFilter = (item) => itemMatchesTheme(item, theme) && kindFilter(item);
-  const scopeKey = themeScopeKey(theme, kind);
+  const themeFilter = (item) => themeItemFilter(theme, focus)(item) && kindFilter(item);
+  const scopeKey = focus ? reviewScopeKey(theme, kind, focus) : themeScopeKey(theme, kind);
+  const scopedUsedSources = focus ? null : usedSources;
 
   const preferred = quizPoolForDifficulty(difficulty);
   const combinedPool = shouldIsolateThemeByDifficulty(theme)
@@ -7448,8 +8017,8 @@ function buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind) {
   });
 
   const pick = pickWithoutRepeat(dedupedPool, theme.era, kind, {
-    usedSources,
-    allowReuse: false,
+    usedSources: scopedUsedSources,
+    allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
     requireScoped: true
@@ -7470,12 +8039,13 @@ function buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind) {
   };
 }
 
-function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind) {
-  const themeFilter = (item) => itemMatchesTheme(item, theme);
-  const scopeKey = themeScopeKey(theme, kind);
+function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind, focus = null) {
+  const themeFilter = themeItemFilter(theme, focus);
+  const scopeKey = focus ? reviewScopeKey(theme, kind, focus) : themeScopeKey(theme, kind);
+  const scopedUsedSources = focus ? null : usedSources;
 
   if (kind === "speaker" || kind === "hebrew") {
-    return buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind);
+    return buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind, focus);
   }
 
   if (kind === "quiz") {
@@ -7485,8 +8055,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
     );
     const scopedQuizSource = quizSource.filter(themeFilter);
     const pick = pickWithoutRepeat(quizSource, theme.era, "quiz", {
-      usedSources,
-      allowReuse: false,
+      usedSources: scopedUsedSources,
+      allowReuse: Boolean(focus),
       filter: themeFilter,
       scopeKey,
       requireScoped: true
@@ -7510,8 +8080,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       "spelling"
     );
     const pick = pickWithoutRepeat(spellingSource, theme.era, "spelling", {
-      usedSources,
-      allowReuse: false,
+      usedSources: scopedUsedSources,
+      allowReuse: Boolean(focus),
       filter: themeFilter,
       scopeKey,
       requireScoped: true
@@ -7535,8 +8105,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       "order"
     );
     const pick = pickWithoutRepeat(orderSource, theme.era, "order", {
-      usedSources,
-      allowReuse: false,
+      usedSources: scopedUsedSources,
+      allowReuse: Boolean(focus),
       filter: themeFilter,
       scopeKey,
       requireScoped: true
@@ -7560,8 +8130,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
       "fact"
     );
     const pick = pickWithoutRepeat(factSource, theme.era, "fact", {
-      usedSources,
-      allowReuse: false,
+      usedSources: scopedUsedSources,
+      allowReuse: Boolean(focus),
       filter: themeFilter,
       scopeKey,
       requireScoped: true
@@ -7720,13 +8290,29 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   });
 
   const unseen = pickPool.filter((item) => !counts[itemSignature(item)]);
+  let choice = null;
+  let reuseCount = 0;
 
-  if (!unseen.length) return { item: null, reuseCount: 0 };
+  if (unseen.length) {
+    const unseenNotRecent = unseen.filter((item) => !recentSet.has(itemSignature(item)));
+    const unseenPool = unseenNotRecent.length ? unseenNotRecent : unseen;
+    choice = unseenPool[Math.floor(Math.random() * unseenPool.length)];
+  } else if (options.allowReuse) {
+    const reusablePool = pickPool
+      .slice()
+      .sort((a, b) => {
+        const aCount = counts[itemSignature(a)] || 0;
+        const bCount = counts[itemSignature(b)] || 0;
+        if (aCount !== bCount) return aCount - bCount;
+        const aRecent = recentSet.has(itemSignature(a)) ? 1 : 0;
+        const bRecent = recentSet.has(itemSignature(b)) ? 1 : 0;
+        return aRecent - bRecent;
+      });
+    choice = reusablePool[0] || null;
+    reuseCount = choice ? (counts[itemSignature(choice)] || 0) : 0;
+  }
 
-  const unseenNotRecent = unseen.filter((item) => !recentSet.has(itemSignature(item)));
-  const unseenPool = unseenNotRecent.length ? unseenNotRecent : unseen;
-  const choice = unseenPool[Math.floor(Math.random() * unseenPool.length)];
-  const reuseCount = 0;
+  if (!choice) return { item: null, reuseCount: 0 };
 
   const pickedSignature = itemSignature(choice);
   record.uses.push(pickedSignature);
@@ -7798,7 +8384,25 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
     return picked.slice(0, count);
   };
 
-  const candidates = buildSelection(filterBySource(source));
+  let candidates = buildSelection(filterBySource(source));
+
+  if (candidates.length < count && options.allowReuse) {
+    const reusable = shuffled(filterBySource(source)).sort((a, b) => {
+      const aCount = counts[itemSignature(a)] || 0;
+      const bCount = counts[itemSignature(b)] || 0;
+      if (aCount !== bCount) return aCount - bCount;
+      const aRecent = recentSet.has(itemSignature(a)) ? 1 : 0;
+      const bRecent = recentSet.has(itemSignature(b)) ? 1 : 0;
+      return aRecent - bRecent;
+    });
+    const seenReuse = new Set(candidates.map((item) => itemSignature(item)));
+    reusable.forEach((item) => {
+      const signature = itemSignature(item);
+      if (candidates.length >= count || seenReuse.has(signature)) return;
+      seenReuse.add(signature);
+      candidates.push(item);
+    });
+  }
 
   if (candidates.length < count) return { items: null, reuseCount: 0 };
 
@@ -8628,30 +9232,52 @@ function activityFor(meta) {
 
   const difficulty = currentDifficulty();
   const sourceBucketForKind = (kind) => kind;
+  const reviewFocus = activeReviewFocusForMeta(meta);
+  const buildByKind = (kind, focus = null) => {
+    const usedSources = focus
+      ? null
+      : usedQuestionSourcesForDifficulty(state.difficulty, sourceBucketForKind(kind), meta.theme);
+
+    if (kind === "speaker" || kind === "hebrew") {
+      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind, focus);
+    }
+    if (kind === "truefalse") {
+      return buildTrueFalseActivity(meta, meta.theme, difficulty, usedSources, focus);
+    }
+    if (kind === "matching") {
+      return buildMatchingActivity(meta, meta.theme, difficulty, usedSources, focus);
+    }
+    if (kind === "quiz") {
+      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind, focus)
+        || buildFallbackQuizActivity(meta, meta.theme, difficulty, usedSources, focus);
+    }
+    if (kind === "order") {
+      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind, focus)
+        || buildFallbackOrderActivity(meta, meta.theme, difficulty, usedSources, focus);
+    }
+    if (kind === "spelling") {
+      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind, focus)
+        || buildFallbackSpellingActivity(meta, meta.theme, difficulty, usedSources, focus);
+    }
+    return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind, focus)
+      || buildFallbackFactActivity(meta, meta.theme, difficulty, usedSources, focus);
+  };
 
   let activity;
+  let usedReviewFocus = false;
 
   if (meta.stage >= 1 && meta.stage <= 4) {
-    for (const kind of stageKindPlan(meta, difficulty)) {
-      const usedSources = usedQuestionSourcesForDifficulty(state.difficulty, sourceBucketForKind(kind), meta.theme);
-      if (kind === "speaker" || kind === "hebrew") {
-        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind);
-      } else if (kind === "truefalse") {
-        activity = buildTrueFalseActivity(meta, meta.theme, difficulty, usedSources);
-      } else if (kind === "matching") {
-        activity = buildMatchingActivity(meta, meta.theme, difficulty, usedSources);
-      } else if (kind === "quiz") {
-        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind)
-          || buildFallbackQuizActivity(meta, meta.theme, difficulty, usedSources);
-      } else if (kind === "order") {
-        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind)
-          || buildFallbackOrderActivity(meta, meta.theme, difficulty, usedSources);
-      } else if (kind === "spelling") {
-        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind)
-          || buildFallbackSpellingActivity(meta, meta.theme, difficulty, usedSources);
-      } else {
-        activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind)
-          || buildFallbackFactActivity(meta, meta.theme, difficulty, usedSources);
+    const stageKinds = stageKindPlan(meta, difficulty);
+    const orderedKinds = reviewFocus && reviewFocus.kind && stageKinds.includes(reviewFocus.kind)
+      ? [reviewFocus.kind].concat(stageKinds.filter((kind) => kind !== reviewFocus.kind))
+      : stageKinds;
+
+    for (const kind of orderedKinds) {
+      const focusForKind = reviewFocus && (!reviewFocus.kind || reviewFocus.kind === kind) ? reviewFocus : null;
+      activity = buildByKind(kind, focusForKind);
+      if (activity && focusForKind) usedReviewFocus = true;
+      if (!activity && focusForKind && reviewFocus.kind === kind) {
+        activity = buildByKind(kind, null);
       }
       if (activity) break;
     }
@@ -8665,11 +9291,12 @@ function activityFor(meta) {
   }
 
   if (!activity) {
-    const exhaustedType = stageKindPlan(meta, difficulty)[0] || "question";
+    const exhaustedType = (reviewFocus && reviewFocus.kind) || stageKindPlan(meta, difficulty)[0] || "question";
     activity = buildQuestionPoolExhaustedActivity(meta, exhaustedType);
   }
 
   if (activity && typeof activity === "object") {
+    if (usedReviewFocus) activity.reviewFocus = true;
     activity.__v = ACTIVITY_SCHEMA_VERSION;
   }
   state.stageActivities[cacheKey] = activity;
@@ -13047,7 +13674,10 @@ function updateAudioState() {
   const theaterOpen = isStoryTheaterOpen();
   const creditsOpen = isCreditsOpen();
   const musicShouldBeAudible = state.audio.music && !theaterOpen && (!state.activeStage || isFinalOpen() || creditsOpen);
-  const musicTarget = musicShouldBeAudible ? musicGainForCurrentLevel() : 0;
+  const duckMultiplier = Date.now() < (audioEngine.duckUntil || 0)
+    ? Math.max(0.14, Math.min(1, Number(audioEngine.duckLevel) || 0.42))
+    : 1;
+  const musicTarget = musicShouldBeAudible ? musicGainForCurrentLevel() * duckMultiplier : 0;
   const musicFadeSeconds = musicShouldBeAudible ? 0.92 : (theaterOpen || state.activeStage ? 0.24 : 0.46);
   setMusicGainSmooth(musicTarget, musicFadeSeconds);
   if (audioEngine.sfxGain) audioEngine.sfxGain.gain.value = state.audio.sfx ? 0.3 : 0;
