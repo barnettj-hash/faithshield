@@ -1119,6 +1119,10 @@ const UI_TEXT_BY_LANGUAGE = {
     replayBadgeCeremony: "Replay Badge Celebration",
     exportBadgeCard: "Export Badge Card",
     downloadCard: "Download Card",
+    emailReflection: "Email Reflection",
+    shareReflectionCard: "Share Reflection Card",
+    reflectionCardTitle: "Daily Reflection",
+    reflectionEmailSubject: "My FAITHSHIELD Daily Reflection",
     autoOpenBadgeShield: "Auto-open Badge Shield",
     setBonusesLabel: "Set bonuses"
   },
@@ -1220,6 +1224,10 @@ const UI_TEXT_BY_LANGUAGE = {
     replayBadgeCeremony: "Repetir celebracion de insignia",
     exportBadgeCard: "Exportar tarjeta de insignia",
     downloadCard: "Descargar tarjeta",
+    emailReflection: "Enviar reflexion",
+    shareReflectionCard: "Compartir tarjeta de reflexion",
+    reflectionCardTitle: "Reflexion diaria",
+    reflectionEmailSubject: "Mi reflexion diaria de FAITHSHIELD",
     autoOpenBadgeShield: "Autoabrir escudo de insignias",
     setBonusesLabel: "Bonos de conjunto"
   }
@@ -3497,6 +3505,8 @@ let completeDevotionChallengeBtn = null;
 let completeDevotionActionBtn = null;
 let saveDevotionReflectionBtn = null;
 let claimDevotionRewardBtn = null;
+let emailDevotionReflectionBtn = null;
+let exportDevotionReflectionCardBtn = null;
 let weeklyChallengeSection = null;
 let weeklyChallengeMeta = null;
 let weeklyChallengeText = null;
@@ -5207,6 +5217,168 @@ async function exportCurrentShareCard() {
   }
 }
 
+function currentReflectionSharePayload() {
+  ensureDailyDevotionState();
+  const note = String(state.dailyDevotion.note || "").trim();
+  if (!note) return null;
+  const todayWord = dailyThoughtForToday();
+  return {
+    ref: todayWord && todayWord.ref ? todayWord.ref : "",
+    thought: todayWord && todayWord.thought ? todayWord.thought : "",
+    practical: todayWord && todayWord.practical ? todayWord.practical : "",
+    note,
+    player: state.playerName || "Faith Player",
+    date: new Date().toLocaleDateString()
+  };
+}
+
+function reflectionShareMessage(payload = currentReflectionSharePayload()) {
+  if (!payload) return "";
+  return [
+    `${t("reflectionCardTitle")} • FAITHSHIELD`,
+    payload.ref,
+    payload.thought,
+    `${challengeCopy("My reflection", "Mi reflexion")}: ${payload.note}`,
+    `${challengeCopy("Practical action", "Accion practica")}: ${payload.practical}`
+  ].filter(Boolean).join("\n");
+}
+
+function reflectionCardFileName(payload = currentReflectionSharePayload()) {
+  const datePart = localDayKey().replace(/[^0-9-]/g, "") || "today";
+  return `faithshield-reflection-${datePart}.png`;
+}
+
+function createReflectionShareCardCanvas(payload = currentReflectionSharePayload()) {
+  if (!payload) return null;
+  const width = 1080;
+  const height = 1080;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const bg = ctx.createLinearGradient(0, 0, width, height);
+  bg.addColorStop(0, "#1f3047");
+  bg.addColorStop(0.58, "#152637");
+  bg.addColorStop(1, "#0f1827");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
+
+  const glow = ctx.createRadialGradient(width * 0.72, height * 0.18, 30, width * 0.72, height * 0.18, 360);
+  glow.addColorStop(0, "rgba(220, 171, 82, 0.28)");
+  glow.addColorStop(1, "rgba(220, 171, 82, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.strokeStyle = "rgba(228, 191, 120, 0.58)";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(56, 56, width - 112, height - 112);
+
+  ctx.fillStyle = "#d9b56b";
+  ctx.font = "700 34px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("FAITHSHIELD", width / 2, 112);
+
+  ctx.fillStyle = "#f5e8c9";
+  ctx.font = "700 60px Georgia, 'Times New Roman', serif";
+  ctx.fillText(t("reflectionCardTitle"), width / 2, 190);
+
+  ctx.fillStyle = "#e8d3a3";
+  ctx.font = "600 28px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.fillText(payload.ref || "", width / 2, 242);
+
+  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  ctx.fillRect(92, 290, width - 184, 210);
+  ctx.strokeStyle = "rgba(228, 191, 120, 0.28)";
+  ctx.strokeRect(92, 290, width - 184, 210);
+
+  ctx.fillStyle = "#f0dfbd";
+  ctx.font = "600 24px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(challengeCopy("Today's verse", "Versiculo de hoy"), 124, 336);
+  ctx.fillStyle = "#f7edd9";
+  ctx.font = "500 34px Georgia, 'Times New Roman', serif";
+  drawWrappedCenterText(ctx, payload.thought, width / 2, 388, width - 320, 44, 3);
+
+  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  ctx.fillRect(92, 550, width - 184, 250);
+  ctx.strokeStyle = "rgba(228, 191, 120, 0.28)";
+  ctx.strokeRect(92, 550, width - 184, 250);
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#d9b56b";
+  ctx.font = "600 24px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.fillText(challengeCopy("My reflection", "Mi reflexion"), 124, 596);
+  ctx.fillStyle = "#f4ead2";
+  ctx.font = "500 34px system-ui, -apple-system, Segoe UI, sans-serif";
+  drawWrappedCenterText(ctx, payload.note, width / 2, 650, width - 320, 46, 4);
+
+  ctx.fillStyle = "#d9b56b";
+  ctx.font = "600 22px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.fillText(challengeCopy("Practical action", "Accion practica"), 124, 846);
+  ctx.fillStyle = "#eadfca";
+  ctx.font = "500 28px system-ui, -apple-system, Segoe UI, sans-serif";
+  drawWrappedCenterText(ctx, payload.practical, width / 2, 892, width - 320, 38, 3);
+
+  ctx.fillStyle = "rgba(255,255,255,0.76)";
+  ctx.font = "500 24px system-ui, -apple-system, Segoe UI, sans-serif";
+  ctx.fillText(`${challengeCopy("Player", "Jugador")}: ${payload.player}`, 124, 994);
+  ctx.textAlign = "right";
+  ctx.fillText(payload.date, width - 124, 994);
+
+  return canvas;
+}
+
+async function exportReflectionCard(payload = currentReflectionSharePayload()) {
+  if (!payload) return false;
+  const canvas = createReflectionShareCardCanvas(payload);
+  if (!canvas) return false;
+
+  const blob = await canvasToPngBlob(canvas);
+  if (!blob) return false;
+
+  const fileName = reflectionCardFileName(payload);
+  const file = typeof File !== "undefined"
+    ? new File([blob], fileName, { type: "image/png" })
+    : null;
+
+  if (file && navigator.share && typeof navigator.canShare === "function") {
+    try {
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: `${t("reflectionCardTitle")} • FAITHSHIELD`,
+          text: reflectionShareMessage(payload),
+          files: [file]
+        });
+        return true;
+      }
+    } catch (_) {
+      // Fall through to download.
+    }
+  }
+
+  downloadBlob(blob, fileName);
+  return true;
+}
+
+function emailCurrentReflection() {
+  const payload = currentReflectionSharePayload();
+  if (!payload) return;
+  const subject = encodeURIComponent(t("reflectionEmailSubject"));
+  const body = encodeURIComponent(reflectionShareMessage(payload));
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+async function exportCurrentReflectionCard() {
+  const payload = currentReflectionSharePayload();
+  if (!payload) return;
+  const done = await exportReflectionCard(payload);
+  if (done && exportDevotionReflectionCardBtn) {
+    exportDevotionReflectionCardBtn.textContent = `${t("shareReflectionCard")} (${t("downloadCard")})`;
+  }
+}
+
 function firstSourceEntry(sourceRef) {
   const first = normalizeSourceRef(sourceRef).split(";")[0] || "";
   return first.trim();
@@ -5585,6 +5757,8 @@ function ensureExperienceSections() {
         '  <button id="completeDevotionChallengeBtn" class="ghost-btn" type="button">Complete Daily Challenge</button>',
         '  <button id="completeDevotionActionBtn" class="ghost-btn" type="button">Complete Practical Action</button>',
         '  <button id="saveDevotionReflectionBtn" class="ghost-btn" type="button">Save Reflection</button>',
+        '  <button id="emailDevotionReflectionBtn" class="ghost-btn" type="button">Email Reflection</button>',
+        '  <button id="exportDevotionReflectionCardBtn" class="ghost-btn" type="button">Share Reflection Card</button>',
         '  <button id="claimDevotionRewardBtn" class="cta-btn" type="button">Claim Reward</button>',
         '</div>'
       ].join("");
@@ -5605,6 +5779,8 @@ function ensureExperienceSections() {
     completeDevotionChallengeBtn = dailyDevotionSection.querySelector("#completeDevotionChallengeBtn");
     completeDevotionActionBtn = dailyDevotionSection.querySelector("#completeDevotionActionBtn");
     saveDevotionReflectionBtn = dailyDevotionSection.querySelector("#saveDevotionReflectionBtn");
+    emailDevotionReflectionBtn = dailyDevotionSection.querySelector("#emailDevotionReflectionBtn");
+    exportDevotionReflectionCardBtn = dailyDevotionSection.querySelector("#exportDevotionReflectionCardBtn");
     claimDevotionRewardBtn = dailyDevotionSection.querySelector("#claimDevotionRewardBtn");
 
     if (completeDevotionChallengeBtn) {
@@ -5632,6 +5808,16 @@ function ensureExperienceSections() {
         state.dailyDevotion.reflection = true;
         persist();
         render();
+      };
+    }
+    if (emailDevotionReflectionBtn) {
+      emailDevotionReflectionBtn.onclick = () => {
+        emailCurrentReflection();
+      };
+    }
+    if (exportDevotionReflectionCardBtn) {
+      exportDevotionReflectionCardBtn.onclick = () => {
+        exportCurrentReflectionCard();
       };
     }
     if (claimDevotionRewardBtn) {
@@ -5881,6 +6067,14 @@ function renderDailyDevotionQuest() {
   if (completeDevotionChallengeBtn) completeDevotionChallengeBtn.disabled = state.dailyDevotion.challenge;
   if (completeDevotionActionBtn) completeDevotionActionBtn.disabled = state.dailyDevotion.action;
   if (saveDevotionReflectionBtn) saveDevotionReflectionBtn.disabled = state.dailyDevotion.reflection && Boolean(state.dailyDevotion.note);
+  if (emailDevotionReflectionBtn) {
+    emailDevotionReflectionBtn.textContent = t("emailReflection");
+    emailDevotionReflectionBtn.disabled = !Boolean(String(state.dailyDevotion.note || "").trim());
+  }
+  if (exportDevotionReflectionCardBtn) {
+    exportDevotionReflectionCardBtn.textContent = t("shareReflectionCard");
+    exportDevotionReflectionCardBtn.disabled = !Boolean(String(state.dailyDevotion.note || "").trim());
+  }
   if (claimDevotionRewardBtn) {
     const ready = state.dailyDevotion.challenge && state.dailyDevotion.action && state.dailyDevotion.reflection;
     claimDevotionRewardBtn.disabled = !ready || state.dailyDevotion.reward;
