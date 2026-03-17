@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-16-flood-covenant-pool-v1";
+const CONTENT_VERSION = "2026-03-17-global-no-repeat-hardening-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -648,9 +648,20 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 27;
-const STRICT_SECTION_NO_REPEAT_THEMES = new Set(["Nations and Babel"]);
-const STRICT_THEME_DIFFICULTY_ISOLATION = new Set(["Nations and Babel"]);
+const ACTIVITY_SCHEMA_VERSION = 28;
+const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
+  Object.entries(THEME_KEYWORDS).filter(([, value]) => (
+    Array.isArray(value)
+    && value.some((entry) => entry && typeof entry === "object" && typeof entry.engine === "string")
+  ))
+);
+const STAGE_FIVE_THEMED_POOLS = Object.freeze({
+  ...LEGACY_THEMED_INTERACTIVE_MODE_SETS,
+  ...THEMED_INTERACTIVE_MODE_SETS
+});
+const HARDENED_THEME_NAMES = timelineThemes.map((theme) => theme.name);
+const STRICT_SECTION_NO_REPEAT_THEMES = new Set(HARDENED_THEME_NAMES);
+const STRICT_THEME_DIFFICULTY_ISOLATION = new Set(HARDENED_THEME_NAMES);
 const QUIZ_LINKED_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "truefalse", "matching"]);
 const SEQUENCE_LINKED_ACTIVITY_TYPES = new Set(["order", "fact", "spelling"]);
 const USE_LEGACY_CUTSCENE_VIDEO_FALLBACK = false;
@@ -8405,14 +8416,46 @@ function stageFivePatternPadsFromRoute(base) {
   return pads.slice(0, 4);
 }
 
-function stageFivePatternFromRoute(base, themeName = "") {
+function stageFivePatternPadsFromChoices(base) {
+  const pool = Array.isArray(base.cards) && base.cards.length
+    ? base.cards
+    : (Array.isArray(base.pads) ? base.pads : []);
+  const pads = [];
+  const seen = new Set();
+  pool.forEach((entry) => {
+    if (pads.length >= 4) return;
+    const icon = String((entry && entry.icon) || "📜").trim() || "📜";
+    const label = String((entry && entry.label) || "Step").trim() || "Step";
+    const key = `${icon}::${label.toLowerCase()}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    pads.push({ icon, label });
+  });
+  STAGE_FIVE_PATTERN_FALLBACK_PADS.forEach((pad) => {
+    if (pads.length >= 4) return;
+    const key = `${pad.icon}::${pad.label.toLowerCase()}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    pads.push({ ...pad });
+  });
+  while (pads.length < 4) {
+    pads.push({ icon: "✨", label: `Step ${pads.length + 1}` });
+  }
+  return pads.slice(0, 4);
+}
+
+function stageFivePatternFromBase(base, themeName = "") {
   const hash = stageFiveHashSeed(base, themeName);
-  const pads = stageFivePatternPadsFromRoute(base);
+  const pads = Array.isArray(base.routeSteps) && base.routeSteps.length
+    ? stageFivePatternPadsFromRoute(base)
+    : stageFivePatternPadsFromChoices(base);
   const sequenceSet = STAGE_FIVE_PATTERN_SEQUENCE_LIBRARY[hash % STAGE_FIVE_PATTERN_SEQUENCE_LIBRARY.length];
+  const suffix = base.engine === "pattern" ? "echo" : "pattern";
+  const labelSuffix = base.engine === "pattern" ? "Echo" : "Sequence";
   return {
-    id: `${base.id || "stage5-route"}-pattern`,
+    id: `${base.id || "stage5-route"}-${suffix}`,
     engine: "pattern",
-    label: `${base.label || "Story Path"} Sequence`,
+    label: `${base.label || "Story Path"} ${labelSuffix}`,
     rounds: 4,
     maxMisses: Math.max(2, Math.min(4, Number(base.maxMisses) || 3)),
     playbackMs: 500,
@@ -8423,6 +8466,10 @@ function stageFivePatternFromRoute(base, themeName = "") {
     pads,
     sequences: sequenceSet.map((sequence) => sequence.slice())
   };
+}
+
+function stageFivePatternFromRoute(base, themeName = "") {
+  return stageFivePatternFromBase(base, themeName);
 }
 
 function stageFiveTimingFromDirectional(base, themeName = "") {
@@ -8462,6 +8509,41 @@ function stageFiveDiscernFromDirectional(base, themeName = "") {
     keyboardHint: "Keyboard: press 1-4 to choose your answer.",
     cards: variant.cards.map((card) => ({ ...card })),
     targets: rounds
+  };
+}
+
+function stageFiveBalanceFromBase(base, themeName = "") {
+  const hash = stageFiveHashSeed(base, themeName);
+  const cue = stageFiveThemeCue(themeName);
+  return {
+    id: `${base.id || "stage5-balance"}-balance`,
+    engine: "balance",
+    label: `${base.label || cue} Steady`,
+    target: 7 + (hash % 2),
+    maxMisses: Math.max(2, Math.min(4, Number(base.maxMisses) || 4)),
+    drift: 0.023 + ((hash % 4) * 0.0015),
+    sourceRef: base.sourceRef,
+    storyPrompt: base.storyPrompt || `Hold steady through this ${cue} Bible moment.`,
+    secondaryPrompt: "Keep the marker inside the gold band.",
+    keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker centered."
+  };
+}
+
+function stageFiveCollectFromBase(base, themeName = "") {
+  const hash = stageFiveHashSeed(base, themeName);
+  const cue = stageFiveThemeCue(themeName);
+  return {
+    id: `${base.id || "stage5-collect"}-collect`,
+    engine: "collect",
+    label: `${base.label || cue} Gathering`,
+    target: 10 + (hash % 4),
+    maxMisses: Math.max(3, Math.min(5, Number(base.maxMisses) || 4)),
+    seconds: 20 + (hash % 4),
+    spawnMs: 360 + ((hash % 4) * 25),
+    sourceRef: base.sourceRef,
+    storyPrompt: base.storyPrompt || `Gather the key story pieces in this ${cue} moment.`,
+    secondaryPrompt: "Catch the right pieces before time runs out.",
+    keyboardHint: "Keyboard: use Left/Right or A/D to gather the falling items."
   };
 }
 
@@ -8507,6 +8589,26 @@ function toNonDirectionalStageFiveMode(base, themeName = "") {
   return stageFiveTimingFromDirectional(base, themeName);
 }
 
+function stageFiveVariantModes(base, themeName = "") {
+  if (!base || typeof base !== "object") return [];
+  switch (base.engine) {
+    case "pattern":
+      return [stageFiveDiscernFromDirectional(base, themeName), stageFiveTimingFromDirectional(base, themeName)];
+    case "discern":
+      return [stageFivePatternFromBase(base, themeName), stageFiveBalanceFromBase(base, themeName)];
+    case "balance":
+      return [stageFiveTimingFromDirectional(base, themeName), stageFiveCollectFromBase(base, themeName)];
+    case "collect":
+      return [stageFiveTimingFromDirectional(base, themeName), stageFiveDiscernFromDirectional(base, themeName)];
+    case "timing":
+      return [stageFivePatternFromBase(base, themeName), stageFiveBalanceFromBase(base, themeName)];
+    case "slingshot":
+      return [stageFiveTimingFromDirectional(base, themeName), stageFiveDiscernFromDirectional(base, themeName)];
+    default:
+      return [stageFiveTimingFromDirectional(base, themeName), stageFiveDiscernFromDirectional(base, themeName)];
+  }
+}
+
 function normalizedStageFivePool(rawPool, themeName = "") {
   const seen = new Set();
   const converted = [];
@@ -8521,6 +8623,32 @@ function normalizedStageFivePool(rawPool, themeName = "") {
   return converted;
 }
 
+function expandedStageFivePool(rawPool, themeName = "", requiredCount = 0) {
+  const seen = new Set();
+  const expanded = [];
+  const addMode = (mode) => {
+    if (!mode || !NON_DIRECTIONAL_STAGE_FIVE_ENGINES.has(mode.engine)) return;
+    const id = String(mode.id || `${mode.engine}-${expanded.length}`);
+    if (seen.has(id)) return;
+    seen.add(id);
+    expanded.push(mode);
+  };
+
+  const normalized = normalizedStageFivePool(rawPool, themeName);
+  normalized.forEach(addMode);
+  normalized.forEach((base) => {
+    stageFiveVariantModes(base, themeName).forEach(addMode);
+  });
+
+  if (expanded.length < requiredCount) {
+    normalized.forEach((base) => {
+      [stageFiveCollectFromBase(base, themeName), stageFiveBalanceFromBase(base, themeName)].forEach(addMode);
+    });
+  }
+
+  return expanded;
+}
+
 const stageFiveSelectionCache = new Map();
 
 function stageFiveBaseSelection(level) {
@@ -8529,10 +8657,12 @@ function stageFiveBaseSelection(level) {
   }
 
   const theme = levelThemeSequence[level - 1] || timelineThemes[timelineThemes.length - 1];
-  const themedModes = THEMED_INTERACTIVE_MODE_SETS[theme.name];
+  const themedModes = STAGE_FIVE_THEMED_POOLS[theme.name];
   const useThemedModes = Array.isArray(themedModes) && themedModes.length;
   const rawPool = useThemedModes ? themedModes : interactiveModes;
-  const normalizedPrimaryPool = normalizedStageFivePool(rawPool, theme.name);
+  const normalizedPrimaryPool = useThemedModes
+    ? expandedStageFivePool(rawPool, theme.name, themeLevelCount(theme))
+    : normalizedStageFivePool(rawPool, theme.name);
   const normalizedFallbackPool = normalizedStageFivePool(interactiveModes, theme.name);
   const emergencyMode = {
     id: "stage5-emergency-timing",
@@ -8568,7 +8698,7 @@ function stageFiveBaseSelection(level) {
     }
 
     const usedIds = new Set(priorSameTheme.map((entry) => entry.id));
-    const recentEngines = priorSameTheme.slice(-2).map((entry) => entry.engine);
+    const recentEngines = priorSameTheme.slice(-3).map((entry) => entry.engine);
 
     base = candidates.find((candidate) => !usedIds.has(candidate.id) && candidate.id !== previous?.id && !recentEngines.includes(candidate.engine))
       || candidates.find((candidate) => !usedIds.has(candidate.id) && candidate.id !== previous?.id)
