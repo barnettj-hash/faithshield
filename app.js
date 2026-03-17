@@ -5218,6 +5218,7 @@ function ensureExperienceSections() {
   const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
   const dailyWordCard = document.querySelector(".daily-word-card");
   const badgeSection = document.querySelector(".badge-section");
+  const postStoryAnchor = badgeSection && badgeSection.parentNode ? badgeSection : null;
 
   ensureBadgeActionButtons();
   ensureShareOverlayEnhancements();
@@ -5237,8 +5238,10 @@ function ensureExperienceSections() {
         '<div id="campaignMapTrack" class="campaign-map-track"></div>',
         '<p id="campaignMapFinish" class="meta"></p>'
       ].join("");
-      if (storySection && storySection.parentNode) {
-        storySection.parentNode.insertBefore(campaignMapSection, storySection);
+      if (postStoryAnchor) {
+        postStoryAnchor.parentNode.insertBefore(campaignMapSection, postStoryAnchor);
+      } else if (storySection && storySection.parentNode) {
+        storySection.parentNode.insertBefore(campaignMapSection, storySection.nextSibling);
       } else {
         appRoot.appendChild(campaignMapSection);
       }
@@ -5266,8 +5269,10 @@ function ensureExperienceSections() {
         '</div>',
         '<div id="weakAreaList" class="weak-area-list"></div>'
       ].join("");
-      if (storySection && storySection.parentNode) {
-        storySection.parentNode.insertBefore(masterySection, storySection);
+      if (postStoryAnchor) {
+        postStoryAnchor.parentNode.insertBefore(masterySection, postStoryAnchor);
+      } else if (storySection && storySection.parentNode) {
+        storySection.parentNode.insertBefore(masterySection, storySection.nextSibling);
       } else {
         appRoot.appendChild(masterySection);
       }
@@ -5305,7 +5310,9 @@ function ensureExperienceSections() {
         '  <button id="claimDevotionRewardBtn" class="cta-btn" type="button">Claim Reward</button>',
         '</div>'
       ].join("");
-      if (dailyWordCard && dailyWordCard.parentNode) {
+      if (postStoryAnchor) {
+        postStoryAnchor.parentNode.insertBefore(dailyDevotionSection, postStoryAnchor);
+      } else if (dailyWordCard && dailyWordCard.parentNode) {
         dailyWordCard.parentNode.insertBefore(dailyDevotionSection, dailyWordCard.nextSibling);
       } else if (progressSection && progressSection.parentNode) {
         progressSection.parentNode.insertBefore(dailyDevotionSection, progressSection.nextSibling);
@@ -5418,7 +5425,9 @@ function ensureExperienceSections() {
         '</div>',
         '<p class="meta">Hotkeys: H = hub, P = story path, M = music, Esc = close panel.</p>'
       ].join("");
-      if (progressSection && progressSection.parentNode) {
+      if (postStoryAnchor) {
+        postStoryAnchor.parentNode.insertBefore(desktopControlsSection, postStoryAnchor);
+      } else if (progressSection && progressSection.parentNode) {
         progressSection.parentNode.insertBefore(desktopControlsSection, progressSection.nextSibling);
       } else {
         appRoot.appendChild(desktopControlsSection);
