@@ -648,8 +648,9 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 25;
+const ACTIVITY_SCHEMA_VERSION = 27;
 const STRICT_SECTION_NO_REPEAT_THEMES = new Set(["Nations and Babel"]);
+const STRICT_THEME_DIFFICULTY_ISOLATION = new Set(["Nations and Babel"]);
 const QUIZ_LINKED_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "truefalse", "matching"]);
 const SEQUENCE_LINKED_ACTIVITY_TYPES = new Set(["order", "fact", "spelling"]);
 const USE_LEGACY_CUTSCENE_VIDEO_FALLBACK = false;
@@ -1542,22 +1543,16 @@ const THEMED_INTERACTIVE_MODE_SETS = {
   ],
   "Nations and Babel": [
     {
-      id: "babel-brick-pattern",
-      engine: "pattern",
-      label: "Brick and Mortar",
-      rounds: 4,
+      id: "babel-kiln-timing",
+      engine: "timing",
+      label: "Kiln Rhythm",
+      target: 8,
       maxMisses: 4,
-      playbackMs: 500,
+      speed: 740,
       sourceRef: "Genesis 11:3",
-      storyPrompt: "Remember the builders' brick-and-mortar rhythm as Babel rises in pride.",
-      keyboardHint: "Keyboard: press 1-4 to repeat the Babel-building pattern.",
-      pads: [
-        { icon: "🧱", label: "Brick" },
-        { icon: "🔥", label: "Burn" },
-        { icon: "🛢️", label: "Mortar" },
-        { icon: "🏗️", label: "Build" }
-      ],
-      sequences: [[0, 1, 2], [0, 1, 2, 3], [0, 2, 3, 0], [0, 1, 2, 3, 0]]
+      storyPrompt: "Keep steady timing as the kiln fires and bricks are shaped in Babel.",
+      secondaryPrompt: "Press Strike when the marker lands in the gold zone.",
+      keyboardHint: "Keyboard: press Space or Enter to strike in the gold zone."
     },
     {
       id: "babel-pride-discern",
@@ -1582,71 +1577,63 @@ const THEMED_INTERACTIVE_MODE_SETS = {
       ]
     },
     {
-      id: "babel-tower-balance",
-      engine: "balance",
-      label: "Tower Tilt",
-      target: 8,
+      id: "babel-brick-collect",
+      engine: "collect",
+      label: "Brick Gathering",
+      target: 11,
       maxMisses: 4,
-      drift: 0.029,
-      sourceRef: "Genesis 11:4",
-      storyPrompt: "Hold the tower line as human pride tries to rise to the heavens.",
-      keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker inside the tower band."
+      seconds: 20,
+      spawnMs: 395,
+      sourceRef: "Genesis 11:3-4",
+      storyPrompt: "Gather the Babel building pieces quickly as the city and tower rise in pride.",
+      secondaryPrompt: "Catch the right pieces before the build collapses.",
+      keyboardHint: "Keyboard: use Left/Right or A/D to gather the falling pieces."
     },
     {
-      id: "babel-scatter-route",
-      engine: "route",
-      label: "Scatter the Nations",
-      maxMisses: 4,
-      sourceRef: "Genesis 11:8-9",
-      storyPrompt: "Trace the scattering route as God spreads the people over the earth.",
-      secondaryPrompt: "Follow the path of scattering one move at a time.",
-      keyboardHint: "Keyboard: use arrow keys or WASD to follow the scattering route.",
-      routeSteps: [
-        { dir: "up", icon: "🗼", label: "Babel" },
-        { dir: "right", icon: "🗣️", label: "Confuse" },
-        { dir: "down", icon: "🌍", label: "Scatter" },
-        { dir: "left", icon: "👣", label: "Nations" }
-      ]
-    },
-    {
-      id: "babel-tongues-pattern",
-      engine: "pattern",
-      label: "Tongues Confused",
-      rounds: 4,
-      maxMisses: 4,
-      playbackMs: 495,
+      id: "babel-tongues-slingshot",
+      engine: "slingshot",
+      label: "Tongues Disrupted",
+      targetRadius: 16,
+      maxPull: 86,
+      pullPowerScale: 0.14,
       sourceRef: "Genesis 11:7",
-      storyPrompt: "Repeat the language-shift pattern as God confuses the speech at Babel.",
-      keyboardHint: "Keyboard: press 1-4 to repeat the language pattern.",
-      pads: [
-        { icon: "🗣️", label: "Speech" },
-        { icon: "❓", label: "Confused" },
-        { icon: "🧱", label: "Stopped" },
-        { icon: "🌍", label: "Scattered" }
-      ],
-      sequences: [[0, 1, 2], [0, 1, 2, 3], [1, 0, 2, 3], [0, 1, 2, 3, 1]]
+      storyPrompt: "Take one precise shot as languages are confused and proud plans are broken.",
+      secondaryPrompt: "Aim carefully, then release one decisive strike.",
+      keyboardHint: "Keyboard: arrows adjust aim, Space/Enter launches, R resets."
     },
     {
-      id: "babel-nations-discern",
+      id: "babel-lineage-discern",
       engine: "discern",
-      label: "Nations Sent Out",
+      label: "Lineage Check",
       maxMisses: 3,
-      sourceRef: "Genesis 10:32; 11:9",
-      storyPrompt: "Discern how God formed nations and languages after Babel.",
-      secondaryPrompt: "Choose the true outcome from the Babel account.",
-      keyboardHint: "Keyboard: press 1-4 to choose the right outcome.",
+      sourceRef: "Genesis 10:8; 10:25; 11:26",
+      storyPrompt: "Discern key people in the Nations and Babel family lines.",
+      secondaryPrompt: "Choose the person or line that matches each prompt.",
+      keyboardHint: "Keyboard: press 1-4 to choose the right answer.",
       cards: [
-        { icon: "🌊", label: "Flood Again" },
-        { icon: "🌍", label: "Nations" },
-        { icon: "🏗️", label: "Finish Tower" },
-        { icon: "👑", label: "One King" }
+        { icon: "🏹", label: "Nimrod" },
+        { icon: "👨", label: "Cush" },
+        { icon: "🌍", label: "Japheth" },
+        { icon: "👴", label: "Terah" }
       ],
       targets: [
-        { prompt: "What spread over the earth after Babel?", correctIndex: 1 },
-        { prompt: "What did the people fail to finish in Shinar?", correctIndex: 2 },
-        { prompt: "What did God confuse at Babel?", correctIndex: 1 },
-        { prompt: "What did Babel not produce for all humanity?", correctIndex: 3 }
+        { prompt: "Who was called a mighty hunter before Yahweh?", correctIndex: 0 },
+        { prompt: "Who fathered Nimrod?", correctIndex: 1 },
+        { prompt: "Which line includes Gomer, Magog, and Javan?", correctIndex: 2 },
+        { prompt: "Who was Abram's father?", correctIndex: 3 }
       ]
+    },
+    {
+      id: "babel-tower-balance",
+      engine: "balance",
+      label: "Tower Balance",
+      target: 8,
+      maxMisses: 4,
+      drift: 0.028,
+      sourceRef: "Genesis 11:4-8",
+      storyPrompt: "Hold the tower steady as proud builders try to keep their plan together.",
+      secondaryPrompt: "Keep the marker inside the safe band as Babel begins to wobble.",
+      keyboardHint: "Keyboard: hold Left/A or Right/D to keep the tower balanced."
     }
   ],
   "Burning Bush": [
@@ -2817,6 +2804,156 @@ const factBank = [
   { era: "saul", parts: ["Obedience", "is", "better", "than", "sacrifice"], sourceRef: "1 Samuel 15:22" },
   { era: "david", parts: ["The", "battle", "is", "Yahweh's"], sourceRef: "1 Samuel 17:47" }
 ];
+
+const NATIONS_BABEL_QUIZ_EASY_EXPANSION = [
+  { era: "genesis", prompt: "Who begat (fathered) Nimrod according to Genesis 10:8?", options: ["Cush", "Ham", "Shem", "Japheth"], answer: "Cush", sourceRef: "Genesis 10:8" },
+  { era: "genesis", prompt: "Which one is NOT listed as a son of Japheth in Genesis 10:2?", options: ["Canaan", "Gomer", "Magog", "Javan"], answer: "Canaan", sourceRef: "Genesis 10:2" },
+  { era: "genesis", prompt: "Who was Abram's father in Genesis 11:26?", options: ["Terah", "Nahor", "Haran", "Eber"], answer: "Terah", sourceRef: "Genesis 11:26" },
+  { era: "genesis", prompt: "How old was Shem when he became the father of Arphaxad?", options: ["100 years", "90 years", "70 years", "120 years"], answer: "100 years", sourceRef: "Genesis 11:10" },
+  { era: "genesis", prompt: "How many years after the flood did Shem father Arphaxad?", options: ["2 years", "7 years", "40 years", "12 years"], answer: "2 years", sourceRef: "Genesis 11:10" },
+  { era: "genesis", prompt: "In which land did Nimrod's kingdom begin?", options: ["Shinar", "Canaan", "Ararat", "Egypt"], answer: "Shinar", sourceRef: "Genesis 10:10" },
+  { era: "genesis", prompt: "Who fathered Peleg and Joktan?", options: ["Eber", "Shelah", "Arphaxad", "Reu"], answer: "Eber", sourceRef: "Genesis 10:25" },
+  { era: "genesis", prompt: "Where did Terah settle while traveling toward Canaan?", options: ["Haran", "Ur", "Babel", "Hebron"], answer: "Haran", sourceRef: "Genesis 11:31" },
+  { era: "genesis", prompt: "According to Genesis 11:30, what was true of Sarai?", options: ["She was barren", "She was queen in Ur", "She had seven children", "She was a prophetess"], answer: "She was barren", sourceRef: "Genesis 11:30" },
+  { era: "genesis", prompt: "Who said, \"Come, let's make bricks, and burn them thoroughly\"?", options: ["The people", "Nimrod", "Noah", "Yahweh"], answer: "The people", sourceRef: "Genesis 11:3" },
+  { era: "genesis", prompt: "Who said, \"Come, let's build ourselves a city, and a tower\"?", options: ["The people", "Terah", "Shem", "Yahweh"], answer: "The people", sourceRef: "Genesis 11:4" },
+  { era: "genesis", prompt: "Which divine name appears in Genesis 11:5-9 in the WEB text?", options: ["Yahweh", "El Shaddai", "Yahweh Nissi", "El Roi"], answer: "Yahweh", sourceRef: "Genesis 11:5-9" },
+  { era: "genesis", prompt: "Who was Nimrod called in Genesis 10:9?", options: ["A mighty hunter before Yahweh", "A priest in Shinar", "A son of Shem", "A king in Egypt"], answer: "A mighty hunter before Yahweh", sourceRef: "Genesis 10:9" },
+  { era: "genesis", prompt: "What did the Babel builders use instead of stone?", options: ["Brick", "Timber", "Marble", "Iron"], answer: "Brick", sourceRef: "Genesis 11:3" },
+  { era: "genesis", prompt: "Which grandson did Terah take with Abram and Sarai from Ur?", options: ["Lot", "Peleg", "Arphaxad", "Canaan"], answer: "Lot", sourceRef: "Genesis 11:31" },
+  { era: "genesis", prompt: "Which two sons are named for Eber in Genesis 10:25?", options: ["Peleg and Joktan", "Shem and Ham", "Abram and Nahor", "Cush and Canaan"], answer: "Peleg and Joktan", sourceRef: "Genesis 10:25" },
+  { era: "genesis", prompt: "What name was given to the city because Yahweh confused language there?", options: ["Babel", "Bethel", "Nineveh", "Hebron"], answer: "Babel", sourceRef: "Genesis 11:9" }
+];
+
+const NATIONS_BABEL_QUIZ_MEDIUM_EXPANSION = [
+  { era: "genesis", prompt: "Why was the name Peleg given in Genesis 10:25?", options: ["In his days the earth was divided", "He built Babel", "He crossed the sea", "He named Abram"], answer: "In his days the earth was divided", sourceRef: "Genesis 10:25" },
+  { era: "genesis", prompt: "Who was the father of Eber?", options: ["Shelah", "Arphaxad", "Peleg", "Joktan"], answer: "Shelah", sourceRef: "Genesis 10:24; 11:14" },
+  { era: "genesis", prompt: "Which city is listed in the beginning of Nimrod's kingdom?", options: ["Accad", "Jericho", "Hebron", "Bethel"], answer: "Accad", sourceRef: "Genesis 10:10" },
+  { era: "genesis", prompt: "Who married Milcah, the daughter of Haran?", options: ["Nahor", "Abram", "Terah", "Lot"], answer: "Nahor", sourceRef: "Genesis 11:29" },
+  { era: "genesis", prompt: "Who was the father of Lot?", options: ["Haran", "Nahor", "Abram", "Eber"], answer: "Haran", sourceRef: "Genesis 11:27" },
+  { era: "genesis", prompt: "From where did Terah depart when heading toward Canaan?", options: ["Ur of the Chaldees", "Haran", "Shinar", "Ararat"], answer: "Ur of the Chaldees", sourceRef: "Genesis 11:31" },
+  { era: "genesis", prompt: "Who did Terah take with Abram and Sarai on the journey?", options: ["Lot", "Ishmael", "Isaac", "Japheth"], answer: "Lot", sourceRef: "Genesis 11:31" },
+  { era: "genesis", prompt: "Which option names the three sons of Terah?", options: ["Abram, Nahor, Haran", "Shem, Ham, Japheth", "Cain, Abel, Seth", "Isaac, Ishmael, Lot"], answer: "Abram, Nahor, Haran", sourceRef: "Genesis 11:26-27" },
+  { era: "genesis", prompt: "Which son of Shem is listed with Elam, Asshur, and Lud?", options: ["Arphaxad", "Cush", "Canaan", "Gomer"], answer: "Arphaxad", sourceRef: "Genesis 10:22" },
+  { era: "genesis", prompt: "Which city is NOT part of the beginning of Nimrod's kingdom in Genesis 10:10?", options: ["Nineveh", "Babel", "Erech", "Calneh"], answer: "Nineveh", sourceRef: "Genesis 10:10-11" },
+  { era: "genesis", prompt: "Who said that nothing would be withheld from the people if they remained one in speech?", options: ["Yahweh", "Nimrod", "Shem", "Terah"], answer: "Yahweh", sourceRef: "Genesis 11:6" },
+  { era: "genesis", prompt: "Which divine name is repeated through Genesis 10-11 in the WEB text?", options: ["Yahweh", "Yahweh Shalom", "El Elyon", "Yahweh Nissi"], answer: "Yahweh", sourceRef: "Genesis 10:9; 11:5-9" },
+  { era: "genesis", prompt: "What goal did Terah set before stopping in Haran?", options: ["To go to Canaan", "To build Babel", "To return to Eden", "To settle in Egypt"], answer: "To go to Canaan", sourceRef: "Genesis 11:31" },
+  { era: "genesis", prompt: "Who first appears as father in the line Shem -> Arphaxad -> Shelah -> Eber?", options: ["Shem", "Peleg", "Nahor", "Terah"], answer: "Shem", sourceRef: "Genesis 11:10" },
+  { era: "genesis", prompt: "Which statement matches Genesis 11:6 exactly in idea?", options: ["Now nothing will be withheld from them which they intend to do", "They immediately repented and worshiped", "Their tower reached heaven that day", "They divided into twelve tribes"], answer: "Now nothing will be withheld from them which they intend to do", sourceRef: "Genesis 11:6" },
+  { era: "genesis", prompt: "Which person died before Terah's migration to Haran in Genesis 11?", options: ["Haran", "Abram", "Nahor", "Lot"], answer: "Haran", sourceRef: "Genesis 11:28" },
+  { era: "genesis", prompt: "Which phrase best summarizes Genesis 11:8?", options: ["Yahweh scattered them abroad from there", "Yahweh gave them one king", "Yahweh restored Eden to them", "Yahweh sent manna from heaven"], answer: "Yahweh scattered them abroad from there", sourceRef: "Genesis 11:8" }
+];
+
+const NATIONS_BABEL_QUIZ_ADVANCED_EXPANSION = [
+  { era: "genesis", prompt: "According to Genesis 10:5, the coastland nations were divided by what four markers?", options: ["Lands, languages, families, nations", "Kings, armies, walls, temples", "Seas, deserts, mountains, rivers", "Priests, judges, kings, prophets"], answer: "Lands, languages, families, nations", sourceRef: "Genesis 10:5" },
+  { era: "genesis", prompt: "In Genesis 10:21, Shem is called the brother of whom?", options: ["Japheth the elder", "Ham the younger", "Cush", "Nimrod"], answer: "Japheth the elder", sourceRef: "Genesis 10:21" },
+  { era: "genesis", prompt: "How old was Arphaxad when he fathered Shelah?", options: ["35 years", "30 years", "34 years", "32 years"], answer: "35 years", sourceRef: "Genesis 11:12" },
+  { era: "genesis", prompt: "How old was Shelah when he fathered Eber?", options: ["30 years", "35 years", "34 years", "29 years"], answer: "30 years", sourceRef: "Genesis 11:14" },
+  { era: "genesis", prompt: "How old was Eber when he fathered Peleg?", options: ["34 years", "30 years", "32 years", "35 years"], answer: "34 years", sourceRef: "Genesis 11:16" },
+  { era: "genesis", prompt: "How old was Peleg when he fathered Reu?", options: ["30 years", "34 years", "32 years", "35 years"], answer: "30 years", sourceRef: "Genesis 11:18" },
+  { era: "genesis", prompt: "How old was Reu when he fathered Serug?", options: ["32 years", "30 years", "34 years", "29 years"], answer: "32 years", sourceRef: "Genesis 11:20" },
+  { era: "genesis", prompt: "How old was Serug when he fathered Nahor?", options: ["30 years", "29 years", "32 years", "35 years"], answer: "30 years", sourceRef: "Genesis 11:22" },
+  { era: "genesis", prompt: "How old was Nahor when he fathered Terah?", options: ["29 years", "30 years", "34 years", "32 years"], answer: "29 years", sourceRef: "Genesis 11:24" },
+  { era: "genesis", prompt: "How old was Terah when he died in Haran?", options: ["205 years", "175 years", "145 years", "230 years"], answer: "205 years", sourceRef: "Genesis 11:32" },
+  { era: "genesis", prompt: "Which pair are named as daughters of Haran?", options: ["Milcah and Iscah", "Sarai and Rebekah", "Leah and Rachel", "Naomi and Ruth"], answer: "Milcah and Iscah", sourceRef: "Genesis 11:29" },
+  { era: "genesis", prompt: "Which phrase from Genesis 11:4 reveals the builders' pride motive?", options: ["Make a name for ourselves", "Build an altar to Yahweh", "Seek the promised land", "Gather manna for all"], answer: "Make a name for ourselves", sourceRef: "Genesis 11:4" },
+  { era: "genesis", prompt: "After fathering Shelah, how many years did Arphaxad live?", options: ["403 years", "430 years", "500 years", "205 years"], answer: "403 years", sourceRef: "Genesis 11:13" },
+  { era: "genesis", prompt: "After fathering Eber, how many years did Shelah live?", options: ["403 years", "430 years", "207 years", "119 years"], answer: "403 years", sourceRef: "Genesis 11:15" },
+  { era: "genesis", prompt: "After fathering Peleg, how many years did Eber live?", options: ["430 years", "403 years", "209 years", "500 years"], answer: "430 years", sourceRef: "Genesis 11:17" },
+  { era: "genesis", prompt: "After fathering Reu, how many years did Peleg live?", options: ["209 years", "430 years", "207 years", "200 years"], answer: "209 years", sourceRef: "Genesis 11:19" },
+  { era: "genesis", prompt: "After fathering Serug, how many years did Reu live?", options: ["207 years", "209 years", "200 years", "119 years"], answer: "207 years", sourceRef: "Genesis 11:21" },
+  { era: "genesis", prompt: "After fathering Nahor, how many years did Serug live?", options: ["200 years", "207 years", "209 years", "403 years"], answer: "200 years", sourceRef: "Genesis 11:23" },
+  { era: "genesis", prompt: "After fathering Terah, how many years did Nahor live?", options: ["119 years", "200 years", "207 years", "430 years"], answer: "119 years", sourceRef: "Genesis 11:25" },
+  { era: "genesis", prompt: "At what age did Terah begin fathering Abram, Nahor, and Haran?", options: ["70 years", "90 years", "100 years", "130 years"], answer: "70 years", sourceRef: "Genesis 11:26" }
+];
+
+const NATIONS_BABEL_SPELLING_EASY_EXPANSION = [
+  { era: "genesis", prompt: "Spell Abram's father from Genesis 11:26.", answer: "Terah", sourceRef: "Genesis 11:26" },
+  { era: "genesis", prompt: "Spell the father of Nimrod from Genesis 10:8.", answer: "Cush", sourceRef: "Genesis 10:8" },
+  { era: "genesis", prompt: "Spell the son of Eber whose days saw division.", answer: "Peleg", sourceRef: "Genesis 10:25" },
+  { era: "genesis", prompt: "Spell the place where Terah settled before his death.", answer: "Haran", sourceRef: "Genesis 11:31-32" }
+];
+
+const NATIONS_BABEL_SPELLING_MEDIUM_EXPANSION = [
+  { era: "genesis", prompt: "Type the son born to Shem two years after the flood.", answer: "Arphaxad", acceptedAnswers: ["Arpachshad"], sourceRef: "Genesis 11:10" },
+  { era: "genesis", prompt: "Type the father of Eber.", answer: "Shelah", sourceRef: "Genesis 11:14" },
+  { era: "genesis", prompt: "Type one city in Nimrod's beginning kingdom that starts with C.", answer: "Calneh", sourceRef: "Genesis 10:10" },
+  { era: "genesis", prompt: "Type the son of Reu in Genesis 11:20.", answer: "Serug", sourceRef: "Genesis 11:20" },
+  { era: "genesis", prompt: "Type the city whose name is linked to confusion of language.", answer: "Babel", sourceRef: "Genesis 11:9" },
+  { era: "genesis", prompt: "Type the son of Shelah in Genesis 11:14.", answer: "Eber", sourceRef: "Genesis 11:14" }
+];
+
+const NATIONS_BABEL_SPELLING_ADVANCED_EXPANSION = [
+  { era: "genesis", prompt: "Type the father of Milcah and Iscah.", answer: "Haran", sourceRef: "Genesis 11:29" },
+  { era: "genesis", prompt: "Type the son of Peleg in Genesis 11:18.", answer: "Reu", sourceRef: "Genesis 11:18" },
+  { era: "genesis", prompt: "Type one city named with Babel and Calneh that starts with A.", answer: "Accad", sourceRef: "Genesis 10:10" },
+  { era: "genesis", prompt: "Type the father of Terah in Genesis 11:24.", answer: "Nahor", sourceRef: "Genesis 11:24" },
+  { era: "genesis", prompt: "Type the father of Shelah in Genesis 11:12.", answer: "Arphaxad", acceptedAnswers: ["Arpachshad"], sourceRef: "Genesis 11:12" },
+  { era: "genesis", prompt: "Type the son of Nahor in Genesis 11:24.", answer: "Terah", sourceRef: "Genesis 11:24" }
+];
+
+const NATIONS_BABEL_ORDER_EASY_EXPANSION = [
+  { era: "genesis", items: ["Cush fathers Nimrod", "Nimrod's kingdom begins at Babel", "Yahweh confuses language at Babel"], sourceRef: "Genesis 10:8-10; 11:7" },
+  { era: "genesis", items: ["Shem fathers Arphaxad", "Arphaxad fathers Shelah", "Shelah fathers Eber"], sourceRef: "Genesis 11:10; 11:12; 11:14" },
+  { era: "genesis", items: ["Terah leaves Ur", "Family comes to Haran", "Terah dies in Haran"], sourceRef: "Genesis 11:31-32" },
+  { era: "genesis", items: ["People say, \"Come, let's make bricks\"", "People say, \"Come, let's build a city and tower\"", "Yahweh scatters them abroad"], sourceRef: "Genesis 11:3-4,8" }
+];
+
+const NATIONS_BABEL_ORDER_MEDIUM_EXPANSION = [
+  { era: "genesis", items: ["People settle in Shinar", "People plan tower", "Yahweh scatters them"], sourceRef: "Genesis 11:2; 11:4; 11:8" },
+  { era: "genesis", items: ["Eber fathers Peleg and Joktan", "Peleg fathers Reu", "Reu fathers Serug"], sourceRef: "Genesis 10:25; 11:18; 11:20" },
+  { era: "genesis", items: ["Terah fathers Abram, Nahor, Haran", "Haran fathers Lot", "Terah sets out toward Canaan"], sourceRef: "Genesis 11:26-27,31" },
+  { era: "genesis", items: ["Shem fathers Arphaxad", "Arphaxad fathers Shelah", "Shelah fathers Eber"], sourceRef: "Genesis 11:10-14" }
+];
+
+const NATIONS_BABEL_ORDER_ADVANCED_EXPANSION = [
+  { era: "genesis", items: ["Arphaxad fathers Shelah at 35", "Shelah fathers Eber at 30", "Eber fathers Peleg at 34"], sourceRef: "Genesis 11:12; 11:14; 11:16" },
+  { era: "genesis", items: ["People make bricks", "People build city and tower", "Yahweh comes down to see"], sourceRef: "Genesis 11:3-5" },
+  { era: "genesis", items: ["Peleg fathers Reu", "Reu fathers Serug", "Serug fathers Nahor"], sourceRef: "Genesis 11:18; 11:20; 11:22" },
+  { era: "genesis", items: ["Nahor fathers Terah", "Terah fathers Abram/Nahor/Haran", "Terah dies in Haran"], sourceRef: "Genesis 11:24; 11:26; 11:32" }
+];
+
+const NATIONS_BABEL_FACT_EASY_EXPANSION = [
+  { era: "genesis", parts: ["Cush", "became", "the", "father", "of", "Nimrod"], sourceRef: "Genesis 10:8" },
+  { era: "genesis", parts: ["Nimrod", "was", "a", "mighty", "hunter", "before", "Yahweh"], sourceRef: "Genesis 10:9" },
+  { era: "genesis", parts: ["Terah", "became", "the", "father", "of", "Abram"], sourceRef: "Genesis 11:26" },
+  { era: "genesis", parts: ["Sarai", "was", "barren"], sourceRef: "Genesis 11:30" },
+  { era: "genesis", parts: ["They", "came", "to", "Haran", "and", "lived", "there"], sourceRef: "Genesis 11:31" },
+  { era: "genesis", parts: ["The", "whole", "earth", "was", "of", "one", "language"], sourceRef: "Genesis 11:1" },
+  { era: "genesis", parts: ["Let's", "make", "bricks", "and", "burn", "them", "thoroughly"], sourceRef: "Genesis 11:3" }
+];
+
+const NATIONS_BABEL_FACT_MEDIUM_EXPANSION = [
+  { era: "genesis", parts: ["Shem", "was", "one", "hundred", "years", "old"], sourceRef: "Genesis 11:10" },
+  { era: "genesis", parts: ["In", "his", "days", "the", "earth", "was", "divided"], sourceRef: "Genesis 10:25" },
+  { era: "genesis", parts: ["Yahweh", "came", "down", "to", "see", "the", "city", "and", "the", "tower"], sourceRef: "Genesis 11:5" },
+  { era: "genesis", parts: ["Terah", "died", "in", "Haran"], sourceRef: "Genesis 11:32" },
+  { era: "genesis", parts: ["Nothing", "will", "be", "withheld", "from", "them", "which", "they", "intend", "to", "do"], sourceRef: "Genesis 11:6" },
+  { era: "genesis", parts: ["Yahweh", "scattered", "them", "abroad", "from", "there"], sourceRef: "Genesis 11:8" }
+];
+
+const NATIONS_BABEL_FACT_ADVANCED_EXPANSION = [
+  { era: "genesis", parts: ["The", "beginning", "of", "his", "kingdom", "was", "Babel", "Erech", "Accad", "and", "Calneh"], sourceRef: "Genesis 10:10" },
+  { era: "genesis", parts: ["Arphaxad", "lived", "thirty-five", "years", "and", "fathered", "Shelah"], sourceRef: "Genesis 11:12" },
+  { era: "genesis", parts: ["Eber", "lived", "thirty-four", "years", "and", "fathered", "Peleg"], sourceRef: "Genesis 11:16" },
+  { era: "genesis", parts: ["Reu", "lived", "thirty-two", "years", "and", "fathered", "Serug"], sourceRef: "Genesis 11:20" },
+  { era: "genesis", parts: ["Nahor", "lived", "twenty-nine", "years", "and", "fathered", "Terah"], sourceRef: "Genesis 11:24" },
+  { era: "genesis", parts: ["Terah", "lived", "two", "hundred", "five", "years"], sourceRef: "Genesis 11:32" }
+];
+
+quizBank.push(...NATIONS_BABEL_QUIZ_EASY_EXPANSION);
+mediumQuizBank.push(...NATIONS_BABEL_QUIZ_MEDIUM_EXPANSION);
+advancedQuizBank.push(...NATIONS_BABEL_QUIZ_ADVANCED_EXPANSION);
+spellingBank.push(...NATIONS_BABEL_SPELLING_EASY_EXPANSION);
+mediumSpellingBank.push(...NATIONS_BABEL_SPELLING_MEDIUM_EXPANSION);
+advancedSpellingBank.push(...NATIONS_BABEL_SPELLING_ADVANCED_EXPANSION);
+orderBank.push(...NATIONS_BABEL_ORDER_EASY_EXPANSION);
+mediumOrderBank.push(...NATIONS_BABEL_ORDER_MEDIUM_EXPANSION);
+advancedOrderBank.push(...NATIONS_BABEL_ORDER_ADVANCED_EXPANSION);
+factBank.push(...NATIONS_BABEL_FACT_EASY_EXPANSION);
+mediumFactBank.push(...NATIONS_BABEL_FACT_MEDIUM_EXPANSION);
+advancedFactBank.push(...NATIONS_BABEL_FACT_ADVANCED_EXPANSION);
 
 function normalizePoolText(value) {
   return normalizeQuizAnswerKey(String(value || ""));
@@ -7055,10 +7192,12 @@ function buildFallbackFactActivity(meta, theme, difficulty, usedSources) {
   };
 }
 
-function buildTrueFalseActivity(meta, theme, usedSources) {
+function buildTrueFalseActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "truefalse");
-  const quizPool = ALL_QUIZ_BANKS;
+  const quizPool = shouldIsolateThemeByDifficulty(theme)
+    ? quizPoolForDifficulty(difficulty)
+    : ALL_QUIZ_BANKS;
   const pick = pickWithoutRepeat(quizPool, theme.era, "truefalse", {
     usedSources,
     allowReuse: false,
@@ -7084,10 +7223,12 @@ function buildTrueFalseActivity(meta, theme, usedSources) {
   };
 }
 
-function buildMatchingActivity(meta, theme, usedSources) {
+function buildMatchingActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "matching");
-  const quizPool = ALL_QUIZ_BANKS;
+  const quizPool = shouldIsolateThemeByDifficulty(theme)
+    ? quizPoolForDifficulty(difficulty)
+    : ALL_QUIZ_BANKS;
   const scopedPool = quizPool.filter(themeFilter);
   const desiredCount = scopedPool.length >= 3 ? 3 : 2;
   const pick = pickManyWithoutRepeat(quizPool, theme.era, "matching", desiredCount, {
@@ -7224,6 +7365,10 @@ function isHebrewNameQuestion(item) {
   return /name of god|what does|which name|divine name|title of god|hebrew/i.test(prompt);
 }
 
+function shouldIsolateThemeByDifficulty(theme) {
+  return Boolean(theme && STRICT_THEME_DIFFICULTY_ISOLATION.has(theme.name));
+}
+
 function quizPoolForDifficulty(difficulty) {
   if (difficulty.id === "advanced") return advancedQuizBank;
   if (difficulty.id === "medium") return mediumQuizBank;
@@ -7236,10 +7381,12 @@ function buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind) {
   const scopeKey = themeScopeKey(theme, kind);
 
   const preferred = quizPoolForDifficulty(difficulty);
-  const combinedPool = preferred
-    .concat(quizBank)
-    .concat(mediumQuizBank)
-    .concat(advancedQuizBank);
+  const combinedPool = shouldIsolateThemeByDifficulty(theme)
+    ? preferred.slice()
+    : preferred
+      .concat(quizBank)
+      .concat(mediumQuizBank)
+      .concat(advancedQuizBank);
   const dedupedPool = [];
   const seen = new Set();
   combinedPool.forEach((item) => {
@@ -8030,9 +8177,9 @@ function activityFor(meta) {
       if (kind === "speaker" || kind === "hebrew") {
         activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind);
       } else if (kind === "truefalse") {
-        activity = buildTrueFalseActivity(meta, meta.theme, usedSources);
+        activity = buildTrueFalseActivity(meta, meta.theme, difficulty, usedSources);
       } else if (kind === "matching") {
-        activity = buildMatchingActivity(meta, meta.theme, usedSources);
+        activity = buildMatchingActivity(meta, meta.theme, difficulty, usedSources);
       } else if (kind === "quiz") {
         activity = buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind)
           || buildFallbackQuizActivity(meta, meta.theme, difficulty, usedSources);
@@ -8141,7 +8288,7 @@ function themeLevelOrdinal(meta) {
   return ordinal;
 }
 
-const NON_DIRECTIONAL_STAGE_FIVE_ENGINES = new Set(["pattern", "discern", "timing", "slingshot"]);
+const NON_DIRECTIONAL_STAGE_FIVE_ENGINES = new Set(["pattern", "discern", "timing", "slingshot", "collect", "balance"]);
 const STAGE_FIVE_PATTERN_FALLBACK_PADS = [
   { icon: "📜", label: "Word" },
   { icon: "🕯️", label: "Light" },
@@ -8344,11 +8491,11 @@ function shouldUseStageFiveSlingshot(base, themeName = "") {
 
 function toNonDirectionalStageFiveMode(base, themeName = "") {
   if (!base || typeof base !== "object") return null;
-  if (base.engine === "pattern" || base.engine === "discern" || base.engine === "timing") return { ...base };
+  if (base.engine === "pattern" || base.engine === "discern" || base.engine === "timing" || base.engine === "collect" || base.engine === "balance") {
+    return { ...base };
+  }
   if (base.engine === "slingshot") return stageFiveSlingshotFromDirectional(base, themeName);
   if (base.engine === "route") return stageFivePatternFromRoute(base, themeName);
-  if (base.engine === "collect") return stageFiveDiscernFromDirectional(base, themeName);
-  if (base.engine === "balance") return stageFiveTimingFromDirectional(base, themeName);
   if (base.engine === "dodge") {
     return shouldUseStageFiveSlingshot(base, themeName)
       ? stageFiveSlingshotFromDirectional(base, themeName)
