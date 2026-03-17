@@ -6229,7 +6229,26 @@ function trackDailyAndWeeklyCompletion(meta, replay = false) {
   }
 }
 
+function ensureCorePracticePlacement() {
+  const memoryHeading = document.getElementById("memoryHeading");
+  const journalHeading = document.getElementById("journalHeading");
+  const dailyThoughtCard = document.querySelector(".daily-word-card");
+  if (!memoryHeading || !journalHeading || !dailyThoughtCard || !dailyThoughtCard.parentNode) return;
+
+  const practiceSection = memoryHeading.closest("section");
+  if (!practiceSection || practiceSection !== journalHeading.closest("section")) return;
+  if (practiceSection.previousElementSibling === dailyThoughtCard) return;
+
+  const parent = dailyThoughtCard.parentNode;
+  if (dailyThoughtCard.nextSibling) {
+    parent.insertBefore(practiceSection, dailyThoughtCard.nextSibling);
+  } else {
+    parent.appendChild(practiceSection);
+  }
+}
+
 function renderExperienceSections() {
+  ensureCorePracticePlacement();
   renderCampaignMap();
   renderMasteryPanel();
   renderDailyDevotionQuest();
