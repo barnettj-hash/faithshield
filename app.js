@@ -655,10 +655,7 @@ const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
     && value.some((entry) => entry && typeof entry === "object" && typeof entry.engine === "string")
   ))
 );
-const STAGE_FIVE_THEMED_POOLS = Object.freeze({
-  ...LEGACY_THEMED_INTERACTIVE_MODE_SETS,
-  ...THEMED_INTERACTIVE_MODE_SETS
-});
+let STAGE_FIVE_THEMED_POOLS = null;
 const HARDENED_THEME_NAMES = timelineThemes.map((theme) => theme.name);
 const STRICT_SECTION_NO_REPEAT_THEMES = new Set(HARDENED_THEME_NAMES);
 const STRICT_THEME_DIFFICULTY_ISOLATION = new Set(HARDENED_THEME_NAMES);
@@ -2169,6 +2166,11 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     }
   ]
 };
+
+STAGE_FIVE_THEMED_POOLS = Object.freeze({
+  ...LEGACY_THEMED_INTERACTIVE_MODE_SETS,
+  ...THEMED_INTERACTIVE_MODE_SETS
+});
 
 
 const badgeSymbolThemes = [
@@ -7107,7 +7109,10 @@ function nextFallbackReferenceSet(theme, bucket, usedSources, count) {
 function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "quiz");
-  const quizPool = ALL_QUIZ_BANKS;
+  const authoredQuizPool = shouldIsolateThemeByDifficulty(theme)
+    ? quizPoolForDifficulty(difficulty)
+    : ALL_QUIZ_BANKS;
+  const quizPool = dedupeActivityPool(authoredQuizPool.concat(derivedQuizPoolForTheme(theme, difficulty)), "quiz");
   const scopedQuizPool = quizPool.filter(themeFilter);
   const pick = pickWithoutRepeat(quizPool, theme.era, "quiz", {
     usedSources,
@@ -7132,9 +7137,11 @@ function buildFallbackQuizActivity(meta, theme, difficulty, usedSources) {
 function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "spelling");
-  const verseFillPool = derivedSpellingPoolForTheme(theme);
-  const authoredPool = ALL_SPELLING_BANKS.filter(themeFilter);
-  const pool = verseFillPool.length ? verseFillPool.concat(authoredPool) : authoredPool;
+  const verseFillPool = derivedSpellingPoolForTheme(theme, difficulty);
+  const authoredPool = shouldIsolateThemeByDifficulty(theme)
+    ? spellingBankForDifficulty(difficulty).filter(themeFilter)
+    : ALL_SPELLING_BANKS.filter(themeFilter);
+  const pool = dedupeActivityPool(verseFillPool.concat(authoredPool), "spelling");
   const pick = pickWithoutRepeat(pool, theme.era, "spelling", {
     usedSources,
     allowReuse: false,
@@ -7157,7 +7164,10 @@ function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources) {
 function buildFallbackOrderActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "order");
-  const orderPool = ALL_ORDER_BANKS;
+  const authoredOrderPool = shouldIsolateThemeByDifficulty(theme)
+    ? orderBankForDifficulty(difficulty)
+    : ALL_ORDER_BANKS;
+  const orderPool = dedupeActivityPool(authoredOrderPool.concat(derivedOrderSetsForTheme(theme, difficulty)), "order");
   const pick = pickWithoutRepeat(orderPool, theme.era, "order", {
     usedSources,
     allowReuse: false,
@@ -7181,7 +7191,10 @@ function buildFallbackOrderActivity(meta, theme, difficulty, usedSources) {
 function buildFallbackFactActivity(meta, theme, difficulty, usedSources) {
   const themeFilter = (item) => itemMatchesTheme(item, theme);
   const scopeKey = themeScopeKey(theme, "fact");
-  const factPool = ALL_FACT_BANKS;
+  const authoredFactPool = shouldIsolateThemeByDifficulty(theme)
+    ? factBankForDifficulty(difficulty)
+    : ALL_FACT_BANKS;
+  const factPool = dedupeActivityPool(authoredFactPool.concat(derivedFactPoolForTheme(theme, difficulty)), "fact");
   const pick = pickWithoutRepeat(factPool, theme.era, "fact", {
     usedSources,
     allowReuse: false,
@@ -7386,6 +7399,24 @@ function quizPoolForDifficulty(difficulty) {
   return quizBank;
 }
 
+function spellingBankForDifficulty(difficulty) {
+  if (difficulty.id === "advanced") return advancedSpellingBank;
+  if (difficulty.id === "medium") return mediumSpellingBank;
+  return spellingBank;
+}
+
+function orderBankForDifficulty(difficulty) {
+  if (difficulty.id === "advanced") return advancedOrderBank;
+  if (difficulty.id === "medium") return mediumOrderBank;
+  return orderBank;
+}
+
+function factBankForDifficulty(difficulty) {
+  if (difficulty.id === "advanced") return advancedFactBank;
+  if (difficulty.id === "medium") return mediumFactBank;
+  return factBank;
+}
+
 function buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind) {
   const kindFilter = kind === "speaker" ? isSpeakerQuestion : isHebrewNameQuestion;
   const themeFilter = (item) => itemMatchesTheme(item, theme) && kindFilter(item);
@@ -7439,7 +7470,10 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
   }
 
   if (kind === "quiz") {
-    const quizSource = difficulty.id === "advanced" ? advancedQuizBank : difficulty.id === "medium" ? mediumQuizBank : quizBank;
+    const quizSource = dedupeActivityPool(
+      quizPoolForDifficulty(difficulty).concat(derivedQuizPoolForTheme(theme, difficulty)),
+      "quiz"
+    );
     const scopedQuizSource = quizSource.filter(themeFilter);
     const pick = pickWithoutRepeat(quizSource, theme.era, "quiz", {
       usedSources,
@@ -7461,8 +7495,11 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
   }
 
   if (kind === "spelling") {
-    const authoredSpellingSource = difficulty.id === "advanced" ? advancedSpellingBank : difficulty.id === "medium" ? mediumSpellingBank : spellingBank;
-    const spellingSource = derivedSpellingPoolForTheme(theme).concat(authoredSpellingSource.filter(themeFilter));
+    const authoredSpellingSource = spellingBankForDifficulty(difficulty);
+    const spellingSource = dedupeActivityPool(
+      derivedSpellingPoolForTheme(theme, difficulty).concat(authoredSpellingSource.filter(themeFilter)),
+      "spelling"
+    );
     const pick = pickWithoutRepeat(spellingSource, theme.era, "spelling", {
       usedSources,
       allowReuse: false,
@@ -7484,7 +7521,10 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
   }
 
   if (kind === "order") {
-    const orderSource = difficulty.id === "advanced" ? advancedOrderBank : difficulty.id === "medium" ? mediumOrderBank : orderBank;
+    const orderSource = dedupeActivityPool(
+      orderBankForDifficulty(difficulty).filter(themeFilter).concat(derivedOrderSetsForTheme(theme, difficulty)),
+      "order"
+    );
     const pick = pickWithoutRepeat(orderSource, theme.era, "order", {
       usedSources,
       allowReuse: false,
@@ -7506,7 +7546,10 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind)
   }
 
   if (kind === "fact") {
-    const factSource = difficulty.id === "advanced" ? advancedFactBank : difficulty.id === "medium" ? mediumFactBank : factBank;
+    const factSource = dedupeActivityPool(
+      factBankForDifficulty(difficulty).filter(themeFilter).concat(derivedFactPoolForTheme(theme, difficulty)),
+      "fact"
+    );
     const pick = pickWithoutRepeat(factSource, theme.era, "fact", {
       usedSources,
       allowReuse: false,
@@ -7779,8 +7822,20 @@ function clueTextFromPrompt(prompt) {
     .trim();
 }
 
-function themeScopedQuizItems(theme) {
-  return ALL_QUIZ_BANKS
+function themeScopedQuizItems(theme, sourcePool = ALL_QUIZ_BANKS) {
+  return (Array.isArray(sourcePool) && sourcePool.length ? sourcePool : ALL_QUIZ_BANKS)
+    .filter((item) => itemMatchesTheme(item, theme))
+    .map((item) => {
+      const entry = referenceEntriesFromSourceRef(item.sourceRef || "")[0];
+      return entry ? { item, entry } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => compareReferenceEntries(a.entry, b.entry))
+    .map(({ item }) => item);
+}
+
+function themeScopedFactItems(theme, sourcePool = ALL_FACT_BANKS) {
+  return (Array.isArray(sourcePool) && sourcePool.length ? sourcePool : ALL_FACT_BANKS)
     .filter((item) => itemMatchesTheme(item, theme))
     .map((item) => {
       const entry = referenceEntriesFromSourceRef(item.sourceRef || "")[0];
@@ -7859,11 +7914,47 @@ function prioritizeVerseFillCandidates(candidates = []) {
   return ordered;
 }
 
+function dedupeActivityPool(items = [], bucket = "item") {
+  const seen = new Set();
+  return items.filter((item) => {
+    const usageKey = canonicalizeQuestionUsageRef(item && (item.historySourceRef || historyKeyForItem(item, bucket)));
+    const fallbackKey = usageKey || `${bucket}::${itemSignature(item)}`;
+    if (!fallbackKey || seen.has(fallbackKey)) return false;
+    seen.add(fallbackKey);
+    return true;
+  });
+}
+
+function displayWordMapFromFactItems(items = []) {
+  const map = new Map();
+  items.forEach((item) => {
+    const parts = Array.isArray(item && item.parts) ? item.parts : [];
+    parts.forEach((part) => {
+      const normalized = normalizeVerseFillWord(part);
+      const cleaned = String(part || "").replace(/[.,;:!?()\[\]"“”]/g, "").trim();
+      if (!normalized || !cleaned || map.has(normalized)) return;
+      map.set(normalized, cleaned);
+    });
+  });
+  return map;
+}
+
+function displayWordForNormalized(normalized, displayMap = new Map()) {
+  return displayMap.get(normalized) || normalized;
+}
+
+function phrasePartsFromLabel(label) {
+  return String(label || "")
+    .split(/\s+/)
+    .map((part) => String(part || "").replace(/^[^\wÀ-ÿ']+|[^\wÀ-ÿ']+$/g, "").trim())
+    .filter(Boolean);
+}
+
 function buildVerseFillPoolFromFactItem(item) {
   const parts = Array.isArray(item.parts) ? item.parts.map((part) => String(part || "").trim()) : [];
   if (parts.length < 3) return [];
 
-  const candidates = prioritizeVerseFillCandidates(verseFillWordCandidates(parts)).slice(0, 3);
+  const candidates = prioritizeVerseFillCandidates(verseFillWordCandidates(parts)).slice(0, 5);
   return candidates.map((answer, index) => {
     const blankIndex = parts.findIndex((part) => normalizeVerseFillWord(part) === answer);
     if (blankIndex === -1) return null;
@@ -7884,17 +7975,208 @@ function buildVerseFillPoolFromFactItem(item) {
   }).filter(Boolean);
 }
 
-function derivedQuizPoolForTheme(theme) {
-  return [];
+function buildVerseFillQuizPoolFromFactItems(items = []) {
+  if (!items.length) return [];
+
+  const displayMap = displayWordMapFromFactItems(items);
+  const themeWords = uniqueList(
+    items.flatMap((item) => prioritizeVerseFillCandidates(verseFillWordCandidates(item.parts || [])))
+  );
+
+  return items.flatMap((item, itemIndex) => {
+    const parts = Array.isArray(item.parts) ? item.parts.map((part) => String(part || "").trim()) : [];
+    if (parts.length < 3) return [];
+
+    const candidates = prioritizeVerseFillCandidates(verseFillWordCandidates(parts)).slice(0, 4);
+    return candidates.map((answerKey, answerIndex) => {
+      const blankIndex = parts.findIndex((part) => normalizeVerseFillWord(part) === answerKey);
+      if (blankIndex === -1) return null;
+
+      const answer = parts[blankIndex].replace(/[.,;:!?()\[\]"“”]/g, "").trim();
+      if (!answer) return null;
+
+      const clueParts = parts.slice();
+      clueParts[blankIndex] = "____";
+      const distractors = shuffled(themeWords.filter((word) => normalizeQuizAnswerKey(word) !== normalizeQuizAnswerKey(answer)))
+        .map((word) => displayWordForNormalized(word, displayMap));
+      const options = [];
+      const seen = new Set();
+      const addOption = (option) => {
+        const text = String(option || "").trim();
+        const key = normalizeQuizAnswerKey(text);
+        if (!text || !key || seen.has(key)) return;
+        seen.add(key);
+        options.push(text);
+      };
+
+      addOption(answer);
+      distractors.forEach(addOption);
+      FALLBACK_QUIZ_DISTRACTORS.forEach(addOption);
+
+      if (options.length < 4) return null;
+
+      return {
+        era: item.era,
+        prompt: challengeCopy(
+          `Which word completes this Bible line? ${clueParts.join(" ")}`,
+          `¿Qué palabra completa esta línea bíblica? ${clueParts.join(" ")}`
+        ),
+        options: shuffled(options.slice(0, 4)),
+        answer,
+        sourceRef: item.sourceRef,
+        historySourceRef: `${item.sourceRef}::quiz::verse-fill::${answerKey}::${itemIndex + 1}-${answerIndex + 1}`
+      };
+    }).filter(Boolean);
+  });
 }
 
-function derivedSpellingPoolForTheme(theme) {
-  const factVersePool = ALL_FACT_BANKS
-    .filter((item) => itemMatchesTheme(item, theme))
-    .flatMap((item) => buildVerseFillPoolFromFactItem(item));
-  if (factVersePool.length) return factVersePool;
+function partItemsFromOrderItems(items = []) {
+  return items.flatMap((item, itemIndex) => {
+    const labels = Array.isArray(item && item.items) ? item.items : [];
+    const refs = referenceEntriesFromSourceRef(item && item.sourceRef || "").map((entry) => entry.ref);
+    return labels.map((label, labelIndex) => {
+      const parts = phrasePartsFromLabel(label);
+      if (parts.length < 2) return null;
+      const sourceRef = refs[labelIndex] || item.sourceRef;
+      return {
+        era: item.era,
+        parts,
+        sourceRef,
+        historySourceRef: `${sourceRef}::label-parts::${normalizeQuizAnswerKey(label)}::${itemIndex + 1}-${labelIndex + 1}`
+      };
+    }).filter(Boolean);
+  });
+}
 
-  return themeScopedQuizItems(theme)
+function summaryFactItemsForTheme(theme) {
+  const parts = phrasePartsFromLabel(theme && theme.fact);
+  if (!theme || parts.length < 3 || !theme.sourceRef) return [];
+  return [{
+    era: theme.era,
+    parts,
+    sourceRef: theme.sourceRef,
+    historySourceRef: `${theme.sourceRef}::theme-summary::${normalizeQuizAnswerKey(theme.fact)}`
+  }];
+}
+
+function interactiveModeSetsForTheme(theme) {
+  if (!theme || !theme.name || !STAGE_FIVE_THEMED_POOLS) return [];
+  const sets = STAGE_FIVE_THEMED_POOLS[theme.name];
+  return Array.isArray(sets) ? sets : [];
+}
+
+function buildQuizItemsFromInteractiveSets(theme, sets = []) {
+  return sets.flatMap((set, setIndex) => {
+    if (!Array.isArray(set && set.targets) || !Array.isArray(set && set.cards) || set.cards.length < 2) return [];
+    const cardLabels = uniqueList(
+      set.cards
+        .map((card) => String(card && card.label || "").trim())
+        .filter(Boolean)
+    );
+    return set.targets.map((target, targetIndex) => {
+      const prompt = String(target && target.prompt || "").trim();
+      const correctCard = set.cards[target && Number.isInteger(target.correctIndex) ? target.correctIndex : -1];
+      const answer = String(correctCard && correctCard.label || "").trim();
+      if (!prompt || !answer) return null;
+
+      const options = [];
+      const seen = new Set();
+      const addOption = (option) => {
+        const text = String(option || "").trim();
+        const key = normalizeQuizAnswerKey(text);
+        if (!text || !key || seen.has(key)) return;
+        seen.add(key);
+        options.push(text);
+      };
+
+      addOption(answer);
+      cardLabels.forEach(addOption);
+      FALLBACK_QUIZ_DISTRACTORS.forEach(addOption);
+      if (options.length < 4) return null;
+
+      return {
+        era: theme.era,
+        prompt,
+        options: shuffled(options.slice(0, 4)),
+        answer,
+        sourceRef: set.sourceRef || theme.sourceRef,
+        historySourceRef: `${set.sourceRef || theme.sourceRef}::interactive-quiz::${normalizeQuizAnswerKey(prompt)}::${setIndex + 1}-${targetIndex + 1}`
+      };
+    }).filter(Boolean);
+  });
+}
+
+function buildOrderSetsFromInteractiveSets(theme, sets = []) {
+  const built = [];
+  sets.forEach((set, setIndex) => {
+    if (Array.isArray(set && set.routeSteps) && set.routeSteps.length >= 2) {
+      const labels = set.routeSteps
+        .map((step) => String(step && step.label || "").trim())
+        .filter(Boolean);
+      if (labels.length >= 2) {
+        built.push({
+          era: theme.era,
+          items: labels.slice(0, Math.min(3, labels.length)),
+          sourceRef: set.sourceRef || theme.sourceRef,
+          historySourceRef: `${set.sourceRef || theme.sourceRef}::interactive-order::route::${setIndex + 1}`
+        });
+      }
+    }
+
+    if (Array.isArray(set && set.sequences) && Array.isArray(set && set.pads) && set.sequences.length) {
+      const labels = set.sequences
+        .slice(0, 2)
+        .map((sequence, sequenceIndex) => {
+          const ordered = (Array.isArray(sequence) ? sequence : [])
+            .map((index) => set.pads[index])
+            .map((pad) => String(pad && pad.label || "").trim())
+            .filter(Boolean);
+          if (ordered.length < 2) return null;
+          return {
+            era: theme.era,
+            items: ordered.slice(0, Math.min(3, ordered.length)),
+            sourceRef: set.sourceRef || theme.sourceRef,
+            historySourceRef: `${set.sourceRef || theme.sourceRef}::interactive-order::pattern::${setIndex + 1}-${sequenceIndex + 1}`
+          };
+        })
+        .filter(Boolean);
+      built.push(...labels);
+    }
+  });
+  return built;
+}
+
+function derivedQuizPoolForTheme(theme, difficulty = currentDifficulty()) {
+  const quizSource = themeScopedQuizItems(theme, quizPoolForDifficulty(difficulty));
+  const factSource = factBankForDifficulty(difficulty).filter((item) => itemMatchesTheme(item, theme));
+  const orderSource = orderBankForDifficulty(difficulty).filter((item) => itemMatchesTheme(item, theme));
+  const labelPartSource = partItemsFromOrderItems(orderSource);
+  const quizDerivedFacts = buildDerivedFactPoolFromQuizItems(quizSource);
+  const summaryFacts = summaryFactItemsForTheme(theme);
+  const interactiveQuizItems = buildQuizItemsFromInteractiveSets(theme, interactiveModeSetsForTheme(theme));
+  return dedupeActivityPool(
+    interactiveQuizItems.concat(
+      buildVerseFillQuizPoolFromFactItems(factSource.concat(quizDerivedFacts, summaryFacts))
+        .concat(buildVerseFillQuizPoolFromFactItems(labelPartSource))
+    ),
+    "quiz"
+  );
+}
+
+function derivedSpellingPoolForTheme(theme, difficulty = currentDifficulty()) {
+  const factSource = factBankForDifficulty(difficulty);
+  const quizSource = themeScopedQuizItems(theme, quizPoolForDifficulty(difficulty));
+  const orderSource = orderBankForDifficulty(difficulty).filter((item) => itemMatchesTheme(item, theme));
+  const labelPartSource = partItemsFromOrderItems(orderSource);
+  const quizDerivedFacts = buildDerivedFactPoolFromQuizItems(quizSource);
+  const summaryFacts = summaryFactItemsForTheme(theme);
+  const factVersePool = factSource
+    .filter((item) => itemMatchesTheme(item, theme))
+    .flatMap((item) => buildVerseFillPoolFromFactItem(item))
+    .concat(quizDerivedFacts.flatMap((item) => buildVerseFillPoolFromFactItem(item)))
+    .concat(summaryFacts.flatMap((item) => buildVerseFillPoolFromFactItem(item)))
+    .concat(labelPartSource.flatMap((item) => buildVerseFillPoolFromFactItem(item)));
+  const quizFallbackPool = themeScopedQuizItems(theme, quizPoolForDifficulty(difficulty))
     .filter((item) => /^[A-Za-zÀ-ÿ'-]+$/.test(String(item.answer || "")))
     .map((item, index) => ({
       era: theme.era,
@@ -7907,26 +8189,184 @@ function derivedSpellingPoolForTheme(theme) {
       sourceRef: item.sourceRef,
       historySourceRef: `${item.historySourceRef || item.sourceRef}::versefill::fallback::${index + 1}`
     }));
+  return dedupeActivityPool(factVersePool.concat(quizFallbackPool), "spelling");
 }
 
-function derivedOrderSetsForTheme(theme) {
-  const themeItems = themeScopedQuizItems(theme);
-  const labels = themeItems.map((item) => clueTextFromPrompt(item.prompt));
+function derivedOrderSetsForTheme(theme, difficulty = currentDifficulty()) {
+  const quizSource = themeScopedQuizItems(theme, quizPoolForDifficulty(difficulty));
+  const quizItems = quizSource.map((item) => ({
+    label: clueTextFromPrompt(item.prompt),
+    sourceRef: item.sourceRef
+  }));
+  const factItems = themeScopedFactItems(theme, factBankForDifficulty(difficulty)).map((item) => ({
+    label: (item.parts || []).join(" "),
+    sourceRef: item.sourceRef
+  }));
+  const quizDerivedFacts = buildDerivedFactPoolFromQuizItems(quizSource).map((item) => ({
+    label: (item.parts || []).join(" "),
+    sourceRef: item.sourceRef
+  }));
+  const summaryItems = summaryFactItemsForTheme(theme).map((item) => ({
+    label: (item.parts || []).join(" "),
+    sourceRef: item.sourceRef
+  }));
+  const interactiveItems = buildOrderSetsFromInteractiveSets(theme, interactiveModeSetsForTheme(theme));
+  const combined = quizItems.concat(factItems, quizDerivedFacts, summaryItems);
   const sets = [];
-  for (let index = 0; index <= labels.length - 3; index += 1) {
+
+  if (combined.length >= 3) {
+    for (let first = 0; first < combined.length - 2; first += 1) {
+      for (let second = first + 1; second < combined.length - 1; second += 1) {
+        for (let third = second + 1; third < combined.length; third += 1) {
+          const trio = [combined[first], combined[second], combined[third]];
+          sets.push({
+            era: theme.era,
+            items: trio.map((item) => item.label),
+            sourceRef: trio.map((item) => item.sourceRef).join("; "),
+            historySourceRef: trio.map((item) => `${item.sourceRef}::derived-order::${normalizeQuizAnswerKey(item.label)}`).join(" || ")
+          });
+        }
+      }
+    }
+  } else if (combined.length === 2) {
     sets.push({
       era: theme.era,
-      items: labels.slice(index, index + 3),
-      sourceRef: themeItems.slice(index, index + 3).map((item) => item.sourceRef).join("; "),
-      historySourceRef: themeItems.slice(index, index + 3).map((item) => `${item.sourceRef}::derived-order`).join(" || ")
+      items: combined.map((item) => item.label),
+      sourceRef: combined.map((item) => item.sourceRef).join("; "),
+      historySourceRef: combined.map((item) => `${item.sourceRef}::derived-order::${normalizeQuizAnswerKey(item.label)}`).join(" || ")
     });
   }
 
-  return sets;
+  return dedupeActivityPool(sets.concat(interactiveItems), "order").slice(0, Math.max(18, themeLevelCount(theme) * 6));
 }
 
-function derivedFactPoolForTheme(theme) {
-  return [];
+function buildDerivedFactPoolFromOrderItems(items = []) {
+  return items.flatMap((item, itemIndex) => {
+    const refs = referenceEntriesFromSourceRef(item.sourceRef || "").map((entry) => entry.ref);
+    const labels = Array.isArray(item && item.items) ? item.items : [];
+    return labels.map((label, labelIndex) => {
+      const parts = phrasePartsFromLabel(label);
+      if (parts.length < 2) return null;
+
+      const sourceRef = refs[labelIndex] || item.sourceRef;
+      return {
+        era: item.era,
+        parts,
+        sourceRef,
+        historySourceRef: `${sourceRef}::fact::order-line::${normalizeQuizAnswerKey(label)}::${itemIndex + 1}-${labelIndex + 1}`
+      };
+    }).filter(Boolean);
+  });
+}
+
+const QUIZ_VERB_PAST_TENSE = {
+  be: "was",
+  become: "became",
+  begin: "began",
+  build: "built",
+  call: "called",
+  come: "came",
+  compare: "compared",
+  confront: "confronted",
+  create: "created",
+  cross: "crossed",
+  do: "did",
+  father: "fathered",
+  find: "found",
+  give: "gave",
+  hear: "heard",
+  lead: "led",
+  leave: "left",
+  make: "made",
+  place: "placed",
+  say: "said",
+  see: "saw",
+  send: "sent",
+  settle: "settled",
+  set: "set",
+  shut: "shut",
+  speak: "spoke",
+  store: "stored",
+  use: "used"
+};
+
+function pastTenseVerb(verb) {
+  const normalized = String(verb || "").trim().toLowerCase();
+  if (!normalized) return "";
+  if (QUIZ_VERB_PAST_TENSE[normalized]) return QUIZ_VERB_PAST_TENSE[normalized];
+  if (normalized.endsWith("e")) return `${normalized}d`;
+  return `${normalized}ed`;
+}
+
+function statementPartsFromQuizItem(item) {
+  const prompt = clueTextFromPrompt(item && item.prompt);
+  const answer = String(item && item.answer || "").trim();
+  if (!prompt || !answer) return null;
+
+  const patterns = [
+    {
+      regex: /^Who said, ["“]?(.+?)["”]?$/i,
+      build: (match) => `${answer} said ${match[1]}`
+    },
+    {
+      regex: /^Who was (.+)$/i,
+      build: (match) => `${answer} was ${match[1]}`
+    },
+    {
+      regex: /^Who (.+)$/i,
+      build: (match) => `${answer} ${match[1]}`
+    },
+    {
+      regex: /^What does (.+) mean$/i,
+      build: (match) => `${match[1]} means ${answer}`
+    },
+    {
+      regex: /^What did ([A-Za-zÀ-ÿ'’\\s-]+?) ([a-z]+)(.*)$/i,
+      build: (match) => `${match[1].trim()} ${pastTenseVerb(match[2])} ${answer}${match[3] || ""}`
+    },
+    {
+      regex: /^Where did ([A-Za-zÀ-ÿ'’\\s-]+?) ([a-z]+)(.*)$/i,
+      build: (match) => `${match[1].trim()} ${pastTenseVerb(match[2])}${match[3] || ""} ${answer}`
+    },
+    {
+      regex: /^Why did ([A-Za-zÀ-ÿ'’\\s-]+?) say,? (.+)$/i,
+      build: (match) => `${match[1].trim()} said ${match[2]} ${answer}`
+    }
+  ];
+
+  const statement = patterns.reduce((found, rule) => {
+    if (found) return found;
+    const match = prompt.match(rule.regex);
+    return match ? rule.build(match).replace(/\s+/g, " ").trim() : null;
+  }, null);
+
+  if (!statement) return null;
+  const parts = phrasePartsFromLabel(statement);
+  return parts.length >= 2 ? parts : null;
+}
+
+function buildDerivedFactPoolFromQuizItems(items = []) {
+  return items.map((item, index) => {
+    const parts = statementPartsFromQuizItem(item);
+    if (!parts) return null;
+    return {
+      era: item.era,
+      parts,
+      sourceRef: item.sourceRef,
+      historySourceRef: `${item.sourceRef}::fact::quiz-line::${normalizeQuizAnswerKey(item.prompt)}::${index + 1}`
+    };
+  }).filter(Boolean);
+}
+
+function derivedFactPoolForTheme(theme, difficulty = currentDifficulty()) {
+  const authoredOrderSource = orderBankForDifficulty(difficulty).filter((item) => itemMatchesTheme(item, theme));
+  const derivedOrderSource = derivedOrderSetsForTheme(theme, difficulty);
+  const quizDerivedSource = buildDerivedFactPoolFromQuizItems(themeScopedQuizItems(theme, quizPoolForDifficulty(difficulty)));
+  const summaryFacts = summaryFactItemsForTheme(theme);
+  return dedupeActivityPool(
+    buildDerivedFactPoolFromOrderItems(authoredOrderSource.concat(derivedOrderSource)).concat(quizDerivedSource, summaryFacts),
+    "fact"
+  ).slice(0, Math.max(24, themeLevelCount(theme) * 8));
 }
 
 function buildFalseAnswer(question) {
