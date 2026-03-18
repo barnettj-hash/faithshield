@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-17-global-no-repeat-hardening-v1";
+const CONTENT_VERSION = "2026-03-17-boss-audio-prayer-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -648,7 +648,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 29;
+const ACTIVITY_SCHEMA_VERSION = 30;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -3285,7 +3285,8 @@ const state = {
   dailyDevotion: JSON.parse(localStorage.getItem("faithDailyDevotion") || '{"day":"","challenge":false,"action":false,"reflection":false,"reward":false,"note":""}'),
   weeklyChallenge: JSON.parse(localStorage.getItem("faithWeeklyChallenge") || '{"weekKey":"","era":"genesis","target":7,"progress":0,"shared":false}'),
   controls: JSON.parse(localStorage.getItem("faithControls") || '{"hotkeys":true,"controller":false,"badgeCeremonyAutoOpen":true}'),
-  reviewFocus: JSON.parse(localStorage.getItem("faithReviewFocus") || "null")
+  reviewFocus: JSON.parse(localStorage.getItem("faithReviewFocus") || "null"),
+  prayerResponses: JSON.parse(localStorage.getItem("faithPrayerResponses") || "{}")
 };
 
 if (launchQueryName) {
@@ -3346,6 +3347,9 @@ state.controls.controller = Boolean(state.controls.controller);
 state.controls.badgeCeremonyAutoOpen = state.controls.badgeCeremonyAutoOpen !== false;
 if (!state.reviewFocus || typeof state.reviewFocus !== "object" || Array.isArray(state.reviewFocus)) {
   state.reviewFocus = null;
+}
+if (!state.prayerResponses || typeof state.prayerResponses !== "object" || Array.isArray(state.prayerResponses)) {
+  state.prayerResponses = {};
 }
 
 if ((localStorage.getItem("faithContentVersion") || "") !== CONTENT_VERSION) {
@@ -3556,12 +3560,18 @@ let badgeCeremonyCloseTimer = 0;
 let badgeCeremonyBadgeId = null;
 let badgeCeremonyActive = false;
 let pendingEraFinaleEra = null;
+let verseAudioUtterance = null;
+let activeVerseAudioButton = null;
 let eraFinaleOverlay = null;
 let eraFinaleTitle = null;
 let eraFinaleMessage = null;
 let eraFinaleReflection = null;
 let eraFinaleProgress = null;
 let eraFinaleVerse = null;
+let eraFinalePrayerPrompt = null;
+let eraFinalePrayerInput = null;
+let eraFinalePrayerSaveBtn = null;
+let eraFinalePrayerStatus = null;
 let eraFinaleContinueBtn = null;
 let eraFinaleReviewBtn = null;
 let eraFinaleBadgeBtn = null;
@@ -4752,6 +4762,7 @@ function persist() {
     weeklyChallenge: state.weeklyChallenge,
     controls: state.controls,
     reviewFocus: state.reviewFocus,
+    prayerResponses: state.prayerResponses,
     activeStage: state.activeStage || "",
     lastStage: state.lastStage || "",
     contentVersion: CONTENT_VERSION
@@ -4780,6 +4791,7 @@ function persist() {
   localStorage.setItem("faithDailyDevotion", JSON.stringify(state.dailyDevotion));
   localStorage.setItem("faithWeeklyChallenge", JSON.stringify(state.weeklyChallenge));
   localStorage.setItem("faithControls", JSON.stringify(state.controls));
+  localStorage.setItem("faithPrayerResponses", JSON.stringify(state.prayerResponses));
   if (state.reviewFocus) localStorage.setItem("faithReviewFocus", JSON.stringify(state.reviewFocus));
   else localStorage.removeItem("faithReviewFocus");
   localStorage.setItem("faithContentVersion", CONTENT_VERSION);
@@ -4905,6 +4917,93 @@ function eraFinaleCopy(era) {
     body: "You completed this chapter of the Bible journey.",
     reflection: "Keep going. God's Word is building the whole shield one section at a time."
   };
+}
+
+function eraPrayerPrompt(era) {
+  const prompts = {
+    genesis: challengeCopy(
+      "Write one short prayer asking God to help you trust His word over every lie.",
+      "Escribe una breve oracion pidiendo a Dios que te ayude a confiar en Su palabra por encima de toda mentira."
+    ),
+    patriarchs: challengeCopy(
+      "Write one short prayer thanking God for keeping His promises across generations.",
+      "Escribe una breve oracion dando gracias a Dios por cumplir Sus promesas a traves de generaciones."
+    ),
+    exodus: challengeCopy(
+      "Write one short prayer thanking God for rescue and asking for courage to obey.",
+      "Escribe una breve oracion dando gracias a Dios por Su rescate y pidiendo valor para obedecer."
+    ),
+    sinai: challengeCopy(
+      "Write one short prayer asking God to shape your heart to love holiness and obedience.",
+      "Escribe una breve oracion pidiendo a Dios que forme tu corazon para amar la santidad y la obediencia."
+    ),
+    wilderness: challengeCopy(
+      "Write one short prayer asking God for daily trust in seasons of waiting and testing.",
+      "Escribe una breve oracion pidiendo a Dios confianza diaria en tiempos de espera y prueba."
+    ),
+    conquest: challengeCopy(
+      "Write one short prayer asking God for courage to follow Him step by step.",
+      "Escribe una breve oracion pidiendo a Dios valor para seguirle paso a paso."
+    ),
+    judges: challengeCopy(
+      "Write one short prayer asking God to keep you faithful when the world around you drifts.",
+      "Escribe una breve oracion pidiendo a Dios que te mantenga fiel cuando el mundo a tu alrededor se aparta."
+    ),
+    samuel: challengeCopy(
+      "Write one short prayer asking God to help you hear and obey His voice.",
+      "Escribe una breve oracion pidiendo a Dios que te ayude a oir y obedecer Su voz."
+    ),
+    saul: challengeCopy(
+      "Write one short prayer asking for a humble heart that obeys God fully.",
+      "Escribe una breve oracion pidiendo un corazon humilde que obedezca completamente a Dios."
+    ),
+    david: challengeCopy(
+      "Write one short prayer asking God for courage to trust Him in your hardest battle.",
+      "Escribe una breve oracion pidiendo a Dios valor para confiar en El en tu batalla mas dificil."
+    )
+  };
+  return prompts[era] || challengeCopy(
+    "Write one short prayer from what God taught you in this chapter.",
+    "Escribe una breve oracion sobre lo que Dios te enseno en este capitulo."
+  );
+}
+
+function prayerResponseForEra(era) {
+  if (!era) return null;
+  const entry = state.prayerResponses && state.prayerResponses[era];
+  if (!entry || typeof entry !== "object") return null;
+  return {
+    text: String(entry.text || "").slice(0, 280),
+    updatedAt: String(entry.updatedAt || ""),
+    day: String(entry.day || "")
+  };
+}
+
+function savePrayerResponseForEra(era, text) {
+  const cleanEra = String(era || "").trim();
+  const cleanText = String(text || "").replace(/\s+/g, " ").trim().slice(0, 280);
+  if (!cleanEra || !cleanText) return null;
+  const payload = {
+    text: cleanText,
+    updatedAt: new Date().toISOString(),
+    day: localDayKey()
+  };
+  state.prayerResponses[cleanEra] = payload;
+  persist();
+  return payload;
+}
+
+function refreshEraFinalePrayerState(era) {
+  if (!eraFinalePrayerPrompt || !eraFinalePrayerInput || !eraFinalePrayerSaveBtn || !eraFinalePrayerStatus) return;
+  const saved = prayerResponseForEra(era);
+  eraFinalePrayerPrompt.textContent = eraPrayerPrompt(era);
+  if (document.activeElement !== eraFinalePrayerInput) {
+    eraFinalePrayerInput.value = saved ? saved.text : "";
+  }
+  eraFinalePrayerSaveBtn.disabled = !String(eraFinalePrayerInput.value || "").trim();
+  eraFinalePrayerStatus.textContent = saved
+    ? challengeCopy(`Saved ${saved.day}.`, `Guardado ${saved.day}.`)
+    : challengeCopy("Write a short prayer response for this chapter.", "Escribe una breve respuesta de oracion para este capitulo.");
 }
 
 function compareDayKeys(a, b) {
@@ -6933,6 +7032,14 @@ function ensureEraFinaleOverlay() {
     '<p class="era-finale-reflection meta"></p>',
     '<p class="era-finale-progress meta"></p>',
     '<p class="era-finale-verse meta"></p>',
+    '<div class="era-finale-prayer-wrap" style="margin-top:1rem;text-align:left;">',
+    '  <p class="era-finale-prayer-prompt meta"></p>',
+    `  <textarea class="journal-input era-finale-prayer-input" rows="3" maxlength="280" placeholder="${challengeCopy("Write one short prayer response", "Escribe una breve oracion")}"></textarea>`,
+    '  <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-top:0.75rem;">',
+    `    <button class="ghost-btn era-finale-prayer-save-btn" type="button">${challengeCopy("Save Prayer Response", "Guardar respuesta de oracion")}</button>`,
+    '    <p class="era-finale-prayer-status meta" style="margin:0;"></p>',
+    "  </div>",
+    "</div>",
     '<div class="final-actions">',
     `<button class="cta-btn era-finale-continue-btn" type="button">${challengeCopy("Continue Journey", "Continuar")}</button>`,
     `<button class="ghost-btn era-finale-review-btn" type="button">${challengeCopy("Review This Era", "Repasar esta era")}</button>`,
@@ -6948,6 +7055,10 @@ function ensureEraFinaleOverlay() {
   eraFinaleReflection = overlay.querySelector(".era-finale-reflection");
   eraFinaleProgress = overlay.querySelector(".era-finale-progress");
   eraFinaleVerse = overlay.querySelector(".era-finale-verse");
+  eraFinalePrayerPrompt = overlay.querySelector(".era-finale-prayer-prompt");
+  eraFinalePrayerInput = overlay.querySelector(".era-finale-prayer-input");
+  eraFinalePrayerSaveBtn = overlay.querySelector(".era-finale-prayer-save-btn");
+  eraFinalePrayerStatus = overlay.querySelector(".era-finale-prayer-status");
   eraFinaleContinueBtn = overlay.querySelector(".era-finale-continue-btn");
   eraFinaleReviewBtn = overlay.querySelector(".era-finale-review-btn");
   eraFinaleBadgeBtn = overlay.querySelector(".era-finale-badge-btn");
@@ -6978,6 +7089,27 @@ function ensureEraFinaleOverlay() {
       openBadgeShield();
     });
   }
+  if (eraFinalePrayerInput) {
+    eraFinalePrayerInput.addEventListener("input", () => {
+      const era = eraFinaleOverlay && eraFinaleOverlay.dataset ? eraFinaleOverlay.dataset.era : "";
+      if (!eraFinalePrayerSaveBtn) return;
+      eraFinalePrayerSaveBtn.disabled = !String(eraFinalePrayerInput.value || "").trim();
+      if (eraFinalePrayerStatus && era && !prayerResponseForEra(era)) {
+        eraFinalePrayerStatus.textContent = challengeCopy("Save your prayer response for this chapter.", "Guarda tu respuesta de oracion para este capitulo.");
+      }
+    });
+  }
+  if (eraFinalePrayerSaveBtn) {
+    eraFinalePrayerSaveBtn.addEventListener("click", () => {
+      const era = eraFinaleOverlay && eraFinaleOverlay.dataset ? eraFinaleOverlay.dataset.era : "";
+      if (!era || !eraFinalePrayerInput) return;
+      const saved = savePrayerResponseForEra(era, eraFinalePrayerInput.value);
+      if (!saved || !eraFinalePrayerStatus) return;
+      eraFinalePrayerStatus.textContent = challengeCopy(`Saved ${saved.day}.`, `Guardado ${saved.day}.`);
+      eraFinalePrayerSaveBtn.disabled = true;
+      playSfx("success");
+    });
+  }
   overlay.addEventListener("click", (event) => {
     if (event.target === overlay) hideEraFinale();
   });
@@ -7005,6 +7137,7 @@ function showEraFinale(era) {
   if (eraFinaleVerse) {
     eraFinaleVerse.textContent = `${challengeCopy("Key range", "Rango clave")}: ${(firstStage && firstStage.theme && firstStage.theme.sourceRef) || formatEraLabel(era)}`;
   }
+  refreshEraFinalePrayerState(era);
   if (eraFinaleReviewBtn) {
     eraFinaleReviewBtn.disabled = !reviewEntry && !firstUnlockedStageForEra(era);
   }
@@ -7242,6 +7375,8 @@ function clearActiveChallenge() {
     activeCleanup();
     activeCleanup = null;
   }
+
+  stopVerseAudio();
 
   if (typeof activeCutsceneCleanup === "function") {
     activeCutsceneCleanup();
@@ -7583,6 +7718,7 @@ function resetProgress() {
   state.stageActivities = {};
   state.mastery = {};
   state.reviewFocus = null;
+  state.prayerResponses = {};
   state.dailyDevotion = {
     day: localDayKey(),
     challenge: false,
@@ -9436,7 +9572,7 @@ function nivPassageUrl(reference) {
   return `https://www.biblegateway.com/passage/?search=${encodeURIComponent(reference)}&version=WEB`;
 }
 
-function renderSourceVerse(reference) {
+function renderSourceVerse(reference, options = {}) {
   const row = document.createElement("div");
   row.className = "source-row";
 
@@ -9451,7 +9587,17 @@ function renderSourceVerse(reference) {
   link.rel = "noopener noreferrer";
   link.textContent = t("sourceVerseWeb");
 
-  row.append(text, link);
+  const audioBtn = document.createElement("button");
+  audioBtn.type = "button";
+  audioBtn.className = "ghost-btn";
+  audioBtn.textContent = verseAudioLabel(false);
+  const speechReady = "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
+  audioBtn.disabled = !speechReady;
+  audioBtn.addEventListener("click", () => {
+    speakVerseAudio(reference, audioBtn, options.fallbackText || "");
+  });
+
+  row.append(text, link, audioBtn);
   return row;
 }
 
@@ -9723,6 +9869,661 @@ function stageFiveHashSeed(base, themeName = "") {
 function stageFiveThemeCue(themeName = "") {
   if (!themeName) return "Bible";
   return String(themeName).replace(/[^A-Za-z0-9' ]+/g, " ").trim() || "Bible";
+}
+
+const BOSS_BATTLE_DIFFICULTY = {
+  easy: { bossHealth: 3, playerHealth: 5 },
+  medium: { bossHealth: 4, playerHealth: 4 },
+  advanced: { bossHealth: 5, playerHealth: 3 }
+};
+
+const BOSS_BATTLE_PROFILES = {
+  genesis: {
+    enemyName: "Serpent of Eden",
+    enemyIcon: "🐍",
+    label: "Serpent Showdown",
+    sourceRef: "Genesis 2:16-17; 3:1-15,21",
+    storyPrompt: "Strike the serpent with truth, obedience, and God's promised hope.",
+    rounds: [
+      {
+        prompt: "What command had God already given before the serpent spoke?",
+        answer: "Do not eat from that tree",
+        options: [
+          { icon: "📜", label: "Do not eat from that tree" },
+          { icon: "🧱", label: "Build a city and tower" },
+          { icon: "⭐", label: "Count the stars" },
+          { icon: "🛶", label: "Take animals into the ark" }
+        ]
+      },
+      {
+        prompt: "Whose offspring was promised to bruise the serpent?",
+        answer: "The woman's offspring",
+        options: [
+          { icon: "👶", label: "The woman's offspring" },
+          { icon: "🌿", label: "Cain's offering" },
+          { icon: "🌊", label: "The floodwaters" },
+          { icon: "🕊️", label: "The dove" }
+        ]
+      },
+      {
+        prompt: "What faithful response should Adam and Eve have chosen?",
+        answer: "Obey God's word",
+        options: [
+          { icon: "🛡️", label: "Obey God's word" },
+          { icon: "🍃", label: "Hide among the trees" },
+          { icon: "👈", label: "Blame someone else" },
+          { icon: "🪡", label: "Sew fig leaves" }
+        ]
+      },
+      {
+        prompt: "What entered the world through sin and curse?",
+        answer: "Death and sorrow",
+        options: [
+          { icon: "⚰️", label: "Death and sorrow" },
+          { icon: "🌈", label: "Rainbow peace" },
+          { icon: "📯", label: "Trumpet victory" },
+          { icon: "👑", label: "A new king" }
+        ]
+      },
+      {
+        prompt: "What mercy did God provide before sending them out of Eden?",
+        answer: "Garments of skin",
+        options: [
+          { icon: "🧥", label: "Garments of skin" },
+          { icon: "🪵", label: "Wood for an ark" },
+          { icon: "🔥", label: "A pillar of fire" },
+          { icon: "📖", label: "Stone tablets" }
+        ]
+      }
+    ]
+  },
+  patriarchs: {
+    enemyName: "Jealous Brothers",
+    enemyIcon: "🗡️",
+    label: "Betrayal Breaker",
+    sourceRef: "Genesis 37:4,28,31; 41:48-49; 50:20",
+    storyPrompt: "Answer with truth from Joseph's story and break the power of betrayal.",
+    rounds: [
+      {
+        prompt: "Which son was sold into Egypt by his brothers?",
+        answer: "Joseph",
+        options: [
+          { icon: "🌾", label: "Joseph" },
+          { icon: "🐏", label: "Isaac" },
+          { icon: "🥣", label: "Esau" },
+          { icon: "⛺", label: "Lot" }
+        ]
+      },
+      {
+        prompt: "Who was Joseph's father?",
+        answer: "Jacob",
+        options: [
+          { icon: "👴", label: "Jacob" },
+          { icon: "⭐", label: "Abraham" },
+          { icon: "🧭", label: "Laban" },
+          { icon: "👑", label: "Pharaoh" }
+        ]
+      },
+      {
+        prompt: "What was dipped in goat's blood to deceive Jacob?",
+        answer: "Joseph's coat",
+        options: [
+          { icon: "🧥", label: "Joseph's coat" },
+          { icon: "🥖", label: "Joseph's bread" },
+          { icon: "🪨", label: "Joseph's stone" },
+          { icon: "🪵", label: "Joseph's staff" }
+        ]
+      },
+      {
+        prompt: "What did Joseph say God meant for good?",
+        answer: "What his brothers meant for evil",
+        options: [
+          { icon: "✨", label: "What his brothers meant for evil" },
+          { icon: "🧱", label: "What Babel built for pride" },
+          { icon: "🌧️", label: "What the flood did in judgment" },
+          { icon: "⚔️", label: "What Esau planned in anger" }
+        ]
+      },
+      {
+        prompt: "What had Joseph gathered and stored during the famine years?",
+        answer: "Grain",
+        options: [
+          { icon: "🌾", label: "Grain" },
+          { icon: "🕊️", label: "Doves" },
+          { icon: "💧", label: "Water skins" },
+          { icon: "🛡️", label: "Bronze shields" }
+        ]
+      }
+    ]
+  },
+  exodus: {
+    enemyName: "Pharaoh",
+    enemyIcon: "👑",
+    label: "Pharaoh's Last Stand",
+    sourceRef: "Exodus 12:7,13; 13:21; 14:16,21; 14:23-28",
+    storyPrompt: "Choose the right act of obedience and deliverance to break Pharaoh's resistance.",
+    rounds: [
+      {
+        prompt: "What sign on the doorposts spared Israel's firstborn?",
+        answer: "Passover blood",
+        options: [
+          { icon: "🩸", label: "Passover blood" },
+          { icon: "🌈", label: "Rainbow sign" },
+          { icon: "🕊️", label: "Olive leaf" },
+          { icon: "📯", label: "Ram's horn" }
+        ]
+      },
+      {
+        prompt: "What did Moses stretch out over the sea?",
+        answer: "His hand with the staff",
+        options: [
+          { icon: "🪄", label: "His hand with the staff" },
+          { icon: "🐍", label: "A bronze serpent" },
+          { icon: "🎵", label: "A harp" },
+          { icon: "🪨", label: "A smooth stone" }
+        ]
+      },
+      {
+        prompt: "What led Israel by night after leaving Egypt?",
+        answer: "A pillar of fire",
+        options: [
+          { icon: "🔥", label: "A pillar of fire" },
+          { icon: "🌿", label: "A flowering rod" },
+          { icon: "⚓", label: "An ark anchor" },
+          { icon: "⛺", label: "A desert tent" }
+        ]
+      },
+      {
+        prompt: "Who kept refusing to let Israel go?",
+        answer: "Pharaoh",
+        options: [
+          { icon: "👑", label: "Pharaoh" },
+          { icon: "🗡️", label: "Joshua" },
+          { icon: "🪙", label: "Boaz" },
+          { icon: "🎯", label: "David" }
+        ]
+      },
+      {
+        prompt: "Which meal remembers God's rescue from Egypt?",
+        answer: "Passover",
+        options: [
+          { icon: "🍞", label: "Passover" },
+          { icon: "🌾", label: "Barley harvest" },
+          { icon: "💧", label: "Water from the rock" },
+          { icon: "🥣", label: "Lentil stew" }
+        ]
+      }
+    ]
+  },
+  sinai: {
+    enemyName: "Golden Calf",
+    enemyIcon: "🐂",
+    label: "Idol Breaker",
+    sourceRef: "Exodus 20:3-4; 24:12; 32:4,19,26",
+    storyPrompt: "Stand against false worship with the covenant words God really gave.",
+    rounds: [
+      {
+        prompt: "Which command forbade making carved images?",
+        answer: "Do not make idols",
+        options: [
+          { icon: "📜", label: "Do not make idols" },
+          { icon: "🛶", label: "Build the ark" },
+          { icon: "📯", label: "March around the city" },
+          { icon: "🪨", label: "Take five stones" }
+        ]
+      },
+      {
+        prompt: "What did Moses break when he came down from the mountain?",
+        answer: "Stone tablets",
+        options: [
+          { icon: "🪨", label: "Stone tablets" },
+          { icon: "🌈", label: "Rainbow bows" },
+          { icon: "🥖", label: "Bread loaves" },
+          { icon: "🧱", label: "Bricks" }
+        ]
+      },
+      {
+        prompt: "Who gathered to Moses and stood on Yahweh's side?",
+        answer: "The sons of Levi",
+        options: [
+          { icon: "🗡️", label: "The sons of Levi" },
+          { icon: "⚔️", label: "Philistine lords" },
+          { icon: "🏹", label: "Amalekite scouts" },
+          { icon: "🧱", label: "Babel builders" }
+        ]
+      },
+      {
+        prompt: "What did the people say about the golden calf?",
+        answer: "These are your gods",
+        options: [
+          { icon: "🐂", label: "These are your gods" },
+          { icon: "🎵", label: "The Lord is my shepherd" },
+          { icon: "🔥", label: "Let my people go" },
+          { icon: "👂", label: "Speak, for your servant hears" }
+        ]
+      },
+      {
+        prompt: "On what did God write the covenant words?",
+        answer: "Stone tablets",
+        options: [
+          { icon: "🪨", label: "Stone tablets" },
+          { icon: "📘", label: "A papyrus scroll" },
+          { icon: "🛡️", label: "A bronze shield" },
+          { icon: "🏔️", label: "A mountain banner" }
+        ]
+      }
+    ]
+  },
+  wilderness: {
+    enemyName: "Amalek",
+    enemyIcon: "⚔️",
+    label: "Amalek Ambush",
+    sourceRef: "Exodus 17:9-15; Exodus 16:15; Numbers 14:33-34; Numbers 21:9",
+    storyPrompt: "Answer with wilderness truth and faithful dependence as Amalek presses the camp.",
+    rounds: [
+      {
+        prompt: "Who fought below while Moses held up his hands?",
+        answer: "Joshua",
+        options: [
+          { icon: "🗡️", label: "Joshua" },
+          { icon: "📯", label: "Samuel" },
+          { icon: "👑", label: "Saul" },
+          { icon: "🎵", label: "David" }
+        ]
+      },
+      {
+        prompt: "What name did Moses give the altar after the victory?",
+        answer: "Yahweh Nissi",
+        options: [
+          { icon: "🏳️", label: "Yahweh Nissi" },
+          { icon: "🌄", label: "Bethel" },
+          { icon: "🪨", label: "Ebenezer" },
+          { icon: "⭐", label: "El Shaddai" }
+        ]
+      },
+      {
+        prompt: "What fell each morning for Israel to gather?",
+        answer: "Manna",
+        options: [
+          { icon: "🍞", label: "Manna" },
+          { icon: "🍇", label: "Grapes" },
+          { icon: "🌾", label: "Barley" },
+          { icon: "🥩", label: "Venison" }
+        ]
+      },
+      {
+        prompt: "How many years did unbelief bring upon that generation?",
+        answer: "Forty",
+        options: [
+          { icon: "4️⃣0️⃣", label: "Forty" },
+          { icon: "7️⃣", label: "Seven" },
+          { icon: "1️⃣2️⃣", label: "Twelve" },
+          { icon: "3️⃣", label: "Three" }
+        ]
+      },
+      {
+        prompt: "What stood uplifted for healing in the camp?",
+        answer: "A bronze serpent",
+        options: [
+          { icon: "🐍", label: "A bronze serpent" },
+          { icon: "🌈", label: "A rainbow sign" },
+          { icon: "🪨", label: "A sling stone" },
+          { icon: "📯", label: "A silver trumpet" }
+        ]
+      }
+    ]
+  },
+  conquest: {
+    enemyName: "Jericho Stronghold",
+    enemyIcon: "🏰",
+    label: "Jericho Boss Siege",
+    sourceRef: "Joshua 3:14-17; 6:4-5,16,20,25",
+    storyPrompt: "Bring down the stronghold with the exact obedience God commanded.",
+    rounds: [
+      {
+        prompt: "How many days did Israel march before the final shout?",
+        answer: "Seven days",
+        options: [
+          { icon: "7️⃣", label: "Seven days" },
+          { icon: "3️⃣", label: "Three days" },
+          { icon: "4️⃣0️⃣", label: "Forty days" },
+          { icon: "1️⃣2️⃣", label: "Twelve days" }
+        ]
+      },
+      {
+        prompt: "What did the priests carry and blow at Jericho?",
+        answer: "Ram's horn trumpets",
+        options: [
+          { icon: "📯", label: "Ram's horn trumpets" },
+          { icon: "🎵", label: "Silver harps" },
+          { icon: "🪨", label: "Smooth stones" },
+          { icon: "⚓", label: "Bronze hooks" }
+        ]
+      },
+      {
+        prompt: "What happened after the people shouted?",
+        answer: "The wall fell flat",
+        options: [
+          { icon: "🧱", label: "The wall fell flat" },
+          { icon: "🌊", label: "The river turned to blood" },
+          { icon: "🔥", label: "Fire consumed the city" },
+          { icon: "☁️", label: "A cloud covered the camp" }
+        ]
+      },
+      {
+        prompt: "Who was spared when Jericho fell?",
+        answer: "Rahab and her household",
+        options: [
+          { icon: "🧣", label: "Rahab and her household" },
+          { icon: "🪙", label: "Achan and his sons" },
+          { icon: "👑", label: "The king of Jericho" },
+          { icon: "🏹", label: "Only the spies" }
+        ]
+      },
+      {
+        prompt: "What entered the Jordan before the people crossed?",
+        answer: "The ark of the covenant",
+        options: [
+          { icon: "🛡️", label: "The ark of the covenant" },
+          { icon: "🐍", label: "The bronze serpent" },
+          { icon: "🐂", label: "The golden calf" },
+          { icon: "🎵", label: "The king's harp" }
+        ]
+      }
+    ]
+  },
+  judges: {
+    enemyName: "Philistine Lords",
+    enemyIcon: "⚔️",
+    label: "Judges Warfront",
+    sourceRef: "Judges 4:21; 6:36-40; 7:7; 16:30; Ruth 1:16",
+    storyPrompt: "Break the oppression by remembering the judges, deliverers, and faithful people God raised up.",
+    rounds: [
+      {
+        prompt: "How many men remained with Gideon for the battle?",
+        answer: "Three hundred",
+        options: [
+          { icon: "3️⃣0️⃣0️⃣", label: "Three hundred" },
+          { icon: "7️⃣0️⃣", label: "Seventy" },
+          { icon: "1️⃣2️⃣", label: "Twelve" },
+          { icon: "1️⃣0️⃣0️⃣0️⃣", label: "One thousand" }
+        ]
+      },
+      {
+        prompt: "Who struck Sisera with the tent peg?",
+        answer: "Jael",
+        options: [
+          { icon: "🪓", label: "Jael" },
+          { icon: "👩‍⚖️", label: "Deborah" },
+          { icon: "🌾", label: "Ruth" },
+          { icon: "👑", label: "Naomi" }
+        ]
+      },
+      {
+        prompt: "What sign did Gideon ask God to give with the fleece?",
+        answer: "Dew on the fleece",
+        options: [
+          { icon: "💧", label: "Dew on the fleece" },
+          { icon: "⭐", label: "Stars in the sky" },
+          { icon: "🔥", label: "Fire on the altar" },
+          { icon: "🌊", label: "Water in the sea" }
+        ]
+      },
+      {
+        prompt: "What weapon did Samson use against a thousand Philistines?",
+        answer: "A donkey's jawbone",
+        options: [
+          { icon: "🦴", label: "A donkey's jawbone" },
+          { icon: "🪨", label: "A sling stone" },
+          { icon: "📯", label: "A trumpet" },
+          { icon: "⚔️", label: "A bronze sword" }
+        ]
+      },
+      {
+        prompt: "Who said, 'Your people shall be my people'?",
+        answer: "Ruth",
+        options: [
+          { icon: "🌾", label: "Ruth" },
+          { icon: "👵", label: "Naomi" },
+          { icon: "👩‍⚖️", label: "Deborah" },
+          { icon: "💇", label: "Delilah" }
+        ]
+      }
+    ]
+  },
+  samuel: {
+    enemyName: "Philistine Threat",
+    enemyIcon: "🛡️",
+    label: "Ebenezer Stand",
+    sourceRef: "1 Samuel 3:10; 7:9-13",
+    storyPrompt: "Stand firm with Samuel's call and the Lord's help against the Philistine threat.",
+    rounds: [
+      {
+        prompt: "Who heard God's call in the night?",
+        answer: "Samuel",
+        options: [
+          { icon: "👂", label: "Samuel" },
+          { icon: "👑", label: "Saul" },
+          { icon: "🪨", label: "David" },
+          { icon: "🛏️", label: "Eliab" }
+        ]
+      },
+      {
+        prompt: "What did Samuel answer the Lord?",
+        answer: "Speak, for your servant hears",
+        options: [
+          { icon: "🗣️", label: "Speak, for your servant hears" },
+          { icon: "🛶", label: "Let my people go" },
+          { icon: "⚔️", label: "The battle is mine" },
+          { icon: "👑", label: "Make us a king" }
+        ]
+      },
+      {
+        prompt: "What memorial stone did Samuel raise after victory?",
+        answer: "Ebenezer",
+        options: [
+          { icon: "🪨", label: "Ebenezer" },
+          { icon: "🌄", label: "Bethel" },
+          { icon: "🏕️", label: "Gilgal" },
+          { icon: "⛰️", label: "Ararat" }
+        ]
+      },
+      {
+        prompt: "What offering did Samuel present as Israel cried to Yahweh?",
+        answer: "A suckling lamb",
+        options: [
+          { icon: "🐑", label: "A suckling lamb" },
+          { icon: "🕊️", label: "A dove" },
+          { icon: "🐂", label: "A golden calf" },
+          { icon: "🌾", label: "Barley loaves" }
+        ]
+      },
+      {
+        prompt: "Who thundered with a great sound against the Philistines?",
+        answer: "Yahweh",
+        options: [
+          { icon: "⛈️", label: "Yahweh" },
+          { icon: "👑", label: "Saul" },
+          { icon: "👂", label: "Samuel alone" },
+          { icon: "⚔️", label: "Jonathan" }
+        ]
+      }
+    ]
+  },
+  saul: {
+    enemyName: "Agag of Amalek",
+    enemyIcon: "⚔️",
+    label: "Agag Reckoning",
+    sourceRef: "1 Samuel 10:1; 15:8-9,22-28",
+    storyPrompt: "Answer with obedience and truth as Saul's compromise is brought into the light.",
+    rounds: [
+      {
+        prompt: "Whom did Saul spare when he should have devoted him to destruction?",
+        answer: "Agag",
+        options: [
+          { icon: "👑", label: "Agag" },
+          { icon: "🛡️", label: "Goliath" },
+          { icon: "🐍", label: "Pharaoh" },
+          { icon: "⚔️", label: "Sisera" }
+        ]
+      },
+      {
+        prompt: "What did Samuel say is better than sacrifice?",
+        answer: "Obedience",
+        options: [
+          { icon: "📜", label: "Obedience" },
+          { icon: "🎵", label: "Singing" },
+          { icon: "🍞", label: "Fasting" },
+          { icon: "🏃", label: "Hiding" }
+        ]
+      },
+      {
+        prompt: "From whom did Samuel say the kingdom would be torn?",
+        answer: "Saul",
+        options: [
+          { icon: "👑", label: "Saul" },
+          { icon: "🪨", label: "David" },
+          { icon: "🗡️", label: "Jonathan" },
+          { icon: "👴", label: "Jesse" }
+        ]
+      },
+      {
+        prompt: "Who anointed Saul king?",
+        answer: "Samuel",
+        options: [
+          { icon: "🫗", label: "Samuel" },
+          { icon: "📜", label: "Nathan" },
+          { icon: "⛰️", label: "Moses" },
+          { icon: "🛏️", label: "Eli" }
+        ]
+      },
+      {
+        prompt: "What nation was Saul commanded to strike?",
+        answer: "Amalek",
+        options: [
+          { icon: "⚔️", label: "Amalek" },
+          { icon: "🌊", label: "Egypt" },
+          { icon: "🏹", label: "Moab" },
+          { icon: "🧱", label: "Babylon" }
+        ]
+      }
+    ]
+  },
+  david: {
+    enemyName: "Goliath",
+    enemyIcon: "🗿",
+    label: "Goliath Boss Battle",
+    sourceRef: "1 Samuel 17:40,45-50",
+    storyPrompt: "Use David's faith, words, and weapons to bring down the giant.",
+    rounds: [
+      {
+        prompt: "What did David take from the brook?",
+        answer: "Five smooth stones",
+        options: [
+          { icon: "🪨", label: "Five smooth stones" },
+          { icon: "📜", label: "Two stone tablets" },
+          { icon: "🍞", label: "Manna" },
+          { icon: "🌿", label: "Olive leaves" }
+        ]
+      },
+      {
+        prompt: "In whose name did David come against Goliath?",
+        answer: "Yahweh of Armies",
+        options: [
+          { icon: "🛡️", label: "Yahweh of Armies" },
+          { icon: "👑", label: "Saul" },
+          { icon: "🐟", label: "Dagon" },
+          { icon: "⚔️", label: "Pharaoh" }
+        ]
+      },
+      {
+        prompt: "What did David refuse before the battle?",
+        answer: "Saul's armor",
+        options: [
+          { icon: "🦺", label: "Saul's armor" },
+          { icon: "🪨", label: "His sling" },
+          { icon: "🪵", label: "His staff" },
+          { icon: "❤️", label: "His courage" }
+        ]
+      },
+      {
+        prompt: "Where did the stone strike Goliath?",
+        answer: "His forehead",
+        options: [
+          { icon: "🎯", label: "His forehead" },
+          { icon: "🛡️", label: "His shield" },
+          { icon: "👣", label: "His foot" },
+          { icon: "✋", label: "His hand" }
+        ]
+      },
+      {
+        prompt: "What weapon did David use to bring the giant down?",
+        answer: "A sling",
+        options: [
+          { icon: "🎯", label: "A sling" },
+          { icon: "📯", label: "A trumpet" },
+          { icon: "🦴", label: "A jawbone" },
+          { icon: "⚔️", label: "A spear" }
+        ]
+      }
+    ]
+  }
+};
+
+function bossOptionKey(option) {
+  return normalizeQuizAnswerKey(option && typeof option === "object" ? option.label : option);
+}
+
+function materializeBossRound(round, steps = 0) {
+  const normalizedOptions = (Array.isArray(round && round.options) ? round.options : [])
+    .map((option) => (option && typeof option === "object"
+      ? { icon: String(option.icon || "✨"), label: String(option.label || "").trim() }
+      : { icon: "✨", label: String(option || "").trim() }))
+    .filter((option) => option.label);
+  const options = rotateKinds(normalizedOptions, steps);
+  const answerKey = bossOptionKey(round && round.answer);
+  const correctIndex = Math.max(0, options.findIndex((option) => bossOptionKey(option) === answerKey));
+  return {
+    prompt: String((round && round.prompt) || "").trim(),
+    successText: String((round && round.successText) || "").trim(),
+    failText: String((round && round.failText) || "").trim(),
+    options,
+    correctIndex
+  };
+}
+
+function isEraBossStage(meta) {
+  if (!meta || meta.stage !== 5) return false;
+  const nextMeta = nextStageMeta(meta);
+  return !nextMeta || !nextMeta.theme || nextMeta.theme.era !== meta.theme.era;
+}
+
+function bossModeForStage(meta, difficulty = currentDifficulty()) {
+  if (!meta || !meta.theme) return null;
+  const profile = BOSS_BATTLE_PROFILES[meta.theme.era];
+  if (!profile) return null;
+  const difficultyId = difficulty && difficulty.id ? difficulty.id : String(difficulty || "medium");
+  const tuning = BOSS_BATTLE_DIFFICULTY[difficultyId] || BOSS_BATTLE_DIFFICULTY.medium;
+  const seedBase = stageFiveHashSeed({
+    id: `boss-${meta.theme.era}`,
+    label: profile.label,
+    sourceRef: profile.sourceRef || meta.theme.sourceRef
+  }, meta.theme.name) + meta.level + meta.stage;
+  const rounds = (Array.isArray(profile.rounds) ? profile.rounds : []).map((round, index) => materializeBossRound(round, (seedBase + index) % 4));
+
+  return {
+    id: `boss-${meta.theme.era}-${difficultyId}-l${meta.level}`,
+    engine: "boss",
+    label: profile.label,
+    enemyName: profile.enemyName,
+    enemyIcon: profile.enemyIcon || "⚔️",
+    sourceRef: profile.sourceRef || meta.theme.sourceRef,
+    storyPrompt: profile.storyPrompt || challengeCopy("Choose the right item or response to defeat the enemy.", "Elige el objeto o respuesta correctos para derrotar al enemigo."),
+    keyboardHint: challengeCopy("Keyboard: press 1-4 to choose the right item or response.", "Teclado: presiona 1-4 para elegir el objeto o respuesta correctos."),
+    rounds,
+    bossHealth: tuning.bossHealth,
+    playerHealth: tuning.playerHealth
+  };
 }
 
 function stageFivePatternPadsFromRoute(base) {
@@ -10058,6 +10859,10 @@ function stageFiveBaseSelection(level) {
 }
 
 function modeForStage(meta, difficulty = currentDifficulty()) {
+  if (isEraBossStage(meta)) {
+    const bossMode = bossModeForStage(meta, difficulty);
+    if (bossMode) return bossMode;
+  }
   const selection = stageFiveBaseSelection(meta.level);
   return materializeInteractiveMode(selection.base, difficulty, `${meta.theme.era}-l${meta.level}-s${meta.stage}`, selection.cycle);
 }
@@ -10950,6 +11755,109 @@ function stopStoryNarration() {
   }
 }
 
+function verseAudioLabel(active = false) {
+  return active
+    ? challengeCopy("Stop Audio", "Detener audio")
+    : challengeCopy("Listen to Verse", "Escuchar versiculo");
+}
+
+function resetVerseAudioButton() {
+  if (!activeVerseAudioButton) return;
+  activeVerseAudioButton.textContent = verseAudioLabel(false);
+  activeVerseAudioButton.dataset.playing = "false";
+  activeVerseAudioButton = null;
+}
+
+function stopVerseAudio() {
+  verseAudioUtterance = null;
+  resetVerseAudioButton();
+  if (!("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+  } catch (_) {
+    // Ignore speech engine teardown errors.
+  }
+}
+
+function factSnippetFromParts(parts) {
+  return (Array.isArray(parts) ? parts : [])
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .trim();
+}
+
+function verseAudioTextForReference(reference, fallbackText = "") {
+  const normalizedReference = normalizeSourceRef(reference);
+  const firstRef = firstSourceEntry(normalizedReference) || normalizedReference;
+  const matchingFacts = ALL_FACT_BANKS.filter((entry) => {
+    const entryRef = normalizeSourceRef(entry && entry.sourceRef);
+    if (!entryRef) return false;
+    return entryRef === normalizedReference
+      || sourceRefIncludesReference(normalizedReference, entryRef)
+      || sourceRefIncludesReference(entryRef, normalizedReference);
+  });
+
+  const snippets = [];
+  const seenRefs = new Set();
+  matchingFacts.forEach((entry) => {
+    if (snippets.length >= 2) return;
+    const entryRef = normalizeSourceRef(entry && entry.sourceRef);
+    if (!entryRef || seenRefs.has(entryRef)) return;
+    const snippet = factSnippetFromParts(entry.parts);
+    if (!snippet) return;
+    seenRefs.add(entryRef);
+    snippets.push(`${firstSourceEntry(entryRef) || entryRef}. ${snippet}`);
+  });
+
+  if (snippets.length) return snippets.join(" ");
+
+  const cleanFallback = String(fallbackText || "").replace(/\s+/g, " ").trim();
+  if (cleanFallback) return `${firstRef}. ${cleanFallback}`;
+  return `${firstRef}.`;
+}
+
+function speakVerseAudio(reference, button = null, fallbackText = "") {
+  if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return;
+  if (button && activeVerseAudioButton === button && verseAudioUtterance) {
+    stopVerseAudio();
+    return;
+  }
+
+  stopVerseAudio();
+  const utterance = new SpeechSynthesisUtterance(verseAudioTextForReference(reference, fallbackText));
+  const voice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang || "en-US";
+  } else {
+    utterance.lang = state.language === "es" ? "es-ES" : "en-US";
+  }
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  utterance.rate = state.language === "es" ? 0.9 : 0.88;
+  verseAudioUtterance = utterance;
+  if (button) {
+    activeVerseAudioButton = button;
+    activeVerseAudioButton.textContent = verseAudioLabel(true);
+    activeVerseAudioButton.dataset.playing = "true";
+  }
+  const complete = () => {
+    if (verseAudioUtterance === utterance) verseAudioUtterance = null;
+    resetVerseAudioButton();
+  };
+  utterance.onend = complete;
+  utterance.onerror = complete;
+
+  try {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  } catch (_) {
+    complete();
+  }
+}
+
 function playRecordedNarration(era) {
   if (PREFER_SYSTEM_NARRATION_VOICE) return Promise.resolve(false);
   const sources = narrationAudioSources(era);
@@ -11596,7 +12504,7 @@ function renderQuiz(meta, activity) {
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
   const hint = createChallengeHint("Keyboard: press 1-4 to choose an answer, then Enter to submit.");
-  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef, { fallbackText: activity.prompt }) : null;
   const optionsWrap = document.createElement("div");
   optionsWrap.className = "quiz-options";
   const feedback = document.createElement("p");
@@ -11721,7 +12629,9 @@ function renderTrueFalse(meta, activity) {
     "Keyboard: press T or F, then Enter to submit.",
     "Teclado: presiona V o F, luego Enter para enviar."
   ));
-  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef, {
+    fallbackText: `${activity.prompt} ${activity.statement} ${activity.claim}`
+  }) : null;
   const optionsWrap = document.createElement("div");
   optionsWrap.className = "quiz-options";
   const feedback = document.createElement("p");
@@ -11832,7 +12742,7 @@ function renderMatching(meta, activity) {
     "Keyboard: use Tab to move between clues, arrow keys to choose, then Enter to submit.",
     "Teclado: usa Tab para moverte entre pistas, flechas para elegir y Enter para enviar."
   ));
-  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef, { fallbackText: activity.prompt }) : null;
   const feedback = document.createElement("p");
   feedback.className = "feedback";
   const wrap = document.createElement("div");
@@ -11940,7 +12850,9 @@ function renderSpelling(meta, activity) {
   const clue = activity.clue ? createSkillStatus(activity.clue) : null;
   if (clue) clue.className = "fact-build";
   const hint = createChallengeHint(activity.clue ? "Keyboard: type the missing Bible word and press Enter." : "Keyboard: type your answer and press Enter.");
-  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef, {
+    fallbackText: `${activity.prompt} ${activity.clue || ""}`
+  }) : null;
 
   const input = document.createElement("input");
   input.className = "answer-input";
@@ -12026,7 +12938,7 @@ function renderOrder(meta, activity) {
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
   const hint = createChallengeHint("Keyboard: Up/Down selects a line, Shift+Up/Down moves it, Enter checks, U undoes, and R resets.");
-  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef, { fallbackText: activity.prompt }) : null;
   const listWrap = document.createElement("div");
   listWrap.className = "order-list";
   const status = document.createElement("p");
@@ -12206,7 +13118,7 @@ function renderFact(meta, activity) {
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt;
   const hint = createChallengeHint("Keyboard: Enter checks, U undoes, and R resets the phrase builder.");
-  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef) : null;
+  const source = activity.sourceRef ? renderSourceVerse(activity.sourceRef, { fallbackText: activity.prompt }) : null;
 
   let pool = activity.parts.slice();
   const chosen = activity.prefilled ? activity.prefilled.slice() : [];
@@ -12333,7 +13245,9 @@ function renderPoolExhausted(meta, activity) {
   const prompt = document.createElement("p");
   prompt.textContent = activity.prompt || "This question pool is exhausted for now.";
 
-  const source = renderSourceVerse(activity.sourceRef || meta.theme.sourceRef);
+  const source = renderSourceVerse(activity.sourceRef || meta.theme.sourceRef, {
+    fallbackText: activity.prompt || activity.message || ""
+  });
 
   const feedback = document.createElement("p");
   feedback.className = "feedback warn";
@@ -12368,7 +13282,7 @@ function renderInteractive(meta, mode, sourceRef) {
   const prompt = document.createElement("p");
   const promptText = mode.storyPrompt || t("challengePrompt");
   prompt.textContent = `${mode.label} (${currentDifficulty().label}): ${promptText}`;
-  const source = shouldShowQuestionSource() && sourceRef ? renderSourceVerse(sourceRef) : null;
+  const source = shouldShowQuestionSource() && sourceRef ? renderSourceVerse(sourceRef, { fallbackText: promptText }) : null;
   const feedback = document.createElement("p");
   feedback.className = "feedback";
 
@@ -12378,7 +13292,9 @@ function renderInteractive(meta, mode, sourceRef) {
     activityPanel.append(header, prompt);
   }
 
-  if (mode.engine === "pattern") {
+  if (mode.engine === "boss") {
+    activeCleanup = renderBoss(meta, mode, feedback);
+  } else if (mode.engine === "pattern") {
     activeCleanup = renderPattern(meta, mode, feedback);
   } else if (mode.engine === "balance") {
     activeCleanup = renderBalance(meta, mode, feedback);
@@ -12408,6 +13324,342 @@ function canvasPointerPosition(canvas, event) {
   return {
     x: ((event.clientX - rect.left) * canvas.width) / rect.width,
     y: ((event.clientY - rect.top) * canvas.height) / rect.height
+  };
+}
+
+function renderBoss(meta, mode, feedback) {
+  const hint = createChallengeHint(mode.keyboardHint || challengeCopy(
+    "Keyboard: press 1-4 to choose the right item or response.",
+    "Teclado: presiona 1-4 para elegir el objeto o la respuesta correctos."
+  ));
+  const status = createSkillStatus("");
+  activityPanel.append(hint, status);
+
+  const arena = document.createElement("div");
+  arena.className = "activity-panel";
+  arena.style.marginTop = "0.85rem";
+  arena.style.display = "grid";
+  arena.style.gap = "0.9rem";
+
+  const bossHead = document.createElement("div");
+  bossHead.style.display = "flex";
+  bossHead.style.alignItems = "center";
+  bossHead.style.justifyContent = "space-between";
+  bossHead.style.gap = "0.9rem";
+  bossHead.style.flexWrap = "wrap";
+
+  const bossIdentity = document.createElement("div");
+  bossIdentity.style.display = "flex";
+  bossIdentity.style.alignItems = "center";
+  bossIdentity.style.gap = "0.8rem";
+
+  const bossIcon = document.createElement("div");
+  bossIcon.textContent = mode.enemyIcon || "⚔️";
+  bossIcon.style.fontSize = "2rem";
+  bossIcon.style.width = "3.2rem";
+  bossIcon.style.height = "3.2rem";
+  bossIcon.style.borderRadius = "999px";
+  bossIcon.style.display = "grid";
+  bossIcon.style.placeItems = "center";
+  bossIcon.style.background = "linear-gradient(180deg, rgba(118,29,29,0.55), rgba(21,10,10,0.92))";
+  bossIcon.style.boxShadow = "0 14px 30px rgba(120,34,34,0.22)";
+  bossIcon.style.border = "1px solid rgba(240, 207, 147, 0.22)";
+
+  const bossTextWrap = document.createElement("div");
+  const bossTitle = document.createElement("h3");
+  bossTitle.textContent = mode.enemyName || challengeCopy("Boss Battle", "Batalla final");
+  bossTitle.style.margin = "0";
+  bossTitle.style.fontSize = "1.35rem";
+
+  const bossStory = document.createElement("p");
+  bossStory.className = "meta";
+  bossStory.textContent = mode.storyPrompt || challengeCopy(
+    "Choose the faithful response to defeat the enemy.",
+    "Elige la respuesta fiel para derrotar al enemigo."
+  );
+  bossStory.style.margin = "0.2rem 0 0";
+
+  bossTextWrap.append(bossTitle, bossStory);
+  bossIdentity.append(bossIcon, bossTextWrap);
+
+  const difficultyChip = document.createElement("div");
+  difficultyChip.className = "tag open";
+  difficultyChip.textContent = `${challengeCopy("Boss", "Jefe")} • ${currentDifficulty().label}`;
+
+  bossHead.append(bossIdentity, difficultyChip);
+
+  const barWrap = document.createElement("div");
+  barWrap.style.display = "grid";
+  barWrap.style.gap = "0.8rem";
+
+  const makeHealthRow = (labelText, accent) => {
+    const row = document.createElement("div");
+    row.style.display = "grid";
+    row.style.gap = "0.28rem";
+
+    const top = document.createElement("div");
+    top.style.display = "flex";
+    top.style.justifyContent = "space-between";
+    top.style.alignItems = "center";
+    top.style.gap = "0.6rem";
+
+    const label = document.createElement("strong");
+    label.textContent = labelText;
+    label.style.fontSize = "0.92rem";
+
+    const value = document.createElement("span");
+    value.className = "meta";
+
+    top.append(label, value);
+
+    const shell = document.createElement("div");
+    shell.style.position = "relative";
+    shell.style.height = "16px";
+    shell.style.borderRadius = "999px";
+    shell.style.overflow = "hidden";
+    shell.style.border = "1px solid rgba(240, 207, 147, 0.18)";
+    shell.style.background = "linear-gradient(180deg, rgba(18,24,36,0.96), rgba(9,13,20,0.98))";
+
+    const fill = document.createElement("div");
+    fill.style.height = "100%";
+    fill.style.width = "100%";
+    fill.style.borderRadius = "999px";
+    fill.style.background = accent;
+    fill.style.transition = "width 180ms ease";
+
+    shell.append(fill);
+    row.append(top, shell);
+    return { row, value, fill };
+  };
+
+  const bossHealth = makeHealthRow(
+    challengeCopy("Enemy Health", "Salud del enemigo"),
+    "linear-gradient(90deg, rgba(195,76,76,0.95), rgba(132,28,28,0.98))"
+  );
+  const playerHealth = makeHealthRow(
+    challengeCopy("Faith Strength", "Fuerza de fe"),
+    "linear-gradient(90deg, rgba(213,169,72,0.96), rgba(184,131,34,0.98))"
+  );
+  barWrap.append(bossHealth.row, playerHealth.row);
+
+  const roundCard = document.createElement("div");
+  roundCard.style.border = "1px solid rgba(240, 207, 147, 0.18)";
+  roundCard.style.borderRadius = "20px";
+  roundCard.style.background = "linear-gradient(180deg, rgba(15,22,33,0.98), rgba(10,15,23,0.96))";
+  roundCard.style.padding = "1rem";
+  roundCard.style.display = "grid";
+  roundCard.style.gap = "0.75rem";
+
+  const roundLabel = document.createElement("p");
+  roundLabel.className = "meta";
+  roundLabel.style.margin = "0";
+
+  const roundPrompt = document.createElement("p");
+  roundPrompt.style.margin = "0";
+  roundPrompt.style.fontSize = "1.1rem";
+  roundPrompt.style.fontWeight = "700";
+  roundPrompt.style.lineHeight = "1.45";
+
+  const optionsWrap = document.createElement("div");
+  optionsWrap.style.display = "grid";
+  optionsWrap.style.gridTemplateColumns = "repeat(auto-fit, minmax(180px, 1fr))";
+  optionsWrap.style.gap = "0.8rem";
+
+  roundCard.append(roundLabel, roundPrompt, optionsWrap);
+  arena.append(bossHead, barWrap, roundCard);
+  activityPanel.append(arena);
+
+  const rounds = Array.isArray(mode.rounds) && mode.rounds.length ? mode.rounds : [];
+  let bossHp = Math.max(1, Number(mode.bossHealth) || 4);
+  let playerHp = Math.max(1, Number(mode.playerHealth) || 4);
+  let roundIndex = 0;
+  let running = rounds.length > 0;
+  let locked = false;
+  const buttons = [];
+  const timers = new Set();
+
+  const schedule = (callback, delay) => {
+    const timer = setTimeout(() => {
+      timers.delete(timer);
+      callback();
+    }, delay);
+    timers.add(timer);
+  };
+
+  const clearTimers = () => {
+    timers.forEach((timer) => clearTimeout(timer));
+    timers.clear();
+  };
+
+  const setLocked = (value) => {
+    locked = value;
+    buttons.forEach((button) => {
+      button.disabled = value || !running;
+    });
+  };
+
+  const clearButtonState = () => {
+    buttons.forEach((button) => {
+      button.classList.remove("selected", "correct", "wrong");
+      button.style.transform = "";
+      button.style.boxShadow = "";
+    });
+  };
+
+  const markButtonState = (index, kind) => {
+    const button = buttons[index];
+    if (!button) return;
+    button.classList.add(kind);
+    if (kind === "correct") {
+      button.style.transform = "translateY(-2px)";
+      button.style.boxShadow = "0 0 0 2px rgba(130,211,146,0.42), 0 16px 30px rgba(70,170,88,0.18)";
+    } else if (kind === "wrong") {
+      button.style.transform = "translateY(-2px)";
+      button.style.boxShadow = "0 0 0 2px rgba(226,122,122,0.42), 0 16px 30px rgba(160,60,60,0.18)";
+    }
+  };
+
+  const updateBars = () => {
+    const maxBoss = Math.max(1, Number(mode.bossHealth) || 1);
+    const maxPlayer = Math.max(1, Number(mode.playerHealth) || 1);
+    bossHealth.value.textContent = `${bossHp}/${maxBoss}`;
+    playerHealth.value.textContent = `${playerHp}/${maxPlayer}`;
+    bossHealth.fill.style.width = `${Math.max(0, Math.min(100, (bossHp / maxBoss) * 100))}%`;
+    playerHealth.fill.style.width = `${Math.max(0, Math.min(100, (playerHp / maxPlayer) * 100))}%`;
+    status.textContent = `${challengeCopy("Boss", "Jefe")}: ${bossHp}/${maxBoss} | ${challengeCopy("Faith", "Fe")}: ${playerHp}/${maxPlayer} | ${challengeCopy("Round", "Ronda")} ${Math.min(roundIndex + 1, rounds.length)}/${rounds.length}`;
+  };
+
+  const renderRound = () => {
+    const round = rounds[roundIndex % rounds.length];
+    if (!round) return;
+    clearButtonState();
+    roundLabel.textContent = `${mode.label} • ${challengeCopy("Round", "Ronda")} ${Math.min(roundIndex + 1, rounds.length)}/${rounds.length}`;
+    roundPrompt.textContent = round.prompt || challengeCopy("Choose the faithful response.", "Elige la respuesta fiel.");
+    optionsWrap.innerHTML = "";
+    buttons.length = 0;
+
+    round.options.forEach((option, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "ghost-btn";
+      button.style.minHeight = "92px";
+      button.style.display = "flex";
+      button.style.flexDirection = "column";
+      button.style.alignItems = "center";
+      button.style.justifyContent = "center";
+      button.style.gap = "0.4rem";
+      button.style.textAlign = "center";
+      button.style.fontWeight = "700";
+      button.style.lineHeight = "1.3";
+      button.innerHTML = `<span style="font-size:1.4rem">${option.icon || "✨"}</span><span>${index + 1}. ${option.label}</span>`;
+      button.addEventListener("click", () => resolveRound(index));
+      buttons.push(button);
+      optionsWrap.appendChild(button);
+    });
+
+    updateBars();
+    setLocked(false);
+  };
+
+  const finishBossVictory = () => {
+    running = false;
+    setLocked(true);
+    feedback.className = "feedback ok";
+    feedback.textContent = challengeCopy(
+      `Victory. ${mode.enemyName} has been defeated.`,
+      `Victoria. ${mode.enemyName} ha sido derrotado.`
+    );
+    playSfx("stage-clear");
+    completeStage(meta, mode, { delayMs: 2300 });
+  };
+
+  const finishBossFailure = () => {
+    running = false;
+    setLocked(true);
+    const hasLives = loseLife();
+    feedback.className = "feedback warn";
+    feedback.textContent = hasLives ? t("challengeFailedReplay") : t("outOfLivesContinue");
+    playSfx("fail");
+    queueStageAutoClose(meta.id, 1700);
+  };
+
+  function resolveRound(index) {
+    if (!running || locked || !canPlayStage()) return;
+    const round = rounds[roundIndex % rounds.length];
+    if (!round) return;
+    setLocked(true);
+    clearButtonState();
+    const isCorrect = index === round.correctIndex;
+    markButtonState(round.correctIndex, "correct");
+    if (!isCorrect) markButtonState(index, "wrong");
+
+    if (isCorrect) {
+      bossHp = Math.max(0, bossHp - 1);
+      feedback.className = "feedback ok";
+      feedback.textContent = round.successText || challengeCopy(
+        "Direct hit. The enemy loses strength.",
+        "Golpe directo. El enemigo pierde fuerza."
+      );
+      playSfx(bossHp <= 0 ? "stage-clear" : "hit");
+    } else {
+      playerHp = Math.max(0, playerHp - 1);
+      feedback.className = "feedback warn";
+      feedback.textContent = round.failText || challengeCopy(
+        "Wrong response. The enemy strikes back.",
+        "Respuesta incorrecta. El enemigo contraataca."
+      );
+      playSfx("fail");
+    }
+
+    updateBars();
+
+    if (bossHp <= 0) {
+      schedule(finishBossVictory, 780);
+      return;
+    }
+
+    if (playerHp <= 0) {
+      schedule(finishBossFailure, 780);
+      return;
+    }
+
+    roundIndex += 1;
+    schedule(() => {
+      if (!running) return;
+      renderRound();
+      if (feedback.className !== "feedback warn") {
+        feedback.className = "feedback";
+        feedback.textContent = "";
+      }
+    }, 820);
+  }
+
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id || !running || locked) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (/^[1-4]$/.test(event.key)) {
+      const index = Number(event.key) - 1;
+      if (index < buttons.length) {
+        event.preventDefault();
+        resolveRound(index);
+      }
+    }
+  };
+
+  if (!rounds.length) {
+    status.textContent = challengeCopy("Boss data is not ready for this stage yet.", "Los datos del jefe no estan listos para esta etapa.");
+    feedback.className = "feedback warn";
+    feedback.textContent = challengeCopy("Replay this stage after the next update.", "Vuelve a jugar esta etapa despues de la proxima actualizacion.");
+    return () => {};
+  }
+
+  window.addEventListener("keydown", onKey);
+  renderRound();
+
+  return () => {
+    running = false;
+    clearTimers();
+    window.removeEventListener("keydown", onKey);
   };
 }
 
