@@ -1609,13 +1609,13 @@ const THEMED_INTERACTIVE_MODE_SETS = {
       id: "babel-tongues-slingshot",
       engine: "slingshot",
       label: "Tongues Disrupted",
-      targetRadius: 16,
-      maxPull: 86,
-      pullPowerScale: 0.14,
+      targetRadius: 18,
+      maxPull: 124,
+      pullPowerScale: 0.155,
       sourceRef: "Genesis 11:7",
       storyPrompt: "Take one precise shot as languages are confused and proud plans are broken.",
-      secondaryPrompt: "Aim carefully, then release one decisive strike.",
-      keyboardHint: "Keyboard: arrows adjust aim, Space/Enter launches, R resets."
+      secondaryPrompt: "Pull farther back and strike the tower-master's exposed command seal.",
+      keyboardHint: "Keyboard: arrows adjust the pull, Space/Enter launches, and R resets."
     },
     {
       id: "babel-lineage-discern",
@@ -16046,7 +16046,18 @@ function renderSlingshot(meta, mode, feedback) {
   const prompt = document.createElement("p");
   prompt.textContent = mode.secondaryPrompt || t("slingshotPrompt");
   const hint = createChallengeHint(mode.keyboardHint || "Keyboard: arrows adjust your pull, Space or Enter launches, and R resets the shot.");
-  const status = createSkillStatus("Aim low and pull back before you release.");
+  const themeText = `${mode.id || ""} ${mode.label || ""} ${mode.storyPrompt || ""} ${mode.sourceRef || ""}`.toLowerCase();
+  const slingshotTheme = themeText.includes("babel") || themeText.includes("shinar")
+    ? "babel"
+    : (themeText.includes("goliath") || themeText.includes("giant") || themeText.includes("gath") || themeText.includes("1 samuel 17")
+      ? "giant"
+      : "champion");
+  const weaknessHint = slingshotTheme === "babel"
+    ? "Pull back farther and strike the tower-master's glowing seal."
+    : (slingshotTheme === "giant"
+      ? "Pull back with conviction and aim for the giant's exposed forehead."
+      : "Draw back fully and hit the enemy's glowing weak point.");
+  const status = createSkillStatus(weaknessHint);
   activityPanel.append(prompt, hint, status);
 
   const canvas = document.createElement("canvas");
@@ -16064,7 +16075,11 @@ function renderSlingshot(meta, mode, feedback) {
 
   const c = canvas.getContext("2d");
   const sling = { x: 80, y: 230 };
-  const giant = { x: 455, y: 110, r: mode.targetRadius || 20 };
+  const target = {
+    x: slingshotTheme === "babel" ? 448 : 455,
+    y: slingshotTheme === "babel" ? 118 : 110,
+    r: mode.targetRadius || 20
+  };
   let stone = { x: sling.x, y: sling.y, vx: 0, vy: 0, flying: false };
   let dragPoint = { x: sling.x, y: sling.y };
   let dragging = false;
@@ -16072,7 +16087,35 @@ function renderSlingshot(meta, mode, feedback) {
   let running = true;
   let raf = 0;
   let activePointerId = null;
-  let keyboardPull = { x: -56, y: 18 };
+  let keyboardPull = slingshotTheme === "babel"
+    ? { x: -92, y: 24 }
+    : (slingshotTheme === "giant" ? { x: -72, y: 18 } : { x: -66, y: 18 });
+
+  function maxPullDistance() {
+    const base = Number(mode.maxPull) || 82;
+    if (slingshotTheme === "babel") return Math.max(base, 124);
+    if (slingshotTheme === "giant") return Math.max(base, 104);
+    return Math.max(base, 94);
+  }
+
+  function pullPowerScale() {
+    const base = Number(mode.pullPowerScale) || 0.14;
+    if (slingshotTheme === "babel") return Math.max(base, 0.155);
+    if (slingshotTheme === "giant") return Math.max(base, 0.145);
+    return Math.max(base, 0.142);
+  }
+
+  function weakPointAt(now = 0) {
+    if (slingshotTheme === "babel") {
+      const sway = Math.sin(now / 420) * 4;
+      return { x: target.x + sway, y: target.y + Math.cos(now / 480) * 2, r: target.r };
+    }
+    if (slingshotTheme === "giant") {
+      const sway = Math.sin(now / 520) * 2;
+      return { x: target.x + sway, y: target.y + Math.cos(now / 620), r: target.r };
+    }
+    return { x: target.x, y: target.y, r: target.r };
+  }
 
   function resetStone() {
     stone = { x: sling.x, y: sling.y, vx: 0, vy: 0, flying: false };
@@ -16081,7 +16124,7 @@ function renderSlingshot(meta, mode, feedback) {
   }
 
   function applyKeyboardPull() {
-    const maxPull = mode.maxPull || 82;
+    const maxPull = maxPullDistance();
     const len = Math.hypot(keyboardPull.x, keyboardPull.y);
     const scale = len > maxPull ? maxPull / len : 1;
     keyboardPull.x *= scale;
@@ -16094,46 +16137,377 @@ function renderSlingshot(meta, mode, feedback) {
     }
   }
 
-  function draw() {
-    c.clearRect(0, 0, canvas.width, canvas.height);
+  function drawBackdrop(now) {
     const sky = c.createLinearGradient(0, 0, 0, canvas.height);
-    sky.addColorStop(0, "#213653");
-    sky.addColorStop(0.7, "#111822");
-    sky.addColorStop(1, "#090d13");
+    if (slingshotTheme === "babel") {
+      sky.addColorStop(0, "#2d3a58");
+      sky.addColorStop(0.58, "#17202f");
+      sky.addColorStop(1, "#0c1018");
+    } else if (slingshotTheme === "giant") {
+      sky.addColorStop(0, "#304968");
+      sky.addColorStop(0.64, "#15212f");
+      sky.addColorStop(1, "#0a1018");
+    } else {
+      sky.addColorStop(0, "#213653");
+      sky.addColorStop(0.7, "#111822");
+      sky.addColorStop(1, "#090d13");
+    }
     c.fillStyle = sky;
     c.fillRect(0, 0, canvas.width, canvas.height);
-    c.fillStyle = "#343f23";
-    c.fillRect(0, 250, canvas.width, 50);
-    c.fillStyle = "rgba(255, 214, 127, 0.12)";
+
+    c.fillStyle = "rgba(255, 214, 127, 0.1)";
     c.beginPath();
-    c.arc(102, 72, 34, 0, Math.PI * 2);
+    c.arc(slingshotTheme === "babel" ? 112 : 102, 72, 36, 0, Math.PI * 2);
     c.fill();
 
-    drawRoundedRect(c, 430, 95, 46, 145, 10, "#8d5c2e");
+    if (slingshotTheme === "babel") {
+      c.fillStyle = "#2a3344";
+      c.beginPath();
+      c.moveTo(0, 212);
+      c.lineTo(70, 164);
+      c.lineTo(138, 204);
+      c.lineTo(220, 148);
+      c.lineTo(288, 198);
+      c.lineTo(364, 142);
+      c.lineTo(444, 204);
+      c.lineTo(canvas.width, 160);
+      c.lineTo(canvas.width, 250);
+      c.lineTo(0, 250);
+      c.closePath();
+      c.fill();
+
+      c.fillStyle = "#404b32";
+      c.fillRect(0, 250, canvas.width, 50);
+      c.fillStyle = "rgba(219, 181, 120, 0.12)";
+      for (let i = 0; i < 11; i += 1) {
+        c.fillRect(26 + i * 48, 256 + ((i % 2) * 3), 28, 5);
+      }
+    } else if (slingshotTheme === "giant") {
+      c.fillStyle = "#2a3640";
+      c.beginPath();
+      c.moveTo(0, 208);
+      c.lineTo(58, 186);
+      c.lineTo(130, 210);
+      c.lineTo(208, 166);
+      c.lineTo(276, 204);
+      c.lineTo(362, 154);
+      c.lineTo(446, 208);
+      c.lineTo(canvas.width, 178);
+      c.lineTo(canvas.width, 250);
+      c.lineTo(0, 250);
+      c.closePath();
+      c.fill();
+
+      c.fillStyle = "#425136";
+      c.fillRect(0, 250, canvas.width, 50);
+    } else {
+      c.fillStyle = "#343f23";
+      c.fillRect(0, 250, canvas.width, 50);
+    }
+
+    c.fillStyle = "rgba(255,255,255,0.04)";
+    for (let i = 0; i < 14; i += 1) {
+      const px = (i * 43 + Math.sin(now / 1300 + i) * 6) % canvas.width;
+      const py = 28 + (i % 5) * 16;
+      c.fillRect(px, py, 2, 2);
+    }
+  }
+
+  function drawBabelBoss(now, weakPoint) {
+    const sway = Math.sin(now / 420) * 4;
+    const towerX = 408;
+    const towerY = 86;
+    const towerW = 92;
+    const towerH = 156;
+    drawRoundedRect(c, towerX, towerY, towerW, towerH, 12, "#8c5a33");
+
+    c.fillStyle = "#9d6a3c";
+    for (let row = 0; row < 12; row += 1) {
+      const y = towerY + 10 + row * 11;
+      c.fillRect(towerX + 6, y, towerW - 12, 2);
+    }
+    for (let col = 0; col < 3; col += 1) {
+      const x = towerX + 20 + col * 22;
+      c.fillRect(x, towerY + 8, 2, towerH - 16);
+    }
+
+    c.fillStyle = "#b98549";
+    for (let i = 0; i < 5; i += 1) {
+      c.fillRect(towerX + 8 + i * 16, towerY - 8, 10, 12);
+    }
+    drawRoundedRect(c, towerX + 8, towerY + 42, towerW - 16, 16, 8, "#6a4328");
+    drawRoundedRect(c, towerX + 12, towerY + 108, towerW - 24, 12, 6, "#5d3a24");
+
+    const bodyX = 450 + sway;
+    const bodyY = 130 + Math.cos(now / 420) * 2;
+    c.strokeStyle = "#dfb789";
+    c.lineWidth = 8;
     c.beginPath();
-    c.arc(giant.x, giant.y, giant.r, 0, Math.PI * 2);
-    const targetGlow = c.createRadialGradient(giant.x, giant.y, 4, giant.x, giant.y, giant.r + 14);
-    targetGlow.addColorStop(0, "#ffd6af");
-    targetGlow.addColorStop(0.55, "#dfb07b");
-    targetGlow.addColorStop(1, "rgba(111, 64, 34, 0.88)");
-    c.fillStyle = targetGlow;
-    c.shadowBlur = 18;
-    c.shadowColor = "rgba(223,176,123,0.28)";
-    c.fill();
-    c.shadowBlur = 0;
-    c.strokeStyle = "rgba(255, 243, 214, 0.55)";
-    c.lineWidth = 3;
-    c.beginPath();
-    c.arc(giant.x, giant.y, giant.r + 8, 0, Math.PI * 2);
+    c.moveTo(bodyX - 14, bodyY + 28);
+    c.lineTo(bodyX - 30, bodyY + 48);
+    c.moveTo(bodyX + 14, bodyY + 28);
+    c.lineTo(bodyX + 32, bodyY + 46);
     c.stroke();
 
-    c.strokeStyle = "#b98549";
+    c.fillStyle = "#6c3926";
+    c.beginPath();
+    c.moveTo(bodyX - 18, bodyY + 12);
+    c.lineTo(bodyX + 18, bodyY + 12);
+    c.lineTo(bodyX + 24, bodyY + 76);
+    c.lineTo(bodyX - 24, bodyY + 76);
+    c.closePath();
+    c.fill();
+
+    c.strokeStyle = "#4b2519";
+    c.lineWidth = 5;
+    c.beginPath();
+    c.moveTo(bodyX - 10, bodyY + 76);
+    c.lineTo(bodyX - 10, bodyY + 106);
+    c.moveTo(bodyX + 10, bodyY + 76);
+    c.lineTo(bodyX + 10, bodyY + 106);
+    c.stroke();
+
+    c.fillStyle = "#2f2219";
+    c.fillRect(bodyX - 18, bodyY + 100, 14, 8);
+    c.fillRect(bodyX + 4, bodyY + 100, 14, 8);
+
+    c.fillStyle = "#e4c09a";
+    c.beginPath();
+    c.arc(bodyX, bodyY, 16, 0, Math.PI * 2);
+    c.fill();
+
+    c.fillStyle = "#3e261d";
+    c.beginPath();
+    c.arc(bodyX, bodyY - 3, 17, Math.PI, Math.PI * 2);
+    c.fill();
+    c.beginPath();
+    c.moveTo(bodyX - 6, bodyY + 10);
+    c.lineTo(bodyX, bodyY + 18);
+    c.lineTo(bodyX + 6, bodyY + 10);
+    c.closePath();
+    c.fill();
+
+    c.strokeStyle = "#2c140f";
+    c.lineWidth = 2.5;
+    c.beginPath();
+    c.moveTo(bodyX - 8, bodyY - 4);
+    c.lineTo(bodyX - 2, bodyY - 6);
+    c.moveTo(bodyX + 2, bodyY - 6);
+    c.lineTo(bodyX + 8, bodyY - 4);
+    c.moveTo(bodyX - 6, bodyY + 7);
+    c.quadraticCurveTo(bodyX, bodyY + 12, bodyX + 6, bodyY + 7);
+    c.stroke();
+
+    c.fillStyle = "#d5a255";
+    c.beginPath();
+    c.moveTo(bodyX - 22, bodyY + 28);
+    c.lineTo(bodyX - 40, bodyY + 20);
+    c.lineTo(bodyX - 34, bodyY + 10);
+    c.lineTo(bodyX - 18, bodyY + 18);
+    c.closePath();
+    c.fill();
+
+    const sealGlow = c.createRadialGradient(weakPoint.x, weakPoint.y, 3, weakPoint.x, weakPoint.y, weakPoint.r + 12);
+    sealGlow.addColorStop(0, "#fff0bf");
+    sealGlow.addColorStop(0.45, "#f5c361");
+    sealGlow.addColorStop(1, "rgba(245,195,97,0)");
+    c.fillStyle = sealGlow;
+    c.beginPath();
+    c.arc(weakPoint.x, weakPoint.y, weakPoint.r + 10, 0, Math.PI * 2);
+    c.fill();
+
+    c.fillStyle = "#f4c153";
+    c.beginPath();
+    c.moveTo(weakPoint.x, weakPoint.y - weakPoint.r);
+    c.lineTo(weakPoint.x + weakPoint.r - 2, weakPoint.y);
+    c.lineTo(weakPoint.x, weakPoint.y + weakPoint.r);
+    c.lineTo(weakPoint.x - weakPoint.r + 2, weakPoint.y);
+    c.closePath();
+    c.fill();
+
+    c.strokeStyle = "rgba(255, 240, 196, 0.8)";
+    c.lineWidth = 2;
+    c.stroke();
+  }
+
+  function drawGiantBoss(now, weakPoint) {
+    const sway = Math.sin(now / 520) * 2.2;
+    const bodyX = 455 + sway;
+    const bodyY = 108 + Math.cos(now / 650);
+
+    c.strokeStyle = "#704f2c";
+    c.lineWidth = 10;
+    c.beginPath();
+    c.moveTo(bodyX + 36, bodyY + 18);
+    c.lineTo(bodyX + 48, bodyY + 148);
+    c.stroke();
+
+    c.fillStyle = "#a57a47";
+    c.fillRect(bodyX + 42, bodyY + 10, 12, 16);
+
+    c.fillStyle = "#7f542b";
+    c.beginPath();
+    c.moveTo(bodyX - 28, bodyY + 28);
+    c.lineTo(bodyX + 28, bodyY + 28);
+    c.lineTo(bodyX + 38, bodyY + 116);
+    c.lineTo(bodyX - 38, bodyY + 116);
+    c.closePath();
+    c.fill();
+
+    c.strokeStyle = "#d9b48a";
+    c.lineWidth = 10;
+    c.beginPath();
+    c.moveTo(bodyX - 18, bodyY + 44);
+    c.lineTo(bodyX - 46, bodyY + 82);
+    c.moveTo(bodyX + 18, bodyY + 44);
+    c.lineTo(bodyX + 44, bodyY + 84);
+    c.moveTo(bodyX - 14, bodyY + 116);
+    c.lineTo(bodyX - 16, bodyY + 164);
+    c.moveTo(bodyX + 14, bodyY + 116);
+    c.lineTo(bodyX + 16, bodyY + 164);
+    c.stroke();
+
+    c.fillStyle = "#2f2117";
+    c.fillRect(bodyX - 28, bodyY + 158, 20, 10);
+    c.fillRect(bodyX + 8, bodyY + 158, 20, 10);
+
+    c.fillStyle = "#d8b48c";
+    c.beginPath();
+    c.arc(bodyX, bodyY, 22, 0, Math.PI * 2);
+    c.fill();
+
+    c.fillStyle = "#7f542b";
+    c.beginPath();
+    c.arc(bodyX, bodyY - 6, 24, Math.PI, Math.PI * 2);
+    c.fill();
+    c.fillRect(bodyX - 25, bodyY - 4, 50, 10);
+
+    c.strokeStyle = "#26150f";
+    c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(bodyX - 11, bodyY - 4);
+    c.lineTo(bodyX - 4, bodyY - 8);
+    c.moveTo(bodyX + 4, bodyY - 8);
+    c.lineTo(bodyX + 11, bodyY - 4);
+    c.moveTo(bodyX - 8, bodyY + 10);
+    c.quadraticCurveTo(bodyX, bodyY + 15, bodyX + 8, bodyY + 10);
+    c.stroke();
+
+    const weakGlow = c.createRadialGradient(weakPoint.x, weakPoint.y, 3, weakPoint.x, weakPoint.y, weakPoint.r + 10);
+    weakGlow.addColorStop(0, "#fff0d1");
+    weakGlow.addColorStop(0.5, "#e79e60");
+    weakGlow.addColorStop(1, "rgba(231,158,96,0)");
+    c.fillStyle = weakGlow;
+    c.beginPath();
+    c.arc(weakPoint.x, weakPoint.y, weakPoint.r + 8, 0, Math.PI * 2);
+    c.fill();
+
+    c.fillStyle = "#f0b96d";
+    c.beginPath();
+    c.arc(weakPoint.x, weakPoint.y, weakPoint.r, 0, Math.PI * 2);
+    c.fill();
+  }
+
+  function drawChampionBoss(now, weakPoint) {
+    const sway = Math.sin(now / 600) * 2;
+    const bodyX = 450 + sway;
+    const bodyY = 114;
+
+    c.fillStyle = "#59412a";
+    drawRoundedRect(c, bodyX - 36, bodyY + 26, 72, 106, 18, "#59412a");
+    c.fillStyle = "#d9b48c";
+    c.beginPath();
+    c.arc(bodyX, bodyY, 18, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#2e2017";
+    c.beginPath();
+    c.arc(bodyX, bodyY - 5, 20, Math.PI, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = "#2e2017";
+    c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(bodyX - 8, bodyY - 2);
+    c.lineTo(bodyX - 3, bodyY - 6);
+    c.moveTo(bodyX + 3, bodyY - 6);
+    c.lineTo(bodyX + 8, bodyY - 2);
+    c.moveTo(bodyX - 6, bodyY + 8);
+    c.quadraticCurveTo(bodyX, bodyY + 12, bodyX + 6, bodyY + 8);
+    c.stroke();
+
+    const weakGlow = c.createRadialGradient(weakPoint.x, weakPoint.y, 3, weakPoint.x, weakPoint.y, weakPoint.r + 10);
+    weakGlow.addColorStop(0, "#fff3d1");
+    weakGlow.addColorStop(0.55, "#e5a85f");
+    weakGlow.addColorStop(1, "rgba(229,168,95,0)");
+    c.fillStyle = weakGlow;
+    c.beginPath();
+    c.arc(weakPoint.x, weakPoint.y, weakPoint.r + 9, 0, Math.PI * 2);
+    c.fill();
+
+    c.fillStyle = "#efbd72";
+    c.beginPath();
+    c.arc(weakPoint.x, weakPoint.y, weakPoint.r, 0, Math.PI * 2);
+    c.fill();
+  }
+
+  function drawSling() {
+    c.strokeStyle = "#7d5533";
+    c.lineWidth = 8;
+    c.lineCap = "round";
+    c.beginPath();
+    c.moveTo(sling.x - 14, sling.y + 10);
+    c.lineTo(sling.x - 8, sling.y - 54);
+    c.moveTo(sling.x + 14, sling.y + 10);
+    c.lineTo(sling.x + 8, sling.y - 54);
+    c.stroke();
+
+    c.fillStyle = "#8f6944";
+    c.beginPath();
+    c.ellipse(sling.x, sling.y + 6, 18, 10, 0, 0, Math.PI * 2);
+    c.fill();
+
+    c.strokeStyle = "#c69459";
     c.lineWidth = 5;
     c.beginPath();
     c.moveTo(sling.x - 14, sling.y + 8);
     c.lineTo(dragPoint.x, dragPoint.y);
     c.lineTo(sling.x + 14, sling.y + 8);
     c.stroke();
+
+    c.fillStyle = "#8c6940";
+    c.beginPath();
+    c.ellipse(dragPoint.x, dragPoint.y, 12, 7, 0, 0, Math.PI * 2);
+    c.fill();
+  }
+
+  function drawTrajectoryPreview() {
+    if (stone.flying || dragging) return;
+    const previewVx = (sling.x - dragPoint.x) * pullPowerScale();
+    const previewVy = (sling.y - dragPoint.y) * pullPowerScale();
+    let px = dragPoint.x;
+    let py = dragPoint.y;
+    c.fillStyle = "rgba(255, 232, 180, 0.22)";
+    for (let i = 1; i <= 10; i += 1) {
+      px += previewVx;
+      py += previewVy + (0.24 * i);
+      c.beginPath();
+      c.arc(px, py, Math.max(1.8, 4 - i * 0.18), 0, Math.PI * 2);
+      c.fill();
+    }
+  }
+
+  function draw(now = performance.now()) {
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    drawBackdrop(now);
+    const weakPoint = weakPointAt(now);
+    if (slingshotTheme === "babel") {
+      drawBabelBoss(now, weakPoint);
+    } else if (slingshotTheme === "giant") {
+      drawGiantBoss(now, weakPoint);
+    } else {
+      drawChampionBoss(now, weakPoint);
+    }
+    drawTrajectoryPreview();
+    drawSling();
 
     c.beginPath();
     c.arc(stone.x, stone.y, 8, 0, Math.PI * 2);
@@ -16154,9 +16528,10 @@ function renderSlingshot(meta, mode, feedback) {
       dragPoint.x = stone.x;
       dragPoint.y = stone.y;
 
-      const dx = stone.x - giant.x;
-      const dy = stone.y - giant.y;
-      if (Math.hypot(dx, dy) < giant.r + 8) {
+      const weakPoint = weakPointAt(performance.now());
+      const dx = stone.x - weakPoint.x;
+      const dy = stone.y - weakPoint.y;
+      if (Math.hypot(dx, dy) < weakPoint.r + 8) {
         finished = true;
         feedback.className = "feedback ok";
         feedback.textContent = t("directHitComplete");
@@ -16207,7 +16582,7 @@ function renderSlingshot(meta, mode, feedback) {
     if (activePointerId !== null && event.pointerId !== activePointerId) return;
     if (!dragging || finished) return;
     const p = getPos(event);
-    const maxPull = mode.maxPull || 82;
+    const maxPull = maxPullDistance();
     const dx = p.x - sling.x;
     const dy = p.y - sling.y;
     const len = Math.hypot(dx, dy);
@@ -16226,8 +16601,8 @@ function renderSlingshot(meta, mode, feedback) {
     if (!dragging || finished || !canPlayStage()) return;
     dragging = false;
     activePointerId = null;
-    stone.vx = (sling.x - dragPoint.x) * (mode.pullPowerScale || 0.14);
-    stone.vy = (sling.y - dragPoint.y) * (mode.pullPowerScale || 0.14);
+    stone.vx = (sling.x - dragPoint.x) * pullPowerScale();
+    stone.vy = (sling.y - dragPoint.y) * pullPowerScale();
     stone.flying = true;
     status.textContent = "Stone released. Hold steady for the hit.";
     playSfx("click");
@@ -16244,13 +16619,13 @@ function renderSlingshot(meta, mode, feedback) {
     finished = false;
     feedback.textContent = "";
     resetStone();
-    status.textContent = "Aim low and pull back before you release.";
+    status.textContent = weaknessHint;
   };
 
   const launchStone = () => {
     if (finished || stone.flying || !canPlayStage()) return;
-    stone.vx = (sling.x - dragPoint.x) * (mode.pullPowerScale || 0.14);
-    stone.vy = (sling.y - dragPoint.y) * (mode.pullPowerScale || 0.14);
+    stone.vx = (sling.x - dragPoint.x) * pullPowerScale();
+    stone.vy = (sling.y - dragPoint.y) * pullPowerScale();
     stone.flying = true;
     status.textContent = "Stone released. Hold steady for the hit.";
     playSfx("click");
@@ -16263,25 +16638,25 @@ function renderSlingshot(meta, mode, feedback) {
     if (!stone.flying && !finished) {
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        keyboardPull.x = Math.max(-(mode.maxPull || 82), keyboardPull.x - 8);
+        keyboardPull.x = Math.max(-maxPullDistance(), keyboardPull.x - 8);
         applyKeyboardPull();
         return;
       }
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        keyboardPull.x = Math.min(mode.maxPull || 82, keyboardPull.x + 8);
+        keyboardPull.x = Math.min(maxPullDistance(), keyboardPull.x + 8);
         applyKeyboardPull();
         return;
       }
       if (event.key === "ArrowUp") {
         event.preventDefault();
-        keyboardPull.y = Math.max(-(mode.maxPull || 82), keyboardPull.y - 8);
+        keyboardPull.y = Math.max(-maxPullDistance(), keyboardPull.y - 8);
         applyKeyboardPull();
         return;
       }
       if (event.key === "ArrowDown") {
         event.preventDefault();
-        keyboardPull.y = Math.min(mode.maxPull || 82, keyboardPull.y + 8);
+        keyboardPull.y = Math.min(maxPullDistance(), keyboardPull.y + 8);
         applyKeyboardPull();
         return;
       }
