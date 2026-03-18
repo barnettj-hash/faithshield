@@ -648,7 +648,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 30;
+const ACTIVITY_SCHEMA_VERSION = 33;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -3560,6 +3560,7 @@ let badgeCeremonyCloseTimer = 0;
 let badgeCeremonyBadgeId = null;
 let badgeCeremonyActive = false;
 let pendingEraFinaleEra = null;
+let bossBattleStylesReady = false;
 let verseAudioUtterance = null;
 let activeVerseAudioButton = null;
 let eraFinaleOverlay = null;
@@ -3865,6 +3866,25 @@ function playSfx(name) {
     setTimeout(() => playTone(523.25, 0.1, "triangle", 0.13), 68);
     setTimeout(() => playTone(659.25, 0.12, "triangle", 0.14), 144);
     setTimeout(() => playTone(783.99, 0.2, "triangle", 0.13), 224);
+  } else if (name === "boss-enter") {
+    playTone(130.81, 0.12, "sawtooth", 0.09);
+    setTimeout(() => playTone(196.0, 0.14, "triangle", 0.08), 90);
+    setTimeout(() => playTone(261.63, 0.18, "triangle", 0.095), 190);
+    setTimeout(() => playTone(392.0, 0.26, "triangle", 0.11), 320);
+  } else if (name === "boss-hit") {
+    playTone(220.0, 0.04, "square", 0.08);
+    setTimeout(() => playTone(659.25, 0.05, "triangle", 0.11), 16);
+    setTimeout(() => playTone(987.77, 0.08, "triangle", 0.095), 56);
+    setTimeout(() => playTone(1318.51, 0.11, "triangle", 0.075), 110);
+  } else if (name === "boss-hurt") {
+    playTone(196.0, 0.08, "sawtooth", 0.12);
+    setTimeout(() => playTone(146.83, 0.1, "sawtooth", 0.11), 86);
+    setTimeout(() => playTone(110.0, 0.13, "triangle", 0.085), 176);
+  } else if (name === "boss-win") {
+    playTone(392.0, 0.08, "triangle", 0.1);
+    setTimeout(() => playTone(523.25, 0.1, "triangle", 0.12), 72);
+    setTimeout(() => playTone(783.99, 0.14, "triangle", 0.12), 170);
+    setTimeout(() => playTone(1046.5, 0.28, "triangle", 0.125), 300);
   } else if (name === "era-finale") {
     playTone(392.0, 0.12, "triangle", 0.1);
     setTimeout(() => playTone(523.25, 0.16, "triangle", 0.11), 120);
@@ -6969,7 +6989,7 @@ function stageCompletionSummary(result) {
   return [sourceLine, challengeCopy("This section is complete. Keep moving through the story path.", "Esta seccion esta completa. Sigue avanzando por el camino de la historia.")].filter(Boolean).join(" ");
 }
 
-function showStageCompleteMoment(result) {
+function showStageCompleteMoment(result, options = {}) {
   if (!result || !result.meta) return;
   const node = ensureStageCompleteToast();
   if (!node) return;
@@ -6990,7 +7010,8 @@ function showStageCompleteMoment(result) {
 
   node.classList.add("show");
   duckMusicTemporarily(0.36, 1800);
-  playSfx("stage-clear");
+  const sfxName = Object.prototype.hasOwnProperty.call(options, "sfx") ? options.sfx : "stage-clear";
+  if (sfxName) playSfx(sfxName);
   if (stageCompleteToastTimer) window.clearTimeout(stageCompleteToastTimer);
   stageCompleteToastTimer = window.setTimeout(() => {
     node.classList.remove("show");
@@ -7505,7 +7526,7 @@ function completeStage(meta, mode, options = {}) {
   if (options.returnTarget) queueHubReturn(options.returnTarget);
   const result = markDone(meta.id, mode);
   if (result && !result.celebrationBadge) {
-    showStageCompleteMoment(result);
+    showStageCompleteMoment(result, options);
   }
   const delayMs = options.delayMs || (result && result.celebrationBadge ? 1120 : 1680);
   queueStageAutoClose(meta.id, delayMs);
@@ -10519,7 +10540,7 @@ function bossModeForStage(meta, difficulty = currentDifficulty()) {
     enemyIcon: profile.enemyIcon || "⚔️",
     sourceRef: profile.sourceRef || meta.theme.sourceRef,
     storyPrompt: profile.storyPrompt || challengeCopy("Choose the right item or response to defeat the enemy.", "Elige el objeto o respuesta correctos para derrotar al enemigo."),
-    keyboardHint: challengeCopy("Keyboard: press 1-4 to choose the right item or response.", "Teclado: presiona 1-4 para elegir el objeto o respuesta correctos."),
+    keyboardHint: challengeCopy("Keyboard: use arrow keys or WASD to raise the shield in the right direction.", "Teclado: usa las flechas o WASD para levantar el escudo en la direccion correcta."),
     rounds,
     bossHealth: tuning.bossHealth,
     playerHealth: tuning.playerHealth
@@ -13327,105 +13348,1136 @@ function canvasPointerPosition(canvas, event) {
   };
 }
 
+function bossBattlePalette(era) {
+  const palette = {
+    genesis: {
+      accent: "#d9b15c",
+      accentSoft: "rgba(217,177,92,0.28)",
+      glow: "rgba(241,199,110,0.34)",
+      player: "#7bc9d7",
+      playerGlow: "rgba(123,201,215,0.3)"
+    },
+    patriarchs: {
+      accent: "#c89a63",
+      accentSoft: "rgba(200,154,99,0.28)",
+      glow: "rgba(222,175,108,0.3)",
+      player: "#8ed7bc",
+      playerGlow: "rgba(142,215,188,0.28)"
+    },
+    exodus: {
+      accent: "#79d0e8",
+      accentSoft: "rgba(121,208,232,0.24)",
+      glow: "rgba(121,208,232,0.34)",
+      player: "#f6d37a",
+      playerGlow: "rgba(246,211,122,0.28)"
+    },
+    sinai: {
+      accent: "#f0cf93",
+      accentSoft: "rgba(240,207,147,0.24)",
+      glow: "rgba(240,207,147,0.32)",
+      player: "#89baf6",
+      playerGlow: "rgba(137,186,246,0.26)"
+    },
+    wilderness: {
+      accent: "#c08f58",
+      accentSoft: "rgba(192,143,88,0.24)",
+      glow: "rgba(220,168,92,0.28)",
+      player: "#90d4c7",
+      playerGlow: "rgba(144,212,199,0.28)"
+    },
+    conquest: {
+      accent: "#d6a64b",
+      accentSoft: "rgba(214,166,75,0.26)",
+      glow: "rgba(214,166,75,0.32)",
+      player: "#8fc7ff",
+      playerGlow: "rgba(143,199,255,0.3)"
+    },
+    judges: {
+      accent: "#d27a52",
+      accentSoft: "rgba(210,122,82,0.26)",
+      glow: "rgba(210,122,82,0.34)",
+      player: "#f1d48b",
+      playerGlow: "rgba(241,212,139,0.24)"
+    },
+    samuel: {
+      accent: "#b78cf0",
+      accentSoft: "rgba(183,140,240,0.24)",
+      glow: "rgba(183,140,240,0.32)",
+      player: "#8fcff1",
+      playerGlow: "rgba(143,207,241,0.28)"
+    },
+    saul: {
+      accent: "#cb6b66",
+      accentSoft: "rgba(203,107,102,0.24)",
+      glow: "rgba(203,107,102,0.32)",
+      player: "#f3d489",
+      playerGlow: "rgba(243,212,137,0.24)"
+    },
+    david: {
+      accent: "#f0d17e",
+      accentSoft: "rgba(240,209,126,0.24)",
+      glow: "rgba(240,209,126,0.34)",
+      player: "#85d0ff",
+      playerGlow: "rgba(133,208,255,0.28)"
+    },
+    generic: {
+      accent: "#d9b15c",
+      accentSoft: "rgba(217,177,92,0.28)",
+      glow: "rgba(241,199,110,0.34)",
+      player: "#7bc9d7",
+      playerGlow: "rgba(123,201,215,0.3)"
+    }
+  };
+  return palette[era] || palette.generic;
+}
+
+function bossBattleBackdropStyle(era, frameIndex = 0) {
+  const view = cutsceneStillFrameViewConfig(era, frameIndex);
+  const fit = view.fit || "cover";
+  const scale = Number(view.scale);
+  const hasScale = Number.isFinite(scale) && scale > 0 && Math.abs(scale - 1) > 0.001;
+  const size = fit === "contain"
+    ? (hasScale ? `${Math.round(scale * 100)}% auto` : "contain")
+    : (hasScale ? `${Math.round(scale * 100)}%` : fit);
+  return {
+    size,
+    position: view.position || "50% 50%",
+    backgroundColor: view.backgroundColor || "#0f1722"
+  };
+}
+
+function bossBattlePhaseLabel(roundIndex, totalRounds, bossRatio, playerRatio) {
+  if (bossRatio <= 0.25) return challengeCopy("Final Strike", "Golpe final");
+  if (playerRatio <= 0.34) return challengeCopy("Hold Fast", "Mantente firme");
+  if (roundIndex >= Math.max(1, totalRounds - 2)) return challengeCopy("Turning Point", "Punto decisivo");
+  return challengeCopy("Opening Clash", "Choque inicial");
+}
+
+function bossBattleStatusText(mode, bossRatio, playerRatio) {
+  if (bossRatio <= 0.25) {
+    return challengeCopy(
+      `${mode.enemyName} is losing stamina. One more faithful block could end the battle.`,
+      `${mode.enemyName} esta perdiendo resistencia. Un bloqueo fiel mas puede terminar la batalla.`
+    );
+  }
+  if (playerRatio <= 0.34) {
+    return challengeCopy(
+      "Stand firm. Read the tell, raise the shield, and survive the next strike.",
+      "Mantente firme. Lee la señal, levanta el escudo y sobrevive al siguiente golpe."
+    );
+  }
+  if (bossRatio <= 0.5) {
+    return challengeCopy(
+      "The boss is weakening. Keep blocking with the right truth and drain the enemy's stamina.",
+      "El jefe se esta debilitando. Sigue bloqueando con la verdad correcta y agota su resistencia."
+    );
+  }
+  return challengeCopy(
+    "The battle has begun. Read the clue and raise the shield from the right direction.",
+    "La batalla ha comenzado. Lee la pista y levanta el escudo desde la direccion correcta."
+  );
+}
+
+function ensureBossBattleStyles() {
+  if (bossBattleStylesReady || typeof document === "undefined") return;
+  const existing = document.getElementById("faithBossBattleStyles");
+  if (existing) {
+    bossBattleStylesReady = true;
+    return;
+  }
+
+  const style = document.createElement("style");
+  style.id = "faithBossBattleStyles";
+  style.textContent = `
+    .faith-boss-arena {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      border-radius: 24px;
+      border: 1px solid rgba(240, 207, 147, 0.18);
+      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.28);
+      background: linear-gradient(180deg, rgba(15, 22, 33, 0.98), rgba(10, 15, 23, 0.98));
+    }
+    .faith-boss-backdrop,
+    .faith-boss-veil,
+    .faith-boss-atmosphere {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .faith-boss-backdrop {
+      opacity: 0.9;
+      transform: scale(1.04);
+      filter: saturate(1.08) contrast(1.02) brightness(0.48);
+      transition: transform 220ms ease, filter 220ms ease, opacity 220ms ease;
+    }
+    .faith-boss-veil {
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.08), transparent 34%),
+        radial-gradient(circle at 80% 10%, var(--boss-glow), transparent 30%),
+        linear-gradient(180deg, rgba(8, 12, 18, 0.16), rgba(8, 12, 18, 0.72) 42%, rgba(8, 12, 18, 0.92));
+      transition: background 220ms ease;
+    }
+    .faith-boss-atmosphere span {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 999px;
+      background: radial-gradient(circle, var(--boss-accent-soft), transparent 70%);
+      filter: blur(8px);
+      opacity: 0.72;
+      animation: faithBossFloat 6s ease-in-out infinite;
+    }
+    .faith-boss-atmosphere span:nth-child(1) { top: -18px; left: -24px; }
+    .faith-boss-atmosphere span:nth-child(2) { top: 26%; right: -36px; animation-duration: 7.2s; }
+    .faith-boss-atmosphere span:nth-child(3) { bottom: -42px; left: 28%; animation-duration: 8.1s; }
+    .faith-boss-content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 0.95rem;
+      padding: 1.05rem;
+    }
+    .faith-boss-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.9rem;
+      flex-wrap: wrap;
+    }
+    .faith-boss-identity {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      min-width: min(100%, 460px);
+    }
+    .faith-boss-icon {
+      position: relative;
+      width: 3.6rem;
+      height: 3.6rem;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 2.05rem;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), var(--boss-accent-soft));
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 0 24px var(--boss-glow), 0 18px 32px rgba(0,0,0,0.34);
+      animation: faithBossFloat 3.8s ease-in-out infinite, faithBossPulse 1.9s ease-in-out infinite;
+    }
+    .faith-boss-icon::after {
+      content: "";
+      position: absolute;
+      inset: -7px;
+      border-radius: inherit;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .faith-boss-icon.is-danger {
+      animation: faithBossFloat 2.2s ease-in-out infinite, faithBossPulse 0.96s ease-in-out infinite;
+    }
+    .faith-boss-copy {
+      display: grid;
+      gap: 0.18rem;
+    }
+    .faith-boss-title {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+    .faith-boss-story {
+      margin: 0;
+    }
+    .faith-boss-statusline {
+      margin: 0.12rem 0 0;
+      font-size: 0.94rem;
+      font-weight: 700;
+      color: var(--boss-accent);
+      text-shadow: 0 0 16px rgba(0, 0, 0, 0.4);
+    }
+    .faith-boss-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+    }
+    .faith-boss-meta-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2rem;
+      padding: 0.38rem 0.72rem;
+      border-radius: 999px;
+      border: 1px solid rgba(240, 207, 147, 0.22);
+      background: rgba(8, 12, 18, 0.6);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      color: #f6ead2;
+    }
+    .faith-boss-bars {
+      display: grid;
+      gap: 0.82rem;
+    }
+    .faith-boss-health-row {
+      display: grid;
+      gap: 0.28rem;
+    }
+    .faith-boss-health-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .faith-boss-health-value {
+      color: #efe3cb;
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+    .faith-boss-shell {
+      position: relative;
+      height: 16px;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(240, 207, 147, 0.18);
+      background: linear-gradient(180deg, rgba(18,24,36,0.96), rgba(9,13,20,0.98));
+    }
+    .faith-boss-fill {
+      height: 100%;
+      width: 100%;
+      border-radius: 999px;
+      transition: width 220ms ease, filter 220ms ease;
+    }
+    .faith-boss-round {
+      border: 1px solid rgba(240, 207, 147, 0.18);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(12,18,28,0.84), rgba(8,13,20,0.82));
+      padding: 1rem;
+      display: grid;
+      gap: 0.75rem;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .faith-boss-roundlabel {
+      margin: 0;
+    }
+    .faith-boss-prompt {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+    .faith-boss-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.8rem;
+    }
+    .faith-boss-option {
+      min-height: 98px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      text-align: center;
+      line-height: 1.3;
+      font-weight: 700;
+      border-radius: 18px;
+      border: 1px solid rgba(240, 207, 147, 0.18);
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,0.08), transparent 46%),
+        linear-gradient(180deg, rgba(22, 30, 43, 0.96), rgba(12, 18, 27, 0.98));
+      box-shadow: 0 14px 30px rgba(0,0,0,0.22);
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+    .faith-boss-option:hover:not(:disabled),
+    .faith-boss-option:focus-visible {
+      transform: translateY(-3px) scale(1.01);
+      border-color: rgba(240, 207, 147, 0.34);
+      box-shadow: 0 16px 34px rgba(0,0,0,0.26), 0 0 0 1px rgba(240, 207, 147, 0.08);
+      outline: none;
+    }
+    .faith-boss-option:disabled {
+      cursor: default;
+      opacity: 0.96;
+    }
+    .faith-boss-option .boss-hotkey {
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(240, 228, 205, 0.82);
+    }
+    .faith-boss-option .boss-icon {
+      font-size: 1.55rem;
+      line-height: 1;
+    }
+    .faith-boss-option .boss-label {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.34;
+    }
+    .faith-boss-option.correct {
+      border-color: rgba(130, 211, 146, 0.62) !important;
+      box-shadow: 0 0 0 2px rgba(130, 211, 146, 0.34), 0 16px 32px rgba(70, 170, 88, 0.2) !important;
+      background: linear-gradient(180deg, rgba(28, 54, 37, 0.96), rgba(13, 28, 20, 0.98)) !important;
+    }
+    .faith-boss-option.wrong {
+      border-color: rgba(226, 122, 122, 0.62) !important;
+      box-shadow: 0 0 0 2px rgba(226, 122, 122, 0.34), 0 16px 32px rgba(160, 60, 60, 0.2) !important;
+      background: linear-gradient(180deg, rgba(58, 25, 25, 0.96), rgba(24, 12, 12, 0.98)) !important;
+    }
+    .faith-boss-stage {
+      display: grid;
+      grid-template-columns: minmax(122px, 1fr) minmax(280px, 420px) minmax(122px, 1fr);
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas:
+        ". up ."
+        "left center right"
+        ". down .";
+      align-items: center;
+      justify-items: center;
+      gap: 0.8rem 0.95rem;
+    }
+    .faith-boss-weakpoint {
+      width: 100%;
+      max-width: 210px;
+      min-height: 88px;
+      display: grid;
+      gap: 0.18rem;
+      align-content: center;
+      justify-items: center;
+      padding: 0.72rem 0.7rem;
+      border-radius: 18px;
+      border: 1px solid rgba(240, 207, 147, 0.18);
+      background: linear-gradient(180deg, rgba(22, 30, 43, 0.94), rgba(12, 18, 27, 0.96));
+      box-shadow: 0 14px 28px rgba(0,0,0,0.18);
+      text-align: center;
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+    .faith-boss-weakpoint.is-up { grid-area: up; }
+    .faith-boss-weakpoint.is-left { grid-area: left; }
+    .faith-boss-weakpoint.is-right { grid-area: right; }
+    .faith-boss-weakpoint.is-down { grid-area: down; }
+    .faith-boss-weakpoint.correct {
+      border-color: rgba(130, 211, 146, 0.62);
+      box-shadow: 0 0 0 2px rgba(130, 211, 146, 0.32), 0 16px 32px rgba(70, 170, 88, 0.18);
+      transform: translateY(-3px);
+    }
+    .faith-boss-weakpoint.wrong {
+      border-color: rgba(226, 122, 122, 0.62);
+      box-shadow: 0 0 0 2px rgba(226, 122, 122, 0.32), 0 16px 32px rgba(160, 60, 60, 0.18);
+      transform: translateY(-3px);
+    }
+    .faith-boss-target-dir {
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(240, 228, 205, 0.78);
+    }
+    .faith-boss-target-label {
+      font-size: 0.95rem;
+      font-weight: 800;
+      line-height: 1.28;
+      color: #f7ecd8;
+    }
+    .faith-boss-sprite-frame {
+      grid-area: center;
+      width: min(100%, 420px);
+      align-self: stretch;
+      justify-self: stretch;
+      padding: 0.75rem 0.75rem 0.45rem;
+      border-radius: 22px;
+      border: 1px solid rgba(240, 207, 147, 0.2);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,0.08), transparent 36%),
+        linear-gradient(180deg, rgba(16, 24, 36, 0.9), rgba(8, 13, 20, 0.96));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 36px rgba(0,0,0,0.22);
+    }
+    .faith-boss-sprite {
+      width: 100%;
+      aspect-ratio: 5 / 6;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.05), transparent 18%),
+        radial-gradient(circle at 50% 18%, var(--boss-accent-soft), transparent 34%),
+        linear-gradient(180deg, rgba(17, 24, 36, 0.8), rgba(8, 12, 18, 0.98));
+    }
+    .faith-boss-sprite svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      image-rendering: pixelated;
+    }
+    .faith-boss-duel {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+      align-items: end;
+      gap: 0.4rem;
+      padding: 0.4rem 0.2rem 0;
+    }
+    .faith-boss-duel-foe,
+    .faith-boss-duel-hero {
+      align-self: end;
+    }
+    .faith-boss-duel-foe svg,
+    .faith-boss-duel-hero svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      image-rendering: pixelated;
+    }
+    .faith-boss-duel-foe {
+      transform: translateY(6px);
+    }
+    .faith-boss-duel-hero {
+      transform: translateY(10px);
+      filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.24));
+    }
+    .faith-boss-weapon-chip {
+      margin-top: 0.55rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.42rem;
+      width: 100%;
+      min-height: 2.2rem;
+      padding: 0.45rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(240, 207, 147, 0.18);
+      background: rgba(8, 12, 18, 0.58);
+      color: #f5ead0;
+      font-size: 0.92rem;
+      font-weight: 800;
+      text-align: center;
+    }
+    .faith-boss-weakness-copy {
+      margin: 0;
+      color: rgba(240, 228, 205, 0.86);
+      font-size: 0.94rem;
+      line-height: 1.45;
+    }
+    .faith-boss-attack-pad {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(58px, 74px));
+      grid-template-areas:
+        ". up ."
+        "left center right"
+        ". down .";
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.15rem;
+    }
+    .faith-boss-attack-btn {
+      min-height: 58px;
+      border-radius: 16px;
+      border: 1px solid rgba(240, 207, 147, 0.18);
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,0.08), transparent 52%),
+        linear-gradient(180deg, rgba(24, 34, 48, 0.96), rgba(12, 18, 27, 0.98));
+      font-size: 1.5rem;
+      font-weight: 900;
+      box-shadow: 0 14px 28px rgba(0,0,0,0.18);
+      transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+    }
+    .faith-boss-attack-btn.is-up { grid-area: up; }
+    .faith-boss-attack-btn.is-left { grid-area: left; }
+    .faith-boss-attack-btn.is-right { grid-area: right; }
+    .faith-boss-attack-btn.is-down { grid-area: down; }
+    .faith-boss-attack-btn:hover:not(:disabled),
+    .faith-boss-attack-btn:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(240, 207, 147, 0.34);
+      box-shadow: 0 16px 32px rgba(0,0,0,0.22), 0 0 0 1px rgba(240, 207, 147, 0.08);
+      outline: none;
+    }
+    .faith-boss-attack-btn.correct {
+      border-color: rgba(130, 211, 146, 0.62);
+      box-shadow: 0 0 0 2px rgba(130, 211, 146, 0.32), 0 16px 32px rgba(70, 170, 88, 0.18);
+    }
+    .faith-boss-attack-btn.wrong {
+      border-color: rgba(226, 122, 122, 0.62);
+      box-shadow: 0 0 0 2px rgba(226, 122, 122, 0.32), 0 16px 32px rgba(160, 60, 60, 0.18);
+    }
+    .faith-boss-arena.is-hit .faith-boss-content,
+    .faith-boss-arena.is-hurt .faith-boss-content {
+      animation: faithBossShake 0.42s ease;
+    }
+    .faith-boss-arena.is-hit .faith-boss-backdrop {
+      transform: scale(1.08);
+      filter: saturate(1.18) contrast(1.06) brightness(0.56);
+    }
+    .faith-boss-arena.is-hurt .faith-boss-backdrop {
+      transform: scale(1.05);
+      filter: saturate(0.95) contrast(1.08) brightness(0.42);
+    }
+    .faith-boss-arena.is-hurt .faith-boss-veil {
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 196, 196, 0.08), transparent 34%),
+        radial-gradient(circle at 80% 10%, rgba(206, 79, 79, 0.22), transparent 30%),
+        linear-gradient(180deg, rgba(28, 10, 12, 0.22), rgba(28, 10, 12, 0.72) 42%, rgba(18, 8, 9, 0.94));
+    }
+    @keyframes faithBossFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes faithBossPulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 0 24px var(--boss-glow), 0 18px 32px rgba(0,0,0,0.34); }
+      50% { box-shadow: 0 0 0 1px rgba(255,255,255,0.07), 0 0 34px var(--boss-glow), 0 22px 36px rgba(0,0,0,0.38); }
+    }
+    @keyframes faithBossShake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-5px); }
+      40% { transform: translateX(4px); }
+      60% { transform: translateX(-3px); }
+      80% { transform: translateX(2px); }
+      100% { transform: translateX(0); }
+    }
+    @media (max-width: 700px) {
+      .faith-boss-content {
+        padding: 0.9rem;
+      }
+      .faith-boss-option {
+        min-height: 92px;
+      }
+      .faith-boss-stage {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+        grid-template-areas:
+          "up up"
+          "center center"
+          "left right"
+          "down down";
+      }
+      .faith-boss-sprite-frame {
+        width: min(100%, 350px);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+  bossBattleStylesReady = true;
+}
+
+function bossVisualProfile(era, mode) {
+  const guardNames = {
+    genesis: challengeCopy("Shield of Promise", "Escudo de promesa"),
+    patriarchs: challengeCopy("Shield of Mercy", "Escudo de misericordia"),
+    exodus: challengeCopy("Passover Shield", "Escudo de Pascua"),
+    sinai: challengeCopy("Covenant Shield", "Escudo del pacto"),
+    wilderness: challengeCopy("Banner Shield", "Escudo del estandarte"),
+    conquest: challengeCopy("March Shield", "Escudo de la marcha"),
+    judges: challengeCopy("Deliverer Shield", "Escudo del libertador"),
+    samuel: challengeCopy("Ebenezer Shield", "Escudo de Eben-ezer"),
+    saul: challengeCopy("Obedience Shield", "Escudo de obediencia"),
+    david: challengeCopy("Shepherd Shield", "Escudo del pastor"),
+    generic: challengeCopy("Shield of Faith", "Escudo de fe")
+  };
+  const profiles = {
+    genesis: {
+      displayName: "Nahash, Serpent of Eden",
+      kind: "serpent-lord",
+      title: challengeCopy("Garden Tempter", "Tentador del huerto"),
+      weaponName: challengeCopy("Promise Blade", "Espada de promesa"),
+      weaponIcon: "🗡️",
+      bossWeapon: "fang",
+      skin: "#d2a180",
+      hair: "#30412b",
+      beard: "#30412b",
+      robe: "#4a6d48",
+      robeDark: "#314730",
+      armor: "#89bf62",
+      trim: "#d9b15c",
+      cape: "#243224"
+    },
+    patriarchs: {
+      displayName: "Joseph's Brothers",
+      kind: "captain",
+      title: challengeCopy("Betrayal Captain", "Capitan de traicion"),
+      weaponName: challengeCopy("Mercy Spear", "Lanza de misericordia"),
+      weaponIcon: "🛡️",
+      bossWeapon: "club",
+      skin: "#d8ae84",
+      hair: "#2f2118",
+      beard: "#2f2118",
+      robe: "#8b6a4e",
+      robeDark: "#664b37",
+      armor: "#705648",
+      trim: "#d7c27d",
+      cape: "#4a3729"
+    },
+    exodus: {
+      displayName: "Pharaoh of Egypt",
+      kind: "king",
+      title: challengeCopy("Hard-Hearted King", "Rey de corazon duro"),
+      weaponName: challengeCopy("Sea Staff", "Baston del mar"),
+      weaponIcon: "🪄",
+      bossWeapon: "staff",
+      skin: "#d0a57f",
+      hair: "#19160f",
+      beard: "#19160f",
+      robe: "#2d5c83",
+      robeDark: "#1e3f5c",
+      armor: "#c9a24a",
+      trim: "#f0d17e",
+      cape: "#3e2330"
+    },
+    sinai: {
+      displayName: "Idol Priest of Sinai",
+      kind: "priest",
+      title: challengeCopy("Keeper of False Worship", "Guardian de adoracion falsa"),
+      weaponName: challengeCopy("Covenant Hammer", "Martillo del pacto"),
+      weaponIcon: "🔨",
+      bossWeapon: "scepter",
+      skin: "#d5a581",
+      hair: "#5a4d37",
+      beard: "#5a4d37",
+      robe: "#8f6a3f",
+      robeDark: "#6c4f2f",
+      armor: "#d7b25f",
+      trim: "#f0cf93",
+      cape: "#3f3225"
+    },
+    wilderness: {
+      displayName: "Amalekite Raider",
+      kind: "raider",
+      title: challengeCopy("Desert Ambusher", "Emboscador del desierto"),
+      weaponName: challengeCopy("Banner Spear", "Lanza del estandarte"),
+      weaponIcon: "🏹",
+      bossWeapon: "spear",
+      skin: "#cf9d73",
+      hair: "#2d1c12",
+      beard: "#2d1c12",
+      robe: "#7b5739",
+      robeDark: "#5a402a",
+      armor: "#ae7e4e",
+      trim: "#d7bb79",
+      cape: "#483222"
+    },
+    conquest: {
+      displayName: "King of Jericho",
+      kind: "king",
+      title: challengeCopy("Wall-Crowned King", "Rey coronado del muro"),
+      weaponName: challengeCopy("Trumpet Charge", "Carga de trompeta"),
+      weaponIcon: "📯",
+      bossWeapon: "spear",
+      skin: "#d1a57d",
+      hair: "#241a14",
+      beard: "#241a14",
+      robe: "#8a6238",
+      robeDark: "#664828",
+      armor: "#b48a4b",
+      trim: "#e0bf77",
+      cape: "#4a3423"
+    },
+    judges: {
+      displayName: "Philistine Lord",
+      kind: "warlord",
+      title: challengeCopy("Oppressor of Israel", "Opresor de Israel"),
+      weaponName: challengeCopy("Deliverer Blade", "Espada del libertador"),
+      weaponIcon: "⚔️",
+      bossWeapon: "sword",
+      skin: "#cd9b72",
+      hair: "#17130e",
+      beard: "#17130e",
+      robe: "#6e5d86",
+      robeDark: "#524566",
+      armor: "#8f6c54",
+      trim: "#e1be74",
+      cape: "#35283d"
+    },
+    samuel: {
+      displayName: "Philistine Captain",
+      kind: "captain",
+      title: challengeCopy("Enemy at Ebenezer", "Enemigo en Eben-ezer"),
+      weaponName: challengeCopy("Thunder Horn", "Cuerno del trueno"),
+      weaponIcon: "📯",
+      bossWeapon: "spear",
+      skin: "#d3a47d",
+      hair: "#2b1f18",
+      beard: "#2b1f18",
+      robe: "#526b8f",
+      robeDark: "#3c4f69",
+      armor: "#8da3c3",
+      trim: "#d6c38c",
+      cape: "#2f3449"
+    },
+    saul: {
+      displayName: "Agag of Amalek",
+      kind: "king",
+      title: challengeCopy("Pride of Amalek", "Orgullo de Amalec"),
+      weaponName: challengeCopy("Obedience Spear", "Lanza de obediencia"),
+      weaponIcon: "🗡️",
+      bossWeapon: "scepter",
+      skin: "#cf9b76",
+      hair: "#271a14",
+      beard: "#271a14",
+      robe: "#8b4043",
+      robeDark: "#672d31",
+      armor: "#bc6b62",
+      trim: "#e6c08d",
+      cape: "#422126"
+    },
+    david: {
+      displayName: "Goliath of Gath",
+      kind: "giant",
+      title: challengeCopy("Champion of Gath", "Campeon de Gat"),
+      weaponName: challengeCopy("Sling of Faith", "Honda de fe"),
+      weaponIcon: "🎯",
+      bossWeapon: "spear",
+      skin: "#c99672",
+      hair: "#1c1613",
+      beard: "#1c1613",
+      robe: "#6f4b33",
+      robeDark: "#523624",
+      armor: "#9c7b55",
+      trim: "#f0d17e",
+      cape: "#3b2a22",
+      stature: 1.18
+    },
+    generic: {
+      displayName: mode && mode.enemyName ? mode.enemyName : challengeCopy("Bible Boss", "Jefe biblico"),
+      kind: "warlord",
+      title: challengeCopy("Faithful Final Battle", "Batalla final de fe"),
+      weaponName: challengeCopy("Shieldbreaker Blade", "Espada rompepoder"),
+      weaponIcon: "🗡️",
+      bossWeapon: "sword",
+      skin: "#d2a37d",
+      hair: "#231913",
+      beard: "#231913",
+      robe: "#5f4f66",
+      robeDark: "#473b4d",
+      armor: "#7f6d86",
+      trim: "#d9b15c",
+      cape: "#2f2635"
+    }
+  };
+
+  const profile = profiles[era] || profiles.generic;
+  return {
+    displayName: profile.displayName || (mode && mode.enemyName) || challengeCopy("Bible Boss", "Jefe biblico"),
+    title: profile.title || challengeCopy("Faithful Final Battle", "Batalla final de fe"),
+    weaponName: profile.weaponName || challengeCopy("Faith Blade", "Espada de fe"),
+    weaponIcon: profile.weaponIcon || "🗡️",
+    guardName: profile.guardName || guardNames[era] || guardNames.generic,
+    bossWeapon: profile.bossWeapon || "sword",
+    skin: profile.skin || "#d2a37d",
+    hair: profile.hair || "#231913",
+    beard: profile.beard || "#231913",
+    robe: profile.robe || "#5f4f66",
+    robeDark: profile.robeDark || "#473b4d",
+    armor: profile.armor || "#7f6d86",
+    trim: profile.trim || "#d9b15c",
+    cape: profile.cape || "#2f2635",
+    kind: profile.kind || "warlord",
+    stature: Number.isFinite(profile.stature) ? profile.stature : 1,
+    weaknessCopy: profile.weaknessCopy || challengeCopy(
+      "Watch the attack lanes around the enemy, find the true opening, and raise the shield in the right direction.",
+      "Observa los carriles de ataque alrededor del enemigo, encuentra la apertura verdadera y levanta el escudo en la direccion correcta."
+    )
+  };
+}
+
+function retroBossSpriteMarkup(profile, bossRatio = 1, playerRatio = 1) {
+  const bossState = bossRatio <= 0.25 ? "faltering" : bossRatio <= 0.5 ? "wounded" : playerRatio <= 0.34 ? "taunting" : "fierce";
+  const scale = profile && Number.isFinite(profile.stature) ? profile.stature : 1;
+  const auraOpacity = bossState === "faltering" ? 0.28 : bossState === "wounded" ? 0.34 : 0.46;
+  const headTilt = bossState === "faltering" ? -4 : bossState === "taunting" ? 3 : 0;
+  const bodyTilt = bossState === "faltering" ? -3 : bossState === "taunting" ? 2 : 0;
+  const eyeY = bossState === "taunting" ? 74 : 76;
+  const browLift = bossState === "faltering" ? 2 : bossState === "taunting" ? -2 : -1;
+  const mouthMarkup = bossState === "faltering"
+    ? `<rect x="96" y="95" width="10" height="3" fill="#2c1c15" />`
+    : bossState === "taunting"
+      ? `<path d="M92 95 Q101 102 112 95" fill="none" stroke="#2c1c15" stroke-width="3" stroke-linecap="square" />`
+      : `<path d="M92 98 Q101 92 112 98" fill="none" stroke="#2c1c15" stroke-width="3" stroke-linecap="square" />`;
+  const browLeft = `<rect x="86" y="${69 + browLift}" width="12" height="3" fill="#1b1410" transform="rotate(-12 92 ${70 + browLift})" />`;
+  const browRight = `<rect x="104" y="${69 + browLift}" width="12" height="3" fill="#1b1410" transform="rotate(12 110 ${70 + browLift})" />`;
+
+  let headAccent = "";
+  if (profile.kind === "king") {
+    headAccent = `<path d="M76 48 L84 34 L96 48 L108 34 L120 48 L128 34 L136 48 L136 58 L76 58 Z" fill="${profile.trim}" stroke="#312417" stroke-width="2" />`;
+  } else if (profile.kind === "giant") {
+    headAccent = `<path d="M74 51 L88 40 L114 40 L128 51 L122 60 L80 60 Z" fill="${profile.armor}" stroke="#201913" stroke-width="2" />`;
+  } else if (profile.kind === "serpent-lord") {
+    headAccent = `
+      <path d="M70 54 Q100 16 130 54 L120 66 Q100 44 80 66 Z" fill="${profile.armor}" stroke="#22311f" stroke-width="2" />
+      <circle cx="80" cy="54" r="5" fill="#f0d17e" />
+      <circle cx="120" cy="54" r="5" fill="#f0d17e" />
+    `;
+  } else if (profile.kind === "priest") {
+    headAccent = `<rect x="82" y="45" width="36" height="10" rx="2" fill="${profile.trim}" stroke="#2a2018" stroke-width="2" />`;
+  }
+
+  let bossWeaponMarkup = "";
+  switch (profile.bossWeapon) {
+    case "staff":
+      bossWeaponMarkup = `
+        <rect x="150" y="96" width="7" height="120" fill="#8d6b45" />
+        <path d="M150 96 Q151 78 166 78 Q176 78 176 87 Q176 98 160 99" fill="none" stroke="#8d6b45" stroke-width="7" stroke-linecap="square" />
+      `;
+      break;
+    case "scepter":
+      bossWeaponMarkup = `
+        <rect x="150" y="92" width="7" height="122" fill="#8d6b45" />
+        <circle cx="153.5" cy="84" r="10" fill="${profile.trim}" stroke="#2a2018" stroke-width="2" />
+      `;
+      break;
+    case "club":
+      bossWeaponMarkup = `
+        <rect x="151" y="112" width="7" height="96" fill="#7d5a38" />
+        <rect x="144" y="94" width="20" height="28" rx="4" fill="#9d7446" stroke="#261a10" stroke-width="2" />
+      `;
+      break;
+    case "fang":
+      bossWeaponMarkup = `
+        <path d="M150 114 L174 84 L182 90 L160 126 Z" fill="${profile.trim}" stroke="#1f1712" stroke-width="2" />
+      `;
+      break;
+    case "sword":
+      bossWeaponMarkup = `
+        <rect x="150" y="108" width="7" height="78" fill="#80603e" />
+        <rect x="143" y="106" width="21" height="6" fill="${profile.trim}" stroke="#231812" stroke-width="2" />
+        <path d="M151 46 L160 106 L147 106 Z" fill="#d8dde7" stroke="#2b2f39" stroke-width="2" />
+      `;
+      break;
+    default:
+      bossWeaponMarkup = `
+        <rect x="150" y="92" width="7" height="122" fill="#8d6b45" />
+        <polygon points="153,52 165,86 141,86" fill="#d8dde7" stroke="#272a33" stroke-width="2" />
+      `;
+      break;
+  }
+
+  return `
+    <svg viewBox="0 0 220 260" role="img" aria-label="${profile.displayName}" shape-rendering="crispEdges">
+      <ellipse cx="110" cy="238" rx="68" ry="16" fill="rgba(0,0,0,0.42)" />
+      <ellipse cx="110" cy="128" rx="74" ry="74" fill="rgba(255,255,255,0.04)" />
+      <g opacity="${auraOpacity}">
+        <circle cx="110" cy="124" r="82" fill="${profile.trim}" opacity="0.18" />
+        <circle cx="110" cy="124" r="56" fill="${profile.armor}" opacity="0.16" />
+      </g>
+      <g transform="translate(110 140) scale(${scale}) rotate(${bodyTilt}) translate(-110 -140)">
+        <path d="M76 111 Q110 78 144 111 L148 190 L72 190 Z" fill="${profile.cape}" opacity="0.74" />
+        <rect x="82" y="170" width="18" height="48" fill="${profile.robeDark}" />
+        <rect x="120" y="170" width="18" height="48" fill="${profile.robeDark}" />
+        <rect x="78" y="216" width="24" height="10" fill="#6c5339" />
+        <rect x="118" y="216" width="24" height="10" fill="#6c5339" />
+        <path d="M74 116 L146 116 L156 198 L64 198 Z" fill="${profile.robe}" stroke="${profile.robeDark}" stroke-width="3" />
+        <path d="M86 116 L110 150 L134 116" fill="none" stroke="${profile.trim}" stroke-width="6" />
+        <rect x="88" y="104" width="44" height="20" fill="${profile.armor}" stroke="${profile.robeDark}" stroke-width="3" />
+        <rect x="74" y="118" width="16" height="64" rx="6" fill="${profile.skin}" transform="rotate(14 82 150)" />
+        <rect x="130" y="118" width="16" height="64" rx="6" fill="${profile.skin}" transform="rotate(-18 138 150)" />
+        <circle cx="80" cy="181" r="8" fill="${profile.skin}" />
+        <circle cx="140" cy="181" r="8" fill="${profile.skin}" />
+        ${bossWeaponMarkup}
+        <g transform="rotate(${headTilt} 110 78)">
+          <rect x="88" y="52" width="44" height="16" rx="6" fill="${profile.hair}" />
+          <circle cx="110" cy="78" r="28" fill="${profile.skin}" stroke="#2d2119" stroke-width="3" />
+          <path d="M86 84 Q110 116 134 84 L126 106 Q110 118 94 106 Z" fill="${profile.beard}" opacity="0.92" />
+          <path d="M82 58 Q110 34 138 58 L136 74 Q110 60 84 74 Z" fill="${profile.hair}" />
+          ${headAccent}
+          <rect x="88" y="${eyeY}" width="8" height="4" fill="#f6f0e6" />
+          <rect x="114" y="${eyeY}" width="8" height="4" fill="#f6f0e6" />
+          <rect x="90" y="${eyeY + 1}" width="4" height="4" fill="#1e1812" />
+          <rect x="116" y="${eyeY + 1}" width="4" height="4" fill="#1e1812" />
+          ${browLeft}
+          ${browRight}
+          <rect x="104" y="84" width="4" height="8" fill="#b9805f" />
+          ${mouthMarkup}
+        </g>
+      </g>
+    </svg>
+  `;
+}
+
+function retroShieldHeroMarkup(profile, palette, playerRatio = 1, activeDirection = "") {
+  const heroState = playerRatio <= 0.34 ? "strained" : activeDirection ? "guarding" : "ready";
+  const shieldShift = {
+    up: { x: -2, y: -10, rotate: -8 },
+    left: { x: -12, y: -2, rotate: -18 },
+    right: { x: 8, y: -2, rotate: 8 },
+    down: { x: -2, y: 8, rotate: 10 },
+    "": { x: 0, y: 0, rotate: 0 }
+  }[activeDirection || ""] || { x: 0, y: 0, rotate: 0 };
+  const mouth = heroState === "strained"
+    ? `<rect x="64" y="66" width="8" height="3" fill="#2c1c15" />`
+    : `<path d="M62 66 Q68 70 74 66" fill="none" stroke="#2c1c15" stroke-width="3" stroke-linecap="square" />`;
+
+  return `
+    <svg viewBox="0 0 150 220" role="img" aria-label="${challengeCopy("Faith warrior", "Guerrero de fe")}" shape-rendering="crispEdges">
+      <ellipse cx="72" cy="202" rx="44" ry="12" fill="rgba(0,0,0,0.38)" />
+      <g transform="translate(0 4)">
+        <path d="M42 98 Q74 72 106 98 L110 162 L38 162 Z" fill="#214260" opacity="0.32" />
+        <rect x="50" y="136" width="14" height="42" fill="#73563b" />
+        <rect x="82" y="136" width="14" height="42" fill="#73563b" />
+        <rect x="48" y="176" width="18" height="9" fill="#5e4a33" />
+        <rect x="80" y="176" width="18" height="9" fill="#5e4a33" />
+        <path d="M42 94 L106 94 L112 164 L36 164 Z" fill="#eadcb8" stroke="#987948" stroke-width="3" />
+        <path d="M58 94 L74 118 L90 94" fill="none" stroke="${palette.player}" stroke-width="6" />
+        <rect x="54" y="84" width="36" height="16" fill="${palette.player}" stroke="#416e83" stroke-width="3" />
+        <rect x="32" y="98" width="14" height="54" rx="6" fill="#d7ad83" transform="rotate(14 39 126)" />
+        <rect x="94" y="98" width="14" height="54" rx="6" fill="#d7ad83" transform="rotate(-18 101 126)" />
+        <circle cx="40" cy="150" r="7" fill="#d7ad83" />
+        <circle cx="100" cy="150" r="7" fill="#d7ad83" />
+        <g transform="translate(${shieldShift.x} ${shieldShift.y}) rotate(${shieldShift.rotate} 32 112)">
+          <path d="M20 90 L44 84 L62 96 L60 130 L40 150 L18 134 L16 102 Z" fill="${palette.player}" stroke="#244050" stroke-width="3" />
+          <path d="M26 100 L42 96 L53 104 L51 125 L39 138 L24 127 L22 106 Z" fill="rgba(255,255,255,0.16)" />
+          <rect x="31" y="107" width="9" height="26" fill="#f6ead2" opacity="0.72" />
+        </g>
+        <g>
+          <rect x="105" y="100" width="6" height="58" fill="#7f6141" />
+          <path d="M108 74 L116 100 L100 100 Z" fill="#d8dde7" stroke="#2b2f39" stroke-width="2" />
+        </g>
+        <rect x="54" y="38" width="28" height="12" rx="5" fill="#3a2a1c" />
+        <circle cx="68" cy="58" r="22" fill="#d7ad83" stroke="#2d2119" stroke-width="3" />
+        <path d="M48 48 Q68 32 88 48 L84 64 Q68 54 52 64 Z" fill="#3a2a1c" />
+        <rect x="56" y="56" width="7" height="4" fill="#f6f0e6" />
+        <rect x="73" y="56" width="7" height="4" fill="#f6f0e6" />
+        <rect x="58" y="57" width="3" height="3" fill="#1e1812" />
+        <rect x="75" y="57" width="3" height="3" fill="#1e1812" />
+        <rect x="54" y="50" width="10" height="3" fill="#1b1410" transform="rotate(-10 59 51)" />
+        <rect x="72" y="50" width="10" height="3" fill="#1b1410" transform="rotate(10 77 51)" />
+        <rect x="66" y="60" width="4" height="7" fill="#bf8461" />
+        ${mouth}
+      </g>
+    </svg>
+  `;
+}
+
+function retroBossBattleSceneMarkup(profile, palette, bossRatio = 1, playerRatio = 1, activeDirection = "") {
+  return `
+    <div class="faith-boss-duel">
+      <div class="faith-boss-duel-foe">${retroBossSpriteMarkup(profile, bossRatio, playerRatio)}</div>
+      <div class="faith-boss-duel-hero">${retroShieldHeroMarkup(profile, palette, playerRatio, activeDirection)}</div>
+    </div>
+  `;
+}
+
 function renderBoss(meta, mode, feedback) {
+  ensureBossBattleStyles();
+  const era = meta && meta.theme ? meta.theme.era : "generic";
+  const palette = bossBattlePalette(era);
+  const profile = bossVisualProfile(era, mode);
+  const enemyDisplayName = profile.displayName || mode.enemyName || challengeCopy("Bible Boss", "Jefe biblico");
+  const bossMode = {
+    ...mode,
+    enemyName: enemyDisplayName
+  };
+  const bossBadgeIcon = {
+    "serpent-lord": "🐍",
+    captain: "🛡️",
+    king: "👑",
+    priest: "🔥",
+    raider: "⚔️",
+    warlord: "⚔️",
+    giant: "🗿"
+  }[profile.kind] || mode.enemyIcon || "⚔️";
+  const bossFrames = cutsceneStillSequenceGroups(era)
+    .map((group) => (Array.isArray(group) ? group.find(Boolean) : ""))
+    .filter(Boolean);
+  const fallbackPoster = cutscenePosterSource(era);
+
   const hint = createChallengeHint(mode.keyboardHint || challengeCopy(
-    "Keyboard: press 1-4 to choose the right item or response.",
-    "Teclado: presiona 1-4 para elegir el objeto o la respuesta correctos."
+    "Keyboard: use arrow keys or WASD to raise the shield in the right direction.",
+    "Teclado: usa las flechas o WASD para levantar el escudo en la direccion correcta."
   ));
   const status = createSkillStatus("");
   activityPanel.append(hint, status);
 
   const arena = document.createElement("div");
-  arena.className = "activity-panel";
+  arena.className = "activity-panel faith-boss-arena";
   arena.style.marginTop = "0.85rem";
-  arena.style.display = "grid";
-  arena.style.gap = "0.9rem";
+  arena.style.setProperty("--boss-accent", palette.accent);
+  arena.style.setProperty("--boss-accent-soft", palette.accentSoft);
+  arena.style.setProperty("--boss-glow", palette.glow);
+  arena.style.setProperty("--boss-player", palette.player);
+  arena.style.setProperty("--boss-player-glow", palette.playerGlow);
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "faith-boss-backdrop";
+
+  const veil = document.createElement("div");
+  veil.className = "faith-boss-veil";
+
+  const atmosphere = document.createElement("div");
+  atmosphere.className = "faith-boss-atmosphere";
+  for (let index = 0; index < 3; index += 1) {
+    atmosphere.appendChild(document.createElement("span"));
+  }
+
+  const content = document.createElement("div");
+  content.className = "faith-boss-content";
 
   const bossHead = document.createElement("div");
-  bossHead.style.display = "flex";
-  bossHead.style.alignItems = "center";
-  bossHead.style.justifyContent = "space-between";
-  bossHead.style.gap = "0.9rem";
-  bossHead.style.flexWrap = "wrap";
+  bossHead.className = "faith-boss-head";
 
   const bossIdentity = document.createElement("div");
-  bossIdentity.style.display = "flex";
-  bossIdentity.style.alignItems = "center";
-  bossIdentity.style.gap = "0.8rem";
+  bossIdentity.className = "faith-boss-identity";
 
   const bossIcon = document.createElement("div");
-  bossIcon.textContent = mode.enemyIcon || "⚔️";
-  bossIcon.style.fontSize = "2rem";
-  bossIcon.style.width = "3.2rem";
-  bossIcon.style.height = "3.2rem";
-  bossIcon.style.borderRadius = "999px";
-  bossIcon.style.display = "grid";
-  bossIcon.style.placeItems = "center";
-  bossIcon.style.background = "linear-gradient(180deg, rgba(118,29,29,0.55), rgba(21,10,10,0.92))";
-  bossIcon.style.boxShadow = "0 14px 30px rgba(120,34,34,0.22)";
-  bossIcon.style.border = "1px solid rgba(240, 207, 147, 0.22)";
+  bossIcon.className = "faith-boss-icon";
+  bossIcon.textContent = bossBadgeIcon;
 
   const bossTextWrap = document.createElement("div");
+  bossTextWrap.className = "faith-boss-copy";
+
   const bossTitle = document.createElement("h3");
-  bossTitle.textContent = mode.enemyName || challengeCopy("Boss Battle", "Batalla final");
-  bossTitle.style.margin = "0";
-  bossTitle.style.fontSize = "1.35rem";
+  bossTitle.className = "faith-boss-title";
+  bossTitle.textContent = enemyDisplayName;
 
   const bossStory = document.createElement("p");
-  bossStory.className = "meta";
-  bossStory.textContent = mode.storyPrompt || challengeCopy(
+  bossStory.className = "meta faith-boss-story";
+  bossStory.textContent = profile.title || mode.storyPrompt || challengeCopy(
     "Choose the faithful response to defeat the enemy.",
     "Elige la respuesta fiel para derrotar al enemigo."
   );
-  bossStory.style.margin = "0.2rem 0 0";
 
-  bossTextWrap.append(bossTitle, bossStory);
+  const battleLine = document.createElement("p");
+  battleLine.className = "faith-boss-statusline";
+
+  bossTextWrap.append(bossTitle, bossStory, battleLine);
   bossIdentity.append(bossIcon, bossTextWrap);
 
   const difficultyChip = document.createElement("div");
-  difficultyChip.className = "tag open";
+  difficultyChip.className = "faith-boss-meta-chip";
   difficultyChip.textContent = `${challengeCopy("Boss", "Jefe")} • ${currentDifficulty().label}`;
 
-  bossHead.append(bossIdentity, difficultyChip);
+  const phaseChip = document.createElement("div");
+  phaseChip.className = "faith-boss-meta-chip";
+
+  const headMeta = document.createElement("div");
+  headMeta.className = "faith-boss-meta";
+  headMeta.append(difficultyChip, phaseChip);
+
+  bossHead.append(bossIdentity, headMeta);
 
   const barWrap = document.createElement("div");
-  barWrap.style.display = "grid";
-  barWrap.style.gap = "0.8rem";
+  barWrap.className = "faith-boss-bars";
 
   const makeHealthRow = (labelText, accent) => {
     const row = document.createElement("div");
-    row.style.display = "grid";
-    row.style.gap = "0.28rem";
+    row.className = "faith-boss-health-row";
 
     const top = document.createElement("div");
-    top.style.display = "flex";
-    top.style.justifyContent = "space-between";
-    top.style.alignItems = "center";
-    top.style.gap = "0.6rem";
+    top.className = "faith-boss-health-top";
 
     const label = document.createElement("strong");
     label.textContent = labelText;
-    label.style.fontSize = "0.92rem";
 
     const value = document.createElement("span");
-    value.className = "meta";
+    value.className = "faith-boss-health-value";
 
     top.append(label, value);
 
     const shell = document.createElement("div");
-    shell.style.position = "relative";
-    shell.style.height = "16px";
-    shell.style.borderRadius = "999px";
-    shell.style.overflow = "hidden";
-    shell.style.border = "1px solid rgba(240, 207, 147, 0.18)";
-    shell.style.background = "linear-gradient(180deg, rgba(18,24,36,0.96), rgba(9,13,20,0.98))";
+    shell.className = "faith-boss-shell";
 
     const fill = document.createElement("div");
-    fill.style.height = "100%";
-    fill.style.width = "100%";
-    fill.style.borderRadius = "999px";
+    fill.className = "faith-boss-fill";
     fill.style.background = accent;
-    fill.style.transition = "width 180ms ease";
 
     shell.append(fill);
     row.append(top, shell);
@@ -13433,40 +14485,48 @@ function renderBoss(meta, mode, feedback) {
   };
 
   const bossHealth = makeHealthRow(
-    challengeCopy("Enemy Health", "Salud del enemigo"),
+    challengeCopy("Boss Stamina", "Resistencia del jefe"),
     "linear-gradient(90deg, rgba(195,76,76,0.95), rgba(132,28,28,0.98))"
   );
   const playerHealth = makeHealthRow(
-    challengeCopy("Faith Strength", "Fuerza de fe"),
-    "linear-gradient(90deg, rgba(213,169,72,0.96), rgba(184,131,34,0.98))"
+    challengeCopy("Shield Guard", "Guardia del escudo"),
+    "linear-gradient(90deg, rgba(117,189,214,0.96), rgba(53,123,162,0.98))"
   );
   barWrap.append(bossHealth.row, playerHealth.row);
 
   const roundCard = document.createElement("div");
-  roundCard.style.border = "1px solid rgba(240, 207, 147, 0.18)";
-  roundCard.style.borderRadius = "20px";
-  roundCard.style.background = "linear-gradient(180deg, rgba(15,22,33,0.98), rgba(10,15,23,0.96))";
-  roundCard.style.padding = "1rem";
-  roundCard.style.display = "grid";
-  roundCard.style.gap = "0.75rem";
+  roundCard.className = "faith-boss-round";
 
   const roundLabel = document.createElement("p");
-  roundLabel.className = "meta";
-  roundLabel.style.margin = "0";
+  roundLabel.className = "meta faith-boss-roundlabel";
 
   const roundPrompt = document.createElement("p");
-  roundPrompt.style.margin = "0";
-  roundPrompt.style.fontSize = "1.1rem";
-  roundPrompt.style.fontWeight = "700";
-  roundPrompt.style.lineHeight = "1.45";
+  roundPrompt.className = "faith-boss-prompt";
 
-  const optionsWrap = document.createElement("div");
-  optionsWrap.style.display = "grid";
-  optionsWrap.style.gridTemplateColumns = "repeat(auto-fit, minmax(180px, 1fr))";
-  optionsWrap.style.gap = "0.8rem";
+  const bossStage = document.createElement("div");
+  bossStage.className = "faith-boss-stage";
 
-  roundCard.append(roundLabel, roundPrompt, optionsWrap);
-  arena.append(bossHead, barWrap, roundCard);
+  const spriteFrame = document.createElement("div");
+  spriteFrame.className = "faith-boss-sprite-frame";
+
+  const spriteWrap = document.createElement("div");
+  spriteWrap.className = "faith-boss-sprite";
+
+  const weaponChip = document.createElement("div");
+  weaponChip.className = "faith-boss-weapon-chip";
+
+  spriteFrame.append(spriteWrap, weaponChip);
+
+  const weaknessCopy = document.createElement("p");
+  weaknessCopy.className = "faith-boss-weakness-copy";
+  weaknessCopy.textContent = profile.weaknessCopy;
+
+  const attackPad = document.createElement("div");
+  attackPad.className = "faith-boss-attack-pad";
+
+  roundCard.append(roundLabel, roundPrompt, bossStage, weaknessCopy, attackPad);
+  content.append(bossHead, barWrap, roundCard);
+  arena.append(backdrop, veil, atmosphere, content);
   activityPanel.append(arena);
 
   const rounds = Array.isArray(mode.rounds) && mode.rounds.length ? mode.rounds : [];
@@ -13475,8 +14535,16 @@ function renderBoss(meta, mode, feedback) {
   let roundIndex = 0;
   let running = rounds.length > 0;
   let locked = false;
+  let defenseDirection = "";
   const buttons = [];
+  const targetNodes = [];
   const timers = new Set();
+  const directionSlots = [
+    { key: "up", className: "is-up", icon: "↑", label: challengeCopy("Up", "Arriba") },
+    { key: "left", className: "is-left", icon: "←", label: challengeCopy("Left", "Izquierda") },
+    { key: "right", className: "is-right", icon: "→", label: challengeCopy("Right", "Derecha") },
+    { key: "down", className: "is-down", icon: "↓", label: challengeCopy("Down", "Abajo") }
+  ];
 
   const schedule = (callback, delay) => {
     const timer = setTimeout(() => {
@@ -13489,6 +14557,18 @@ function renderBoss(meta, mode, feedback) {
   const clearTimers = () => {
     timers.forEach((timer) => clearTimeout(timer));
     timers.clear();
+  };
+
+  const refreshBackdrop = () => {
+    const safeFrameIndex = bossFrames.length ? (roundIndex % bossFrames.length) : 0;
+    const src = bossFrames[safeFrameIndex] || fallbackPoster;
+    if (!src) return;
+    const view = bossBattleBackdropStyle(era, safeFrameIndex);
+    backdrop.style.backgroundImage = `url("${src}")`;
+    backdrop.style.backgroundRepeat = "no-repeat";
+    backdrop.style.backgroundSize = view.size;
+    backdrop.style.backgroundPosition = view.position;
+    backdrop.style.backgroundColor = view.backgroundColor;
   };
 
   const setLocked = (value) => {
@@ -13504,6 +14584,7 @@ function renderBoss(meta, mode, feedback) {
       button.style.transform = "";
       button.style.boxShadow = "";
     });
+    targetNodes.forEach((node) => node.classList.remove("correct", "wrong"));
   };
 
   const markButtonState = (index, kind) => {
@@ -13519,46 +14600,80 @@ function renderBoss(meta, mode, feedback) {
     }
   };
 
+  const markTargetState = (index, kind) => {
+    const node = targetNodes[index];
+    if (!node) return;
+    node.classList.add(kind);
+  };
+
   const updateBars = () => {
     const maxBoss = Math.max(1, Number(mode.bossHealth) || 1);
     const maxPlayer = Math.max(1, Number(mode.playerHealth) || 1);
+    const bossRatio = bossHp / maxBoss;
+    const playerRatio = playerHp / maxPlayer;
     bossHealth.value.textContent = `${bossHp}/${maxBoss}`;
     playerHealth.value.textContent = `${playerHp}/${maxPlayer}`;
     bossHealth.fill.style.width = `${Math.max(0, Math.min(100, (bossHp / maxBoss) * 100))}%`;
     playerHealth.fill.style.width = `${Math.max(0, Math.min(100, (playerHp / maxPlayer) * 100))}%`;
-    status.textContent = `${challengeCopy("Boss", "Jefe")}: ${bossHp}/${maxBoss} | ${challengeCopy("Faith", "Fe")}: ${playerHp}/${maxPlayer} | ${challengeCopy("Round", "Ronda")} ${Math.min(roundIndex + 1, rounds.length)}/${rounds.length}`;
+    bossIcon.classList.toggle("is-danger", bossRatio <= 0.5 || playerRatio <= 0.34);
+    phaseChip.textContent = bossBattlePhaseLabel(roundIndex, rounds.length, bossRatio, playerRatio);
+    battleLine.textContent = bossBattleStatusText(bossMode, bossRatio, playerRatio);
+    spriteWrap.innerHTML = retroBossBattleSceneMarkup(profile, palette, bossRatio, playerRatio, defenseDirection);
+    weaponChip.innerHTML = `🛡️ <span>${challengeCopy("Raise", "Levanta")}:</span> <span>${profile.guardName}</span>`;
+    status.textContent = `${challengeCopy("Boss Stamina", "Resistencia del jefe")}: ${bossHp}/${maxBoss} | ${challengeCopy("Shield Guard", "Guardia del escudo")}: ${playerHp}/${maxPlayer} | ${challengeCopy("Round", "Ronda")} ${Math.min(roundIndex + 1, rounds.length)}/${rounds.length}`;
+  };
+
+  const pulseArena = (kind) => {
+    arena.classList.remove("is-hit", "is-hurt");
+    void arena.offsetWidth;
+    arena.classList.add(kind);
+    schedule(() => {
+      arena.classList.remove(kind);
+    }, 430);
   };
 
   const renderRound = () => {
     const round = rounds[roundIndex % rounds.length];
     if (!round) return;
+    refreshBackdrop();
     clearButtonState();
+    defenseDirection = "";
     roundLabel.textContent = `${mode.label} • ${challengeCopy("Round", "Ronda")} ${Math.min(roundIndex + 1, rounds.length)}/${rounds.length}`;
-    roundPrompt.textContent = round.prompt || challengeCopy("Choose the faithful response.", "Elige la respuesta fiel.");
-    optionsWrap.innerHTML = "";
+    roundPrompt.textContent = round.prompt || challengeCopy(
+      "The boss is attacking. Read the clue and raise the shield in the right direction.",
+      "El jefe esta atacando. Lee la pista y levanta el escudo en la direccion correcta."
+    );
+    bossStage.innerHTML = "";
+    attackPad.innerHTML = "";
     buttons.length = 0;
+    targetNodes.length = 0;
 
-    round.options.forEach((option, index) => {
+    directionSlots.forEach((slot, index) => {
+      const weakpoint = document.createElement("div");
+      weakpoint.className = `faith-boss-weakpoint ${slot.className}`;
+      weakpoint.innerHTML = `<span class="faith-boss-target-dir">${slot.label}</span><span class="faith-boss-target-label">${round.options[index] ? round.options[index].label : challengeCopy("No clue", "Sin pista")}</span>`;
+      targetNodes.push(weakpoint);
+      bossStage.appendChild(weakpoint);
+    });
+
+    bossStage.appendChild(spriteFrame);
+
+    directionSlots.forEach((slot, index) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "ghost-btn";
-      button.style.minHeight = "92px";
-      button.style.display = "flex";
-      button.style.flexDirection = "column";
-      button.style.alignItems = "center";
-      button.style.justifyContent = "center";
-      button.style.gap = "0.4rem";
-      button.style.textAlign = "center";
-      button.style.fontWeight = "700";
-      button.style.lineHeight = "1.3";
-      button.innerHTML = `<span style="font-size:1.4rem">${option.icon || "✨"}</span><span>${index + 1}. ${option.label}</span>`;
+      button.className = `ghost-btn faith-boss-attack-btn ${slot.className}`;
+      button.setAttribute("aria-label", `${challengeCopy("Guard", "Proteger")} ${slot.label}`);
+      button.innerHTML = `🛡️${slot.icon}`;
       button.addEventListener("click", () => resolveRound(index));
       buttons.push(button);
-      optionsWrap.appendChild(button);
+      attackPad.appendChild(button);
     });
 
     updateBars();
     setLocked(false);
+    if (buttons[0] && typeof buttons[0].focus === "function") {
+      buttons[0].focus({ preventScroll: true });
+    }
   };
 
   const finishBossVictory = () => {
@@ -13566,11 +14681,10 @@ function renderBoss(meta, mode, feedback) {
     setLocked(true);
     feedback.className = "feedback ok";
     feedback.textContent = challengeCopy(
-      `Victory. ${mode.enemyName} has been defeated.`,
-      `Victoria. ${mode.enemyName} ha sido derrotado.`
+      `Victory. ${enemyDisplayName} has been defeated.`,
+      `Victoria. ${enemyDisplayName} ha sido derrotado.`
     );
-    playSfx("stage-clear");
-    completeStage(meta, mode, { delayMs: 2300 });
+    completeStage(meta, mode, { delayMs: 2300, sfx: null });
   };
 
   const finishBossFailure = () => {
@@ -13589,26 +14703,33 @@ function renderBoss(meta, mode, feedback) {
     if (!round) return;
     setLocked(true);
     clearButtonState();
+    defenseDirection = directionSlots[index] ? directionSlots[index].key : "";
     const isCorrect = index === round.correctIndex;
     markButtonState(round.correctIndex, "correct");
-    if (!isCorrect) markButtonState(index, "wrong");
+    markTargetState(round.correctIndex, "correct");
+    if (!isCorrect) {
+      markButtonState(index, "wrong");
+      markTargetState(index, "wrong");
+    }
 
     if (isCorrect) {
       bossHp = Math.max(0, bossHp - 1);
       feedback.className = "feedback ok";
       feedback.textContent = round.successText || challengeCopy(
-        "Direct hit. The enemy loses strength.",
-        "Golpe directo. El enemigo pierde fuerza."
+        "Strong block. The enemy loses stamina.",
+        "Bloqueo firme. El enemigo pierde resistencia."
       );
-      playSfx(bossHp <= 0 ? "stage-clear" : "hit");
+      pulseArena("is-hit");
+      playSfx(bossHp <= 0 ? "boss-win" : "boss-hit");
     } else {
       playerHp = Math.max(0, playerHp - 1);
       feedback.className = "feedback warn";
       feedback.textContent = round.failText || challengeCopy(
-        "Wrong response. The enemy strikes back.",
-        "Respuesta incorrecta. El enemigo contraataca."
+        "Guard broken. The enemy lands a hit.",
+        "La guardia se rompio. El enemigo logra un golpe."
       );
-      playSfx("fail");
+      pulseArena("is-hurt");
+      playSfx(playerHp <= 0 ? "fail" : "boss-hurt");
     }
 
     updateBars();
@@ -13637,8 +14758,19 @@ function renderBoss(meta, mode, feedback) {
   const onKey = (event) => {
     if (state.activeStage !== meta.id || !running || locked) return;
     if (event.metaKey || event.ctrlKey || event.altKey) return;
-    if (/^[1-4]$/.test(event.key)) {
-      const index = Number(event.key) - 1;
+    const key = String(event.key || "").toLowerCase();
+    const keyToIndex = {
+      arrowup: 0,
+      w: 0,
+      arrowleft: 1,
+      a: 1,
+      arrowright: 2,
+      d: 2,
+      arrowdown: 3,
+      s: 3
+    };
+    if (Object.prototype.hasOwnProperty.call(keyToIndex, key)) {
+      const index = keyToIndex[key];
       if (index < buttons.length) {
         event.preventDefault();
         resolveRound(index);
@@ -13654,7 +14786,15 @@ function renderBoss(meta, mode, feedback) {
   }
 
   window.addEventListener("keydown", onKey);
+  refreshBackdrop();
   renderRound();
+  feedback.className = "feedback";
+  feedback.textContent = challengeCopy(
+    `The battle is live. ${enemyDisplayName} is pressing forward. Raise the shield, survive the assault, and drain the boss's stamina.`,
+    `La batalla esta en marcha. ${enemyDisplayName} esta avanzando. Levanta el escudo, sobrevive al asalto y agota la resistencia del jefe.`
+  );
+  duckMusicTemporarily(0.22, 2200);
+  playSfx("boss-enter");
 
   return () => {
     running = false;
