@@ -6247,6 +6247,51 @@ function ensureCorePracticePlacement() {
   }
 }
 
+function ensureHubSectionOrder() {
+  const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
+  const storySection = storyPathHeading ? storyPathHeading.closest("section") : null;
+  if (!progressSection || !storySection || !progressSection.parentNode || progressSection.parentNode !== storySection.parentNode) return;
+
+  const parent = progressSection.parentNode;
+  const dailyThoughtCard = document.querySelector(".daily-word-card");
+  const todayPlanSection = document.getElementById("todayPlanHeading") ? document.getElementById("todayPlanHeading").closest("section") : null;
+  const streakSection = document.getElementById("streakHeading") ? document.getElementById("streakHeading").closest("section") : null;
+  const memoryHeading = document.getElementById("memoryHeading");
+  const journalHeading = document.getElementById("journalHeading");
+  const practiceSection = memoryHeading && journalHeading && memoryHeading.closest("section") === journalHeading.closest("section")
+    ? memoryHeading.closest("section")
+    : null;
+  const accessibilitySection = document.getElementById("accessibilityHeading")
+    ? document.getElementById("accessibilityHeading").closest("section")
+    : null;
+  const badgeSection = document.querySelector(".badge-section");
+
+  const orderedSections = [
+    dailyThoughtCard,
+    todayPlanSection,
+    streakSection,
+    practiceSection,
+    dailyDevotionSection,
+    weeklyChallengeSection,
+    masterySection,
+    campaignMapSection,
+    desktopControlsSection,
+    accessibilitySection,
+    badgeSection,
+    storySection
+  ];
+
+  let insertAfter = progressSection;
+  orderedSections.forEach((section) => {
+    if (!section || section === insertAfter || !section.parentNode || section.parentNode !== parent) return;
+    const target = insertAfter.nextSibling;
+    if (section !== target) {
+      parent.insertBefore(section, target);
+    }
+    insertAfter = section;
+  });
+}
+
 function renderExperienceSections() {
   ensureCorePracticePlacement();
   renderCampaignMap();
@@ -6254,6 +6299,7 @@ function renderExperienceSections() {
   renderDailyDevotionQuest();
   renderWeeklyChallenge();
   renderDesktopControls();
+  ensureHubSectionOrder();
 }
 
 function updateHud() {
