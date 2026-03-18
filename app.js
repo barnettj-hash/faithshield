@@ -3871,6 +3871,10 @@ function playSfx(name) {
     setTimeout(() => playTone(196.0, 0.14, "triangle", 0.08), 90);
     setTimeout(() => playTone(261.63, 0.18, "triangle", 0.095), 190);
     setTimeout(() => playTone(392.0, 0.26, "triangle", 0.11), 320);
+  } else if (name === "boss-attack") {
+    playTone(164.81, 0.06, "sawtooth", 0.11);
+    setTimeout(() => playTone(123.47, 0.08, "sawtooth", 0.1), 48);
+    setTimeout(() => playTone(92.5, 0.1, "triangle", 0.085), 122);
   } else if (name === "boss-hit") {
     playTone(220.0, 0.04, "square", 0.08);
     setTimeout(() => playTone(659.25, 0.05, "triangle", 0.11), 16);
@@ -13765,6 +13769,13 @@ function ensureBossBattleStyles() {
       box-shadow: 0 0 0 2px rgba(226, 122, 122, 0.32), 0 16px 32px rgba(160, 60, 60, 0.18);
       transform: translateY(-3px);
     }
+    .faith-boss-weakpoint.incoming {
+      border-color: rgba(240, 207, 147, 0.66);
+      box-shadow:
+        0 0 0 2px rgba(240, 207, 147, 0.28),
+        0 18px 34px rgba(214, 168, 72, 0.22);
+      animation: faithBossIncomingPulse 0.56s ease-in-out infinite;
+    }
     .faith-boss-target-dir {
       font-size: 0.8rem;
       font-weight: 800;
@@ -13822,6 +13833,7 @@ function ensureBossBattleStyles() {
     .faith-boss-duel-foe,
     .faith-boss-duel-hero {
       align-self: end;
+      transition: transform 180ms ease, filter 180ms ease;
     }
     .faith-boss-duel-foe svg,
     .faith-boss-duel-hero svg {
@@ -13836,6 +13848,29 @@ function ensureBossBattleStyles() {
     .faith-boss-duel-hero {
       transform: translateY(10px);
       filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.24));
+    }
+    .faith-boss-duel.is-telegraph .faith-boss-duel-foe {
+      animation: faithBossThreat 0.42s ease-in-out infinite;
+      filter: drop-shadow(0 0 18px rgba(240, 207, 147, 0.22));
+    }
+    .faith-boss-duel.is-strike.dir-up .faith-boss-duel-foe {
+      transform: translateY(-18px) scale(1.03);
+      filter: drop-shadow(0 0 22px rgba(218, 78, 78, 0.26));
+    }
+    .faith-boss-duel.is-strike.dir-left .faith-boss-duel-foe {
+      transform: translate(-18px, 2px) scale(1.03);
+      filter: drop-shadow(0 0 22px rgba(218, 78, 78, 0.26));
+    }
+    .faith-boss-duel.is-strike.dir-right .faith-boss-duel-foe {
+      transform: translate(18px, 2px) scale(1.03);
+      filter: drop-shadow(0 0 22px rgba(218, 78, 78, 0.26));
+    }
+    .faith-boss-duel.is-strike.dir-down .faith-boss-duel-foe {
+      transform: translateY(18px) scale(1.03);
+      filter: drop-shadow(0 0 22px rgba(218, 78, 78, 0.26));
+    }
+    .faith-boss-duel.is-strike .faith-boss-duel-hero {
+      filter: drop-shadow(0 16px 26px rgba(0, 0, 0, 0.26)) brightness(0.96);
     }
     .faith-boss-weapon-chip {
       margin-top: 0.55rem;
@@ -13936,6 +13971,21 @@ function ensureBossBattleStyles() {
       60% { transform: translateX(-3px); }
       80% { transform: translateX(2px); }
       100% { transform: translateX(0); }
+    }
+    @keyframes faithBossThreat {
+      0% { transform: translateY(6px) scale(1); }
+      50% { transform: translateY(0) scale(1.02); }
+      100% { transform: translateY(6px) scale(1); }
+    }
+    @keyframes faithBossIncomingPulse {
+      0%, 100% {
+        transform: translateY(0);
+        filter: brightness(1);
+      }
+      50% {
+        transform: translateY(-2px);
+        filter: brightness(1.08);
+      }
     }
     @media (max-width: 700px) {
       .faith-boss-content {
@@ -14347,9 +14397,21 @@ function retroShieldHeroMarkup(profile, palette, playerRatio = 1, activeDirectio
   `;
 }
 
-function retroBossBattleSceneMarkup(profile, palette, bossRatio = 1, playerRatio = 1, activeDirection = "") {
+function retroBossBattleSceneMarkup(
+  profile,
+  palette,
+  bossRatio = 1,
+  playerRatio = 1,
+  activeDirection = "",
+  incomingDirection = "",
+  attackPhase = "idle"
+) {
+  const duelClasses = ["faith-boss-duel"];
+  if (attackPhase === "telegraph") duelClasses.push("is-telegraph");
+  if (attackPhase === "strike") duelClasses.push("is-strike");
+  if (incomingDirection) duelClasses.push(`dir-${incomingDirection}`);
   return `
-    <div class="faith-boss-duel">
+    <div class="${duelClasses.join(" ")}">
       <div class="faith-boss-duel-foe">${retroBossSpriteMarkup(profile, bossRatio, playerRatio)}</div>
       <div class="faith-boss-duel-hero">${retroShieldHeroMarkup(profile, palette, playerRatio, activeDirection)}</div>
     </div>
@@ -14536,6 +14598,9 @@ function renderBoss(meta, mode, feedback) {
   let running = rounds.length > 0;
   let locked = false;
   let defenseDirection = "";
+  let incomingDirection = "";
+  let attackPhase = "idle";
+  let roundAttackToken = 0;
   const buttons = [];
   const targetNodes = [];
   const timers = new Set();
@@ -14618,9 +14683,26 @@ function renderBoss(meta, mode, feedback) {
     bossIcon.classList.toggle("is-danger", bossRatio <= 0.5 || playerRatio <= 0.34);
     phaseChip.textContent = bossBattlePhaseLabel(roundIndex, rounds.length, bossRatio, playerRatio);
     battleLine.textContent = bossBattleStatusText(bossMode, bossRatio, playerRatio);
-    spriteWrap.innerHTML = retroBossBattleSceneMarkup(profile, palette, bossRatio, playerRatio, defenseDirection);
+    spriteWrap.innerHTML = retroBossBattleSceneMarkup(
+      profile,
+      palette,
+      bossRatio,
+      playerRatio,
+      defenseDirection,
+      incomingDirection,
+      attackPhase
+    );
     weaponChip.innerHTML = `🛡️ <span>${challengeCopy("Raise", "Levanta")}:</span> <span>${profile.guardName}</span>`;
     status.textContent = `${challengeCopy("Boss Stamina", "Resistencia del jefe")}: ${bossHp}/${maxBoss} | ${challengeCopy("Shield Guard", "Guardia del escudo")}: ${playerHp}/${maxPlayer} | ${challengeCopy("Round", "Ronda")} ${Math.min(roundIndex + 1, rounds.length)}/${rounds.length}`;
+  };
+
+  const syncIncomingAttack = () => {
+    targetNodes.forEach((node, index) => {
+      const slot = directionSlots[index];
+      const isIncoming = attackPhase !== "idle" && slot && slot.key === incomingDirection;
+      node.classList.toggle("incoming", !!isIncoming);
+    });
+    updateBars();
   };
 
   const pulseArena = (kind) => {
@@ -14638,6 +14720,7 @@ function renderBoss(meta, mode, feedback) {
     refreshBackdrop();
     clearButtonState();
     defenseDirection = "";
+    attackPhase = "idle";
     roundLabel.textContent = `${mode.label} • ${challengeCopy("Round", "Ronda")} ${Math.min(roundIndex + 1, rounds.length)}/${rounds.length}`;
     roundPrompt.textContent = round.prompt || challengeCopy(
       "The boss is attacking. Read the clue and raise the shield in the right direction.",
@@ -14669,11 +14752,42 @@ function renderBoss(meta, mode, feedback) {
       attackPad.appendChild(button);
     });
 
-    updateBars();
+    incomingDirection = directionSlots[round.correctIndex] ? directionSlots[round.correctIndex].key : "";
+    syncIncomingAttack();
     setLocked(false);
     if (buttons[0] && typeof buttons[0].focus === "function") {
       buttons[0].focus({ preventScroll: true });
     }
+
+    const currentToken = ++roundAttackToken;
+    schedule(() => {
+      if (!running || locked || currentToken !== roundAttackToken) return;
+      attackPhase = "telegraph";
+      feedback.className = "feedback warn";
+      feedback.textContent = challengeCopy(
+        `${enemyDisplayName} coils to strike. Block the true lane now.`,
+        `${enemyDisplayName} se prepara para golpear. Bloquea el carril verdadero ahora.`
+      );
+      syncIncomingAttack();
+      playSfx("boss-attack");
+    }, 320);
+
+    schedule(() => {
+      if (!running || locked || currentToken !== roundAttackToken) return;
+      attackPhase = "strike";
+      feedback.className = "feedback warn";
+      feedback.textContent = challengeCopy(
+        `${enemyDisplayName} lunges. Raise the shield before the hit lands.`,
+        `${enemyDisplayName} se lanza. Levanta el escudo antes de que golpee.`
+      );
+      syncIncomingAttack();
+      playSfx("boss-attack");
+    }, 1380);
+
+    schedule(() => {
+      if (!running || locked || currentToken !== roundAttackToken) return;
+      resolveRound(-1, { timedOut: true });
+    }, 2250);
   };
 
   const finishBossVictory = () => {
@@ -14697,19 +14811,23 @@ function renderBoss(meta, mode, feedback) {
     queueStageAutoClose(meta.id, 1700);
   };
 
-  function resolveRound(index) {
+  function resolveRound(index, options = {}) {
     if (!running || locked || !canPlayStage()) return;
     const round = rounds[roundIndex % rounds.length];
     if (!round) return;
     setLocked(true);
+    roundAttackToken += 1;
     clearButtonState();
     defenseDirection = directionSlots[index] ? directionSlots[index].key : "";
+    attackPhase = "strike";
+    const timedOut = !!options.timedOut;
     const isCorrect = index === round.correctIndex;
     markButtonState(round.correctIndex, "correct");
-    markTargetState(round.correctIndex, "correct");
+    markTargetState(round.correctIndex, isCorrect ? "correct" : "wrong");
     if (!isCorrect) {
-      markButtonState(index, "wrong");
-      markTargetState(index, "wrong");
+      if (index >= 0) {
+        markButtonState(index, "wrong");
+      }
     }
 
     if (isCorrect) {
@@ -14724,15 +14842,20 @@ function renderBoss(meta, mode, feedback) {
     } else {
       playerHp = Math.max(0, playerHp - 1);
       feedback.className = "feedback warn";
-      feedback.textContent = round.failText || challengeCopy(
-        "Guard broken. The enemy lands a hit.",
-        "La guardia se rompio. El enemigo logra un golpe."
-      );
+      feedback.textContent = timedOut
+        ? challengeCopy(
+            `${enemyDisplayName} struck first. Your shield was too late.`,
+            `${enemyDisplayName} golpeo primero. Tu escudo llego demasiado tarde.`
+          )
+        : round.failText || challengeCopy(
+            "Guard broken. The enemy lands a hit.",
+            "La guardia se rompio. El enemigo logra un golpe."
+          );
       pulseArena("is-hurt");
       playSfx(playerHp <= 0 ? "fail" : "boss-hurt");
     }
 
-    updateBars();
+    syncIncomingAttack();
 
     if (bossHp <= 0) {
       schedule(finishBossVictory, 780);
