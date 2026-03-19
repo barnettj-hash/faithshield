@@ -3554,6 +3554,7 @@ let badgeUnlockToastTimer = 0;
 let badgeUnlockToastNode = null;
 let stageCompleteToastTimer = 0;
 let stageCompleteToastNode = null;
+let stageAutoCloseTimer = 0;
 let badgePraiseUtterance = null;
 let badgeCeremonyRevealTimer = 0;
 let badgeCeremonyCloseTimer = 0;
@@ -6970,6 +6971,9 @@ function ensureStageCompleteToast() {
   ].join("");
 
   document.body.appendChild(node);
+  node.style.pointerEvents = "none";
+  const card = node.querySelector(".badge-unlock-card");
+  if (card) card.style.pointerEvents = "none";
   stageCompleteToastNode = node;
   return node;
 }
@@ -7021,6 +7025,14 @@ function showStageCompleteMoment(result, options = {}) {
     node.classList.remove("show");
     stageCompleteToastTimer = 0;
   }, 1500);
+}
+
+function hideStageCompleteToast() {
+  if (stageCompleteToastTimer) {
+    window.clearTimeout(stageCompleteToastTimer);
+    stageCompleteToastTimer = 0;
+  }
+  if (stageCompleteToastNode) stageCompleteToastNode.classList.remove("show");
 }
 
 function eraReviewEntry(era) {
@@ -7396,6 +7408,7 @@ function loseLife() {
 }
 
 function clearActiveChallenge() {
+  clearStageAutoCloseTimer();
   if (typeof activeCleanup === "function") {
     activeCleanup();
     activeCleanup = null;
@@ -7406,6 +7419,13 @@ function clearActiveChallenge() {
   if (typeof activeCutsceneCleanup === "function") {
     activeCutsceneCleanup();
     activeCutsceneCleanup = null;
+  }
+}
+
+function releaseActiveChallengeRuntime() {
+  if (typeof activeCleanup === "function") {
+    activeCleanup();
+    activeCleanup = null;
   }
 }
 
@@ -7430,6 +7450,8 @@ function dismissWelcome() {
 }
 
 function closeActivity() {
+  clearStageAutoCloseTimer();
+  hideStageCompleteToast();
   clearActiveChallenge();
   if (document.activeElement && typeof document.activeElement.blur === "function") {
     document.activeElement.blur();
@@ -7447,8 +7469,19 @@ function closeActivity() {
   updateAudioState();
 }
 
+function clearStageAutoCloseTimer() {
+  if (!stageAutoCloseTimer) return;
+  window.clearTimeout(stageAutoCloseTimer);
+  stageAutoCloseTimer = 0;
+}
+
 function queueStageAutoClose(stageId, delayMs = 850) {
-  window.setTimeout(() => {
+  clearStageAutoCloseTimer();
+  if (state.activeStage === stageId) {
+    releaseActiveChallengeRuntime();
+  }
+  stageAutoCloseTimer = window.setTimeout(() => {
+    stageAutoCloseTimer = 0;
     if (state.activeStage === stageId) closeActivity();
   }, delayMs);
 }
@@ -12498,6 +12531,7 @@ function openStage(stageId) {
   warmUpcomingStageMedia(meta);
 
   clearActiveChallenge();
+  hideStageCompleteToast();
   stopStoryNarration();
   state.activeStage = stageId;
   state.lastStage = stageId;
@@ -16871,12 +16905,30 @@ document.addEventListener(
   true
 );
 
-if (closeActivityBtn) closeActivityBtn.addEventListener("click", closeActivity);
+function requestActivityClose(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  if (!state.activeStage || !activityOverlay || activityOverlay.classList.contains("hidden")) return;
+  closeActivity();
+}
+
+if (closeActivityBtn) {
+  closeActivityBtn.addEventListener("pointerdown", requestActivityClose);
+  closeActivityBtn.addEventListener("click", requestActivityClose);
+}
 if (activityOverlay) {
   activityOverlay.addEventListener("click", (event) => {
-    if (event.target === activityOverlay) closeActivity();
+    if (event.target === activityOverlay) requestActivityClose(event);
   });
 }
+
+window.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (!state.activeStage || !activityOverlay || activityOverlay.classList.contains("hidden")) return;
+  requestActivityClose(event);
+});
 
 if (acceptChallengeBtn) acceptChallengeBtn.addEventListener("click", dismissWelcome);
 if (welcomeOverlay) {
