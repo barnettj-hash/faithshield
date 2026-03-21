@@ -7280,8 +7280,7 @@ function ensureHubSectionOrder() {
     ? document.getElementById("accessibilityHeading").closest("section")
     : null;
   const badgeSection = document.querySelector(".badge-section");
-
-  const orderedSections = [
+  const preferredSections = [
     dailyThoughtCard,
     todayPlanSection,
     streakSection,
@@ -7295,9 +7294,15 @@ function ensureHubSectionOrder() {
     campaignMapSection,
     desktopControlsSection,
     accessibilitySection,
-    badgeSection,
-    storySection
+    badgeSection
   ];
+  const extraHubSections = Array.from(parent.children).filter((section) => {
+    if (!(section instanceof HTMLElement)) return false;
+    if (section === progressSection || section === storySection) return false;
+    if (!section.matches("section")) return false;
+    return !preferredSections.includes(section);
+  });
+  const orderedSections = preferredSections.concat(extraHubSections, storySection);
 
   let insertAfter = progressSection;
   orderedSections.forEach((section) => {
