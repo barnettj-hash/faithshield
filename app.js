@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-17-boss-audio-prayer-v1";
+const CONTENT_VERSION = "2026-03-20-stage5-dynamic-reliability-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -15,10 +15,38 @@ const MASTERY_TARGET_PERCENT = 85;
 const DAILY_DEVOTION_REWARD_XP = 35;
 const DAILY_DEVOTION_REWARD_LIFE = 1;
 const WEEKLY_CHALLENGE_TARGET = 7;
+const PROFILE_INDEX_KEY = "faithProfilesIndex";
+const PROFILE_ACTIVE_KEY = "faithActiveProfileId";
+const PROFILE_PREFIX = "faithProfile::";
+const PROFILE_LIMIT = 8;
+const WEEKEND_EVENT_ROTATION = [
+  {
+    id: "double-xp",
+    name: "Double XP Weekend",
+    description: "Your first stage clear this weekend grants a stronger XP reward.",
+    rewardXp: 55,
+    rewardLives: 0
+  },
+  {
+    id: "mercy-rest",
+    name: "Mercy Weekend",
+    description: "Your first stage clear this weekend restores one extra life.",
+    rewardXp: 20,
+    rewardLives: 1
+  },
+  {
+    id: "shield-drill",
+    name: "Shield Drill Weekend",
+    description: "Your first stage clear this weekend rewards both practice and courage.",
+    rewardXp: 35,
+    rewardLives: 1
+  }
+];
+const PROFILE_COLOR_SWATCHES = ["#e5b85d", "#8bd3dd", "#f49f85", "#9fdc8a", "#b3a0ff", "#f4d35e", "#94c8ff", "#f08ca0"];
 const MUSIC_LEVELS = {
-  low: 0.34,
-  medium: 0.46,
-  high: 0.58
+  low: 0.38,
+  medium: 0.54,
+  high: 0.68
 };
 const MUSIC_STYLES = {
   cinematic: true,
@@ -47,7 +75,11 @@ const difficultyProfiles = {
       pattern: { roundsDelta: -1, maxMissesDelta: 2, paceDelta: 120 },
       balance: { targetDelta: -2, maxMissesDelta: 2, driftDelta: -0.004 },
       route: { maxMissesDelta: 2 },
-      discern: { maxMissesDelta: 2 }
+      discern: { maxMissesDelta: 2 },
+      spotlight: { roundsDelta: -1, shufflesDelta: -1, maxMissesDelta: 2 },
+      memoryflip: { peekDelta: 280, maxMissesDelta: 2 },
+      sealbreak: { roundsDelta: -1, targetCountDelta: -1, maxMissesDelta: 2 },
+      shieldwall: { targetDelta: -2, maxMissesDelta: 2, speedDelta: 120 }
     }
   },
   medium: {
@@ -66,7 +98,11 @@ const difficultyProfiles = {
       pattern: { roundsDelta: 0, maxMissesDelta: 0, paceDelta: 0 },
       balance: { targetDelta: 0, maxMissesDelta: 0, driftDelta: 0 },
       route: { maxMissesDelta: 0 },
-      discern: { maxMissesDelta: 0 }
+      discern: { maxMissesDelta: 0 },
+      spotlight: { roundsDelta: 0, shufflesDelta: 0, maxMissesDelta: 0 },
+      memoryflip: { peekDelta: 0, maxMissesDelta: 0 },
+      sealbreak: { roundsDelta: 0, targetCountDelta: 0, maxMissesDelta: 0 },
+      shieldwall: { targetDelta: 0, maxMissesDelta: 0, speedDelta: 0 }
     }
   },
   advanced: {
@@ -85,7 +121,11 @@ const difficultyProfiles = {
       pattern: { roundsDelta: 1, maxMissesDelta: -1, paceDelta: -100 },
       balance: { targetDelta: 2, maxMissesDelta: -1, driftDelta: 0.006 },
       route: { maxMissesDelta: -1 },
-      discern: { maxMissesDelta: -1 }
+      discern: { maxMissesDelta: -1 },
+      spotlight: { roundsDelta: 1, shufflesDelta: 1, maxMissesDelta: -1 },
+      memoryflip: { peekDelta: -180, maxMissesDelta: -1 },
+      sealbreak: { roundsDelta: 1, targetCountDelta: 1, maxMissesDelta: -1 },
+      shieldwall: { targetDelta: 2, maxMissesDelta: -1, speedDelta: -110 }
     }
   }
 };
@@ -648,7 +688,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 33;
+const ACTIVITY_SCHEMA_VERSION = 34;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -3251,6 +3291,40 @@ function musicGainForCurrentLevel() {
   return MUSIC_LEVELS[resolvedMusicLevel()] || MUSIC_LEVELS.high;
 }
 
+function shouldKeepHubMusicAlive() {
+  if (!state.audio.music) return false;
+  if (typeof document !== "undefined" && document.visibilityState === "hidden") return false;
+  if (state.activeStage) return false;
+  if (isStoryTheaterOpen() || isFinalOpen() || isCreditsOpen()) return false;
+  if (activityOverlay && !activityOverlay.classList.contains("hidden")) return false;
+  return true;
+}
+
+function stopMusicHeartbeat() {
+  if (!audioEngine.musicHeartbeatTimer) return;
+  window.clearInterval(audioEngine.musicHeartbeatTimer);
+  audioEngine.musicHeartbeatTimer = null;
+}
+
+function ensureMusicHeartbeat() {
+  if (audioEngine.musicHeartbeatTimer || typeof window === "undefined") return;
+  audioEngine.musicHeartbeatTimer = window.setInterval(() => {
+    if (!state.audio.music) {
+      stopMusicHeartbeat();
+      return;
+    }
+    if (!shouldKeepHubMusicAlive()) return;
+    ensureAudio();
+    if (!audioEngine.ctx) return;
+    if (audioEngine.ctx.state === "suspended") {
+      audioEngine.ctx.resume().catch(() => {});
+    }
+    if (!audioEngine.timer && !audioEngine.finaleTimer && !audioEngine.creditsTimer) {
+      startMusicLoop();
+    }
+  }, 1600);
+}
+
 function normalizePlayerName(value) {
   const collapsed = String(value || "")
     .replace(/\s+/g, " ")
@@ -3260,6 +3334,211 @@ function normalizePlayerName(value) {
 }
 
 const launchQueryName = normalizePlayerName(new URLSearchParams(window.location.search).get("playerName") || "");
+
+function safeJsonParse(value, fallback) {
+  try {
+    if (value == null || value === "") return fallback;
+    return JSON.parse(value);
+  } catch (_) {
+    return fallback;
+  }
+}
+
+function deepClone(value) {
+  return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+
+function profileStorageKey(id) {
+  return `${PROFILE_PREFIX}${String(id || "default")}`;
+}
+
+function defaultStatsSnapshot() {
+  return {
+    levelsCompleted: 0,
+    stagesCompleted: 0,
+    interactiveWins: 0,
+    timingWins: 0,
+    collectWins: 0,
+    dodgeWins: 0,
+    slingshotWins: 0,
+    flawlessLevels: 0,
+    badgeSetBonuses: {},
+    difficultyPass: { easy: false, medium: false, advanced: false },
+    eraFinalesSeen: {},
+    chapterIntrosSeen: {}
+  };
+}
+
+function defaultStateSnapshot(name = "") {
+  return {
+    unlocked: 1,
+    completed: [],
+    xp: 0,
+    lives: MAX_LIVES,
+    badges: [],
+    audio: { music: true, sfx: true, musicLevel: "high", musicStyle: "cinematic" },
+    levelFailures: {},
+    stats: defaultStatsSnapshot(),
+    difficulty: "medium",
+    activeStage: null,
+    lastStage: null,
+    lastBadge: "",
+    playerName: normalizePlayerName(name || ""),
+    finalSeen: false,
+    questionHistory: {},
+    stageActivities: {},
+    language: "en",
+    dailyStrike: { count: 0, best: 0, lastClaimed: "" },
+    mastery: {},
+    dailyDevotion: { day: "", challenge: false, action: false, reflection: false, reward: false, note: "" },
+    weeklyChallenge: { weekKey: "", era: "genesis", target: WEEKLY_CHALLENGE_TARGET, progress: 0, shared: false },
+    controls: { hotkeys: true, controller: false, badgeCeremonyAutoOpen: true },
+    reviewFocus: null,
+    prayerResponses: {},
+    dailyCalendar: {}
+  };
+}
+
+function legacyStateSnapshotFromStorage() {
+  const snapshot = defaultStateSnapshot(normalizePlayerName(localStorage.getItem("faithPlayerName") || ""));
+  snapshot.unlocked = Number(localStorage.getItem("faithUnlocked") || snapshot.unlocked);
+  snapshot.completed = safeJsonParse(localStorage.getItem("faithCompleted"), snapshot.completed);
+  snapshot.xp = Number(localStorage.getItem("faithXp") || snapshot.xp);
+  snapshot.lives = Number(localStorage.getItem("faithLives") || snapshot.lives);
+  snapshot.badges = safeJsonParse(localStorage.getItem("faithBadges"), snapshot.badges);
+  snapshot.audio = safeJsonParse(localStorage.getItem("faithAudio"), snapshot.audio);
+  snapshot.levelFailures = safeJsonParse(localStorage.getItem("faithLevelFailures"), snapshot.levelFailures);
+  snapshot.stats = safeJsonParse(localStorage.getItem("faithStats"), snapshot.stats);
+  snapshot.difficulty = localStorage.getItem("faithDifficulty") || snapshot.difficulty;
+  snapshot.activeStage = localStorage.getItem("faithActiveStage") || snapshot.activeStage;
+  snapshot.lastStage = localStorage.getItem("faithLastStage") || snapshot.lastStage;
+  snapshot.lastBadge = localStorage.getItem("faithLastBadge") || snapshot.lastBadge;
+  snapshot.playerName = normalizePlayerName(localStorage.getItem("faithPlayerName") || snapshot.playerName);
+  snapshot.finalSeen = localStorage.getItem("faithFinalSeen") === "true";
+  snapshot.questionHistory = safeJsonParse(localStorage.getItem("faithQuestionHistory"), snapshot.questionHistory);
+  snapshot.stageActivities = safeJsonParse(localStorage.getItem("faithStageActivities"), snapshot.stageActivities);
+  snapshot.language = localStorage.getItem("faithLanguage") || snapshot.language;
+  snapshot.dailyStrike = safeJsonParse(localStorage.getItem("faithDailyStrike"), snapshot.dailyStrike);
+  snapshot.mastery = safeJsonParse(localStorage.getItem("faithMastery"), snapshot.mastery);
+  snapshot.dailyDevotion = safeJsonParse(localStorage.getItem("faithDailyDevotion"), snapshot.dailyDevotion);
+  snapshot.weeklyChallenge = safeJsonParse(localStorage.getItem("faithWeeklyChallenge"), snapshot.weeklyChallenge);
+  snapshot.controls = safeJsonParse(localStorage.getItem("faithControls"), snapshot.controls);
+  snapshot.reviewFocus = safeJsonParse(localStorage.getItem("faithReviewFocus"), snapshot.reviewFocus);
+  snapshot.prayerResponses = safeJsonParse(localStorage.getItem("faithPrayerResponses"), snapshot.prayerResponses);
+  snapshot.dailyCalendar = safeJsonParse(localStorage.getItem("faithDailyCalendar"), snapshot.dailyCalendar);
+  return snapshot;
+}
+
+function writeLegacySnapshotToStorage(snapshot) {
+  if (!snapshot || typeof snapshot !== "object") return;
+  const merged = { ...defaultStateSnapshot(snapshot.playerName), ...deepClone(snapshot) };
+  localStorage.setItem("faithUnlocked", String(merged.unlocked));
+  localStorage.setItem("faithCompleted", JSON.stringify(merged.completed || []));
+  localStorage.setItem("faithXp", String(merged.xp || 0));
+  localStorage.setItem("faithLives", String(merged.lives || MAX_LIVES));
+  localStorage.setItem("faithBadges", JSON.stringify(merged.badges || []));
+  localStorage.setItem("faithAudio", JSON.stringify(merged.audio || { music: true, sfx: true }));
+  localStorage.setItem("faithLevelFailures", JSON.stringify(merged.levelFailures || {}));
+  localStorage.setItem("faithStats", JSON.stringify(merged.stats || defaultStatsSnapshot()));
+  localStorage.setItem("faithLastBadge", merged.lastBadge || "");
+  localStorage.setItem("faithPlayerName", normalizePlayerName(merged.playerName || ""));
+  localStorage.setItem("faithFinalSeen", String(Boolean(merged.finalSeen)));
+  localStorage.setItem("faithDifficulty", merged.difficulty || "medium");
+  localStorage.setItem("faithQuestionHistory", JSON.stringify(merged.questionHistory || {}));
+  localStorage.setItem("faithStageActivities", JSON.stringify(merged.stageActivities || {}));
+  localStorage.setItem("faithLanguage", merged.language || "en");
+  localStorage.setItem("faithDailyStrike", JSON.stringify(merged.dailyStrike || { count: 0, best: 0, lastClaimed: "" }));
+  localStorage.setItem("faithMastery", JSON.stringify(merged.mastery || {}));
+  localStorage.setItem("faithDailyDevotion", JSON.stringify(merged.dailyDevotion || { day: "", challenge: false, action: false, reflection: false, reward: false, note: "" }));
+  localStorage.setItem("faithWeeklyChallenge", JSON.stringify(merged.weeklyChallenge || { weekKey: "", era: "genesis", target: WEEKLY_CHALLENGE_TARGET, progress: 0, shared: false }));
+  localStorage.setItem("faithControls", JSON.stringify(merged.controls || { hotkeys: true, controller: false, badgeCeremonyAutoOpen: true }));
+  localStorage.setItem("faithPrayerResponses", JSON.stringify(merged.prayerResponses || {}));
+  localStorage.setItem("faithDailyCalendar", JSON.stringify(merged.dailyCalendar || {}));
+  if (merged.reviewFocus) localStorage.setItem("faithReviewFocus", JSON.stringify(merged.reviewFocus));
+  else localStorage.removeItem("faithReviewFocus");
+  if (merged.activeStage) localStorage.setItem("faithActiveStage", merged.activeStage);
+  else localStorage.removeItem("faithActiveStage");
+  if (merged.lastStage) localStorage.setItem("faithLastStage", merged.lastStage);
+  else localStorage.removeItem("faithLastStage");
+  localStorage.setItem("faithContentVersion", CONTENT_VERSION);
+}
+
+function normalizeProfileMeta(profile, index = 0) {
+  if (!profile || typeof profile !== "object") return null;
+  const fallbackId = `profile-${index + 1}`;
+  const createdAt = String(profile.createdAt || localDayKey());
+  const updatedAt = String(profile.updatedAt || createdAt);
+  const name = normalizePlayerName(profile.name || profile.playerName || "") || `Profile ${index + 1}`;
+  const accent = profile.accent || PROFILE_COLOR_SWATCHES[index % PROFILE_COLOR_SWATCHES.length];
+  return {
+    id: String(profile.id || fallbackId),
+    name,
+    accent,
+    createdAt,
+    updatedAt
+  };
+}
+
+function loadProfileIndex() {
+  const parsed = safeJsonParse(localStorage.getItem(PROFILE_INDEX_KEY), []);
+  if (!Array.isArray(parsed)) return [];
+  const seen = new Set();
+  return parsed
+    .map((profile, index) => normalizeProfileMeta(profile, index))
+    .filter((profile) => {
+      if (!profile || seen.has(profile.id)) return false;
+      seen.add(profile.id);
+      return true;
+    })
+    .slice(0, PROFILE_LIMIT);
+}
+
+function saveProfileIndex(index) {
+  localStorage.setItem(PROFILE_INDEX_KEY, JSON.stringify((index || []).slice(0, PROFILE_LIMIT)));
+}
+
+function readStoredProfileSnapshot(profileId) {
+  return safeJsonParse(localStorage.getItem(profileStorageKey(profileId)), null);
+}
+
+function writeStoredProfileSnapshot(profileId, snapshot) {
+  localStorage.setItem(profileStorageKey(profileId), JSON.stringify(deepClone(snapshot || defaultStateSnapshot())));
+}
+
+function ensureProfileStorageBootstrap() {
+  let profiles = loadProfileIndex();
+  if (!profiles.length) {
+    const defaultProfile = normalizeProfileMeta({
+      id: "default",
+      name: normalizePlayerName(localStorage.getItem("faithPlayerName") || "") || "Faith Player",
+      accent: PROFILE_COLOR_SWATCHES[0],
+      createdAt: localDayKey(),
+      updatedAt: localDayKey()
+    }, 0);
+    profiles = [defaultProfile];
+    writeStoredProfileSnapshot(defaultProfile.id, legacyStateSnapshotFromStorage());
+    saveProfileIndex(profiles);
+  }
+
+  let activeId = String(localStorage.getItem(PROFILE_ACTIVE_KEY) || profiles[0].id || "default");
+  if (!profiles.some((profile) => profile.id === activeId)) {
+    activeId = profiles[0].id;
+  }
+  localStorage.setItem(PROFILE_ACTIVE_KEY, activeId);
+
+  const snapshot = readStoredProfileSnapshot(activeId);
+  if (snapshot) {
+    writeLegacySnapshotToStorage(snapshot);
+  } else {
+    writeStoredProfileSnapshot(activeId, legacyStateSnapshotFromStorage());
+  }
+
+  return { profiles, activeId };
+}
+
+const initialProfileStore = ensureProfileStorageBootstrap();
+let profileIndex = initialProfileStore.profiles;
+let activeProfileId = initialProfileStore.activeId;
 
 const state = {
 
@@ -3286,7 +3565,8 @@ const state = {
   weeklyChallenge: JSON.parse(localStorage.getItem("faithWeeklyChallenge") || '{"weekKey":"","era":"genesis","target":7,"progress":0,"shared":false}'),
   controls: JSON.parse(localStorage.getItem("faithControls") || '{"hotkeys":true,"controller":false,"badgeCeremonyAutoOpen":true}'),
   reviewFocus: JSON.parse(localStorage.getItem("faithReviewFocus") || "null"),
-  prayerResponses: JSON.parse(localStorage.getItem("faithPrayerResponses") || "{}")
+  prayerResponses: JSON.parse(localStorage.getItem("faithPrayerResponses") || "{}"),
+  dailyCalendar: JSON.parse(localStorage.getItem("faithDailyCalendar") || "{}")
 };
 
 if (launchQueryName) {
@@ -3351,6 +3631,9 @@ if (!state.reviewFocus || typeof state.reviewFocus !== "object" || Array.isArray
 if (!state.prayerResponses || typeof state.prayerResponses !== "object" || Array.isArray(state.prayerResponses)) {
   state.prayerResponses = {};
 }
+if (!state.dailyCalendar || typeof state.dailyCalendar !== "object" || Array.isArray(state.dailyCalendar)) {
+  state.dailyCalendar = {};
+}
 
 if ((localStorage.getItem("faithContentVersion") || "") !== CONTENT_VERSION) {
   state.questionHistory = {};
@@ -3380,6 +3663,9 @@ state.stats = {
     ? { ...state.stats.eraFinalesSeen }
     : {}
 };
+state.stats.chapterIntrosSeen = (state.stats && state.stats.chapterIntrosSeen && typeof state.stats.chapterIntrosSeen === "object" && !Array.isArray(state.stats.chapterIntrosSeen))
+  ? { ...state.stats.chapterIntrosSeen }
+  : {};
 
 function ensureDailyDevotionState() {
   const today = localDayKey();
@@ -3392,6 +3678,31 @@ function ensureDailyDevotionState() {
     reward: false,
     note: ""
   };
+}
+
+function ensureDailyCalendarEntry(dayKey = localDayKey()) {
+  const key = String(dayKey || localDayKey());
+  if (!state.dailyCalendar[key] || typeof state.dailyCalendar[key] !== "object" || Array.isArray(state.dailyCalendar[key])) {
+    state.dailyCalendar[key] = {
+      challenge: false,
+      devotion: false,
+      reflection: false,
+      reward: false,
+      weekendRewardClaimed: false,
+      weekendEventId: "",
+      era: ""
+    };
+  }
+  return state.dailyCalendar[key];
+}
+
+function weekendEventForDate(date = new Date()) {
+  const day = date.getDay();
+  if (day !== 0 && day !== 6) return null;
+  const weekKey = isoWeekKey(date);
+  const digits = String(weekKey || "").replace(/\D+/g, "");
+  const hash = digits ? Number(digits.slice(-4)) : 0;
+  return WEEKEND_EVENT_ROTATION[hash % WEEKEND_EVENT_ROTATION.length] || WEEKEND_EVENT_ROTATION[0];
 }
 
 function pickWeeklyEraByKey(weekKey) {
@@ -3415,6 +3726,7 @@ function ensureWeeklyChallengeState() {
 }
 
 ensureDailyDevotionState();
+ensureDailyCalendarEntry(localDayKey());
 ensureWeeklyChallengeState();
 
 const stageGrid = document.getElementById("stageGrid");
@@ -3515,6 +3827,22 @@ let weeklyChallengeSection = null;
 let weeklyChallengeMeta = null;
 let weeklyChallengeText = null;
 let shareWeeklyChallengeBtn = null;
+let profileSection = null;
+let profileSummary = null;
+let profileGrid = null;
+let addProfileBtn = null;
+let exportSyncCodeBtn = null;
+let importSyncCodeBtn = null;
+let hallOfFaithSection = null;
+let hallOfFaithSummary = null;
+let hallBossGrid = null;
+let hallBadgeStrip = null;
+let hallVerseGrid = null;
+let hallEraGrid = null;
+let dailyCalendarSection = null;
+let dailyCalendarSummary = null;
+let dailyCalendarEvent = null;
+let dailyCalendarGrid = null;
 let desktopControlsSection = null;
 let hotkeysToggle = null;
 let controllerToggle = null;
@@ -3530,6 +3858,7 @@ const audioEngine = {
   musicGain: null,
   sfxGain: null,
   timer: null,
+  musicHeartbeatTimer: null,
   step: 0,
   musicStartCtx: 0,
   nextBeatAt: 0,
@@ -3562,6 +3891,7 @@ let badgeCeremonyBadgeId = null;
 let badgeCeremonyActive = false;
 let pendingEraFinaleEra = null;
 let bossBattleStylesReady = false;
+const bossSpriteSheetCache = new Map();
 let verseAudioUtterance = null;
 let activeVerseAudioButton = null;
 let eraFinaleOverlay = null;
@@ -3579,6 +3909,10 @@ let eraFinaleReviewBtn = null;
 let eraFinaleBadgeBtn = null;
 
 function clearAudioNodes() {
+  if (audioEngine.musicHeartbeatTimer) {
+    window.clearInterval(audioEngine.musicHeartbeatTimer);
+    audioEngine.musicHeartbeatTimer = null;
+  }
   audioEngine.ctx = null;
   audioEngine.master = null;
   audioEngine.musicGain = null;
@@ -4764,8 +5098,52 @@ function getStageMeta(stageId) {
   return stages.find((stage) => stage.id === stageId);
 }
 
+function captureStateSnapshot() {
+  return deepClone({
+    unlocked: state.unlocked,
+    completed: state.completed,
+    xp: state.xp,
+    lives: state.lives,
+    badges: state.badges,
+    audio: state.audio,
+    levelFailures: state.levelFailures,
+    stats: state.stats,
+    difficulty: state.difficulty,
+    activeStage: state.activeStage || null,
+    lastStage: state.lastStage || null,
+    lastBadge: state.lastBadge || "",
+    playerName: state.playerName || "",
+    finalSeen: state.finalSeen,
+    questionHistory: state.questionHistory,
+    stageActivities: state.stageActivities,
+    language: state.language,
+    dailyStrike: state.dailyStrike,
+    mastery: state.mastery,
+    dailyDevotion: state.dailyDevotion,
+    weeklyChallenge: state.weeklyChallenge,
+    controls: state.controls,
+    reviewFocus: state.reviewFocus,
+    prayerResponses: state.prayerResponses,
+    dailyCalendar: state.dailyCalendar
+  });
+}
+
+function activeProfileMeta() {
+  return profileIndex.find((profile) => profile.id === activeProfileId) || null;
+}
+
+function syncActiveProfileMetadata() {
+  const profile = activeProfileMeta();
+  if (!profile) return;
+  const preferredName = normalizePlayerName(state.playerName || profile.name || "") || profile.name || "Faith Player";
+  profile.name = preferredName;
+  profile.updatedAt = localDayKey();
+  saveProfileIndex(profileIndex);
+}
+
 function persist() {
   const fingerprint = JSON.stringify({
+    profileId: activeProfileId,
     unlocked: state.unlocked,
     completed: state.completed,
     xp: state.xp,
@@ -4788,6 +5166,7 @@ function persist() {
     controls: state.controls,
     reviewFocus: state.reviewFocus,
     prayerResponses: state.prayerResponses,
+    dailyCalendar: state.dailyCalendar,
     activeStage: state.activeStage || "",
     lastStage: state.lastStage || "",
     contentVersion: CONTENT_VERSION
@@ -4817,6 +5196,7 @@ function persist() {
   localStorage.setItem("faithWeeklyChallenge", JSON.stringify(state.weeklyChallenge));
   localStorage.setItem("faithControls", JSON.stringify(state.controls));
   localStorage.setItem("faithPrayerResponses", JSON.stringify(state.prayerResponses));
+  localStorage.setItem("faithDailyCalendar", JSON.stringify(state.dailyCalendar));
   if (state.reviewFocus) localStorage.setItem("faithReviewFocus", JSON.stringify(state.reviewFocus));
   else localStorage.removeItem("faithReviewFocus");
   localStorage.setItem("faithContentVersion", CONTENT_VERSION);
@@ -4826,6 +5206,10 @@ function persist() {
 
   if (state.lastStage) localStorage.setItem("faithLastStage", state.lastStage);
   else localStorage.removeItem("faithLastStage");
+
+  syncActiveProfileMetadata();
+  localStorage.setItem(PROFILE_ACTIVE_KEY, activeProfileId);
+  writeStoredProfileSnapshot(activeProfileId, captureStateSnapshot());
 }
 
 function isDone(id) {
@@ -5769,6 +6153,394 @@ function ensureShareOverlayEnhancements() {
   };
 }
 
+function ensurePremiumHubStyles() {
+  if (document.getElementById("premiumHubStyles")) return;
+  const style = document.createElement("style");
+  style.id = "premiumHubStyles";
+  style.textContent = [
+    ".premium-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}",
+    ".premium-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(229,184,93,.16);border:1px solid rgba(229,184,93,.28);font-weight:700;font-size:.92rem;}",
+    ".profile-card,.hall-card,.calendar-day-card{padding:16px;border-radius:18px;border:1px solid rgba(229,184,93,.24);background:linear-gradient(180deg,rgba(20,28,44,.94),rgba(11,17,29,.96));box-shadow:0 18px 40px rgba(0,0,0,.18);}",
+    ".profile-card.active{box-shadow:0 0 0 2px rgba(229,184,93,.45),0 22px 48px rgba(0,0,0,.24);}",
+    ".profile-card-head{display:flex;align-items:center;gap:14px;margin-bottom:10px;}",
+    ".profile-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#0b1525;}",
+    ".profile-meta p,.hall-card p,.calendar-day-card p{margin:0;}",
+    ".profile-actions,.hall-actions,.feature-actions.wrap{display:flex;flex-wrap:wrap;gap:10px;}",
+    ".hall-badge-strip{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));}",
+    ".hall-badge-pill{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(229,184,93,.16);min-height:108px;text-align:center;}",
+    ".hall-badge-pill.locked{opacity:.38;filter:saturate(.4);}",
+    ".hall-badge-pill .icon{font-size:1.75rem;}",
+    ".hall-boss-grid,.hall-verse-grid,.hall-era-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));}",
+    ".hall-boss-card{position:relative;overflow:hidden;}",
+    ".hall-boss-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(229,184,93,.12),transparent 40%);pointer-events:none;}",
+    ".hall-boss-title{font-size:1.04rem;font-weight:800;margin-bottom:6px;}",
+    ".hall-mastery-meter{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:10px;}",
+    ".hall-mastery-meter span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#e5b85d,#f8e6b0);}",
+    ".calendar-grid{display:grid;gap:8px;grid-template-columns:repeat(7,minmax(0,1fr));}",
+    ".calendar-weekday{font-size:.84rem;text-transform:uppercase;letter-spacing:.08em;color:rgba(248,238,214,.72);padding:0 0 4px 2px;}",
+    ".calendar-day-card{min-height:112px;display:flex;flex-direction:column;justify-content:space-between;}",
+    ".calendar-day-card.dim{opacity:.42;}",
+    ".calendar-day-number{font-size:1.05rem;font-weight:800;}",
+    ".calendar-day-state{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}",
+    ".calendar-tag{font-size:.75rem;font-weight:700;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);}",
+    ".calendar-tag.weekend{background:rgba(229,184,93,.14);border-color:rgba(229,184,93,.26);}",
+    ".chapter-intro-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;padding:12px 14px;border-radius:16px;background:rgba(229,184,93,.1);border:1px solid rgba(229,184,93,.24);}",
+    ".era-card-title{font-size:1rem;font-weight:800;margin-bottom:6px;}",
+    ".era-card-status{margin-bottom:10px;}",
+    "@media (max-width:760px){.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.calendar-weekday{display:none;}}"
+  ].join("");
+  document.head.appendChild(style);
+}
+
+function profileDisplayInitials(profile) {
+  const text = String((profile && profile.name) || "").trim();
+  if (!text) return "FS";
+  const parts = text.split(/\s+/).slice(0, 2);
+  return parts.map((part) => part.charAt(0).toUpperCase()).join("") || "FS";
+}
+
+function uniqueProfileId(name = "profile") {
+  return `${normalizeFileSlug(name || "profile", "profile")}-${Date.now().toString(36)}`;
+}
+
+function switchToProfile(profileId) {
+  if (!profileId || profileId === activeProfileId) return;
+  writeStoredProfileSnapshot(activeProfileId, captureStateSnapshot());
+  activeProfileId = profileId;
+  localStorage.setItem(PROFILE_ACTIVE_KEY, activeProfileId);
+  const snapshot = readStoredProfileSnapshot(activeProfileId) || defaultStateSnapshot();
+  writeLegacySnapshotToStorage(snapshot);
+  window.location.reload();
+}
+
+function createFreshProfile() {
+  if (profileIndex.length >= PROFILE_LIMIT) {
+    window.alert(challengeCopy(`You can keep up to ${PROFILE_LIMIT} profiles in Family/Classroom mode.`, `Puedes guardar hasta ${PROFILE_LIMIT} perfiles en el modo familia/clase.`));
+    return;
+  }
+  const input = window.prompt(challengeCopy("Name this new profile:", "Nombra este nuevo perfil:"), "");
+  const name = normalizePlayerName(input || "");
+  if (!name) return;
+  const profile = normalizeProfileMeta({
+    id: uniqueProfileId(name),
+    name,
+    accent: PROFILE_COLOR_SWATCHES[profileIndex.length % PROFILE_COLOR_SWATCHES.length],
+    createdAt: localDayKey(),
+    updatedAt: localDayKey()
+  }, profileIndex.length);
+  profileIndex.push(profile);
+  saveProfileIndex(profileIndex);
+  const snapshot = defaultStateSnapshot(name);
+  snapshot.audio = deepClone(state.audio);
+  snapshot.language = state.language;
+  snapshot.controls = deepClone(state.controls);
+  writeStoredProfileSnapshot(profile.id, snapshot);
+  switchToProfile(profile.id);
+}
+
+function exportCurrentProfileSyncCode() {
+  const payload = {
+    app: "FAITHSHIELD",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    profile: activeProfileMeta() || normalizeProfileMeta({ id: activeProfileId, name: state.playerName || "Faith Player" }),
+    snapshot: captureStateSnapshot()
+  };
+  const json = JSON.stringify(payload);
+  const code = btoa(unescape(encodeURIComponent(json)));
+  copyTextToClipboardOrPrompt(code, () => {
+    window.alert(challengeCopy("Sync code copied. Paste it on another device to import this profile.", "Codigo de sincronizacion copiado. Pegalo en otro dispositivo para importar este perfil."));
+  });
+}
+
+function importProfileFromSyncCode() {
+  const code = window.prompt(challengeCopy("Paste a FAITHSHIELD sync code:", "Pega un codigo de sincronizacion de FAITHSHIELD:"), "");
+  if (!code) return;
+  let payload = null;
+  try {
+    payload = JSON.parse(decodeURIComponent(escape(atob(String(code).trim()))));
+  } catch (_) {
+    window.alert(challengeCopy("That sync code could not be read.", "No se pudo leer ese codigo de sincronizacion."));
+    return;
+  }
+  if (!payload || payload.app !== "FAITHSHIELD" || !payload.snapshot) {
+    window.alert(challengeCopy("That sync code is not valid for FAITHSHIELD.", "Ese codigo de sincronizacion no es valido para FAITHSHIELD."));
+    return;
+  }
+  const incomingProfile = normalizeProfileMeta({
+    ...(payload.profile || {}),
+    id: uniqueProfileId((payload.profile && payload.profile.name) || "imported-profile"),
+    updatedAt: localDayKey()
+  }, profileIndex.length);
+  profileIndex.push(incomingProfile);
+  profileIndex = profileIndex.slice(0, PROFILE_LIMIT);
+  saveProfileIndex(profileIndex);
+  writeStoredProfileSnapshot(incomingProfile.id, payload.snapshot);
+  switchToProfile(incomingProfile.id);
+}
+
+function hallBossEntries() {
+  return eraOrderList()
+    .map((era) => {
+      const bossStage = stages.filter((meta) => meta.theme.era === era && isEraBossStage(meta)).slice(-1)[0] || null;
+      if (!bossStage) return null;
+      const bossMode = bossModeForStage(bossStage, currentDifficulty());
+      const profile = bossVisualProfile(era, bossMode);
+      return {
+        era,
+        bossStage,
+        profile,
+        defeated: state.completed.includes(bossStage.id)
+      };
+    })
+    .filter(Boolean);
+}
+
+function isEraComplete(era) {
+  const eraStages = stages.filter((meta) => meta.theme.era === era);
+  return Boolean(eraStages.length) && eraStages.every((meta) => state.completed.includes(meta.id));
+}
+
+function masteredVerseEntries(limit = 9) {
+  return masteryEntries()
+    .filter((entry) => Number(entry.strength || 0) >= MASTERY_TARGET_PERCENT && entry.source)
+    .sort((a, b) => Number(b.strength || 0) - Number(a.strength || 0))
+    .slice(0, Math.max(1, limit));
+}
+
+function eraCompletionShareText(era) {
+  const label = formatEraLabel(era);
+  const stagesDone = stages.filter((meta) => meta.theme.era === era && state.completed.includes(meta.id)).length;
+  const total = stages.filter((meta) => meta.theme.era === era).length;
+  const bossEntry = hallBossEntries().find((entry) => entry.era === era);
+  const bossLine = bossEntry && bossEntry.defeated
+    ? `${bossEntry.profile.displayName} was defeated in the final battle.`
+    : "The final boss still stands.";
+  return `FAITHSHIELD - ${label} complete. I cleared ${stagesDone}/${total} stages, mastered key verses, and ${bossLine}`;
+}
+
+function createEraCompletionShareCardCanvas(era) {
+  const width = 1280;
+  const height = 720;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const bg = ctx.createLinearGradient(0, 0, width, height);
+  bg.addColorStop(0, "#17233f");
+  bg.addColorStop(0.55, "#101a2f");
+  bg.addColorStop(1, "#081220");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = "rgba(229, 184, 93, 0.12)";
+  ctx.fillRect(72, 72, width - 144, height - 144);
+  ctx.strokeStyle = "rgba(229, 184, 93, 0.45)";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(72, 72, width - 144, height - 144);
+
+  const label = formatEraLabel(era);
+  const bossEntry = hallBossEntries().find((entry) => entry.era === era);
+  const masteryCount = masteredVerseEntries(30).filter((entry) => entry.era === era).length;
+
+  ctx.fillStyle = "#f8ecd6";
+  ctx.font = "700 26px Georgia";
+  ctx.fillText("FAITHSHIELD ERA COMPLETE", 120, 150);
+  ctx.font = "700 62px Georgia";
+  ctx.fillText(label, 120, 240);
+  ctx.font = "400 30px Georgia";
+  ctx.fillStyle = "#ead6b0";
+  ctx.fillText(`Player: ${displayPlayerName()}`, 120, 302);
+  ctx.fillText(`Stages Cleared: ${stages.filter((meta) => meta.theme.era === era && state.completed.includes(meta.id)).length}/${stages.filter((meta) => meta.theme.era === era).length}`, 120, 350);
+  ctx.fillText(`Boss Defeated: ${bossEntry ? bossEntry.profile.displayName : "Era Guardian"}`, 120, 398);
+  ctx.fillText(`Verses Mastered In Era: ${masteryCount}`, 120, 446);
+  ctx.fillText(new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }), 120, 530);
+
+  ctx.fillStyle = "#e5b85d";
+  ctx.font = "700 118px Georgia";
+  ctx.fillText("✦", width - 240, 220);
+  ctx.font = "700 40px Georgia";
+  ctx.fillText(isEraComplete(era) ? "Shield Secured" : "Journey In Progress", width - 370, 310);
+
+  ctx.fillStyle = "#f8ecd6";
+  ctx.font = "400 28px Georgia";
+  wrapCanvasText(ctx, eraCompletionShareText(era), 120, 600, width - 240, 40);
+
+  return canvas;
+}
+
+function exportEraCompletionCard(era) {
+  const canvas = createEraCompletionShareCardCanvas(era);
+  if (!canvas) return;
+  const link = document.createElement("a");
+  link.href = canvas.toDataURL("image/png");
+  link.download = `faithshield-${normalizeFileSlug(era, "era")}-completion-card.png`;
+  link.click();
+}
+
+function renderProfilesSection() {
+  ensureExperienceSections();
+  if (!profileSection || !profileGrid || !profileSummary) return;
+  const activeMeta = activeProfileMeta();
+  profileSummary.textContent = challengeCopy(
+    `${profileIndex.length} profile${profileIndex.length === 1 ? "" : "s"} ready. Active: ${activeMeta ? activeMeta.name : "Faith Player"}.`,
+    `${profileIndex.length} perfil${profileIndex.length === 1 ? "" : "es"} listo${profileIndex.length === 1 ? "" : "s"}. Activo: ${activeMeta ? activeMeta.name : "Jugador de Fe"}.`
+  );
+  profileGrid.innerHTML = "";
+  profileIndex.forEach((profile) => {
+    const card = document.createElement("article");
+    card.className = `profile-card ${profile.id === activeProfileId ? "active" : ""}`;
+    card.innerHTML = [
+      '<div class="profile-card-head">',
+      `  <div class="profile-avatar" style="background:${profile.accent}">${profileDisplayInitials(profile)}</div>`,
+      '  <div class="profile-meta">',
+      `    <p class="hall-boss-title">${profile.name}</p>`,
+      `    <p class="meta">${profile.id === activeProfileId ? challengeCopy("Active profile", "Perfil activo") : challengeCopy("Family/Classroom profile", "Perfil familiar/clase")}</p>`,
+      "  </div>",
+      "</div>",
+      '<div class="profile-actions"></div>'
+    ].join("");
+    const actions = card.querySelector(".profile-actions");
+    const switchBtn = document.createElement("button");
+    switchBtn.type = "button";
+    switchBtn.className = profile.id === activeProfileId ? "cta-btn" : "ghost-btn";
+    switchBtn.textContent = profile.id === activeProfileId ? challengeCopy("Playing Now", "Jugando ahora") : challengeCopy("Switch Here", "Cambiar aqui");
+    switchBtn.disabled = profile.id === activeProfileId;
+    switchBtn.onclick = () => switchToProfile(profile.id);
+    actions.appendChild(switchBtn);
+    profileGrid.appendChild(card);
+  });
+}
+
+function renderHallOfFaith() {
+  ensureExperienceSections();
+  if (!hallOfFaithSection) return;
+  const bosses = hallBossEntries();
+  const defeatedCount = bosses.filter((entry) => entry.defeated).length;
+  const mastered = masteredVerseEntries(12);
+  if (hallOfFaithSummary) {
+    hallOfFaithSummary.textContent = `${defeatedCount}/${bosses.length} bosses defeated • ${state.badges.length}/${MAX_BADGES} badges earned • ${mastered.length} mastered verses ready`;
+  }
+  if (hallBossGrid) {
+    hallBossGrid.innerHTML = "";
+    bosses.forEach((entry) => {
+      const card = document.createElement("article");
+      card.className = "hall-card hall-boss-card";
+      card.innerHTML = [
+        `<p class="premium-chip">${entry.defeated ? "Boss Defeated" : "Boss Waiting"}</p>`,
+        `<p class="hall-boss-title" style="margin-top:14px;">${entry.profile.displayName}</p>`,
+        `<p class="meta">${formatEraLabel(entry.era)} • ${entry.profile.title}</p>`,
+        `<p style="margin-top:12px;">${entry.profile.weaknessCopy}</p>`
+      ].join("");
+      hallBossGrid.appendChild(card);
+    });
+  }
+  if (hallBadgeStrip) {
+    hallBadgeStrip.innerHTML = "";
+    badgeCatalog.slice(0, Math.max(MAX_BADGES, badgeCatalog.length)).forEach((badge) => {
+      const earned = state.badges.includes(badge.id);
+      const pill = document.createElement("div");
+      pill.className = `hall-badge-pill ${earned ? "" : "locked"}`.trim();
+      pill.innerHTML = [
+        `<span class="icon">${badge.icon || "🛡️"}</span>`,
+        `<span>${badge.name}</span>`,
+        `<span class="meta">${earned ? challengeCopy("Unlocked", "Desbloqueado") : challengeCopy("Locked", "Bloqueado")}</span>`
+      ].join("");
+      hallBadgeStrip.appendChild(pill);
+    });
+  }
+  if (hallVerseGrid) {
+    hallVerseGrid.innerHTML = "";
+    mastered.forEach((entry) => {
+      const card = document.createElement("article");
+      card.className = "hall-card";
+      card.innerHTML = [
+        `<p class="hall-boss-title">${entry.theme}</p>`,
+        `<p class="meta">${entry.source}</p>`,
+        `<div class="hall-mastery-meter"><span style="width:${Math.max(8, Math.round(Number(entry.strength || 0)))}%"></span></div>`,
+        `<p class="meta" style="margin-top:10px;">Mastery strength: ${Math.round(Number(entry.strength || 0))}%</p>`
+      ].join("");
+      hallVerseGrid.appendChild(card);
+    });
+  }
+  if (hallEraGrid) {
+    hallEraGrid.innerHTML = "";
+    eraOrderList().forEach((era) => {
+      const card = document.createElement("article");
+      card.className = "hall-card";
+      const complete = isEraComplete(era);
+      card.innerHTML = [
+        `<p class="era-card-title">${formatEraLabel(era)}</p>`,
+        `<p class="meta era-card-status">${complete ? challengeCopy("All stages complete. Share this era card.", "Todas las etapas completas. Comparte esta tarjeta.") : challengeCopy("Still in progress. Finish the era to unlock the share card.", "Aun en progreso. Termina la era para desbloquear la tarjeta.")}</p>`,
+        '<div class="hall-actions"></div>'
+      ].join("");
+      const actions = card.querySelector(".hall-actions");
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "ghost-btn";
+      copyBtn.disabled = !complete;
+      copyBtn.textContent = challengeCopy("Copy Share Text", "Copiar texto");
+      copyBtn.onclick = () => copyTextToClipboardOrPrompt(eraCompletionShareText(era));
+      actions.appendChild(copyBtn);
+      const cardBtn = document.createElement("button");
+      cardBtn.type = "button";
+      cardBtn.className = complete ? "cta-btn" : "ghost-btn";
+      cardBtn.disabled = !complete;
+      cardBtn.textContent = challengeCopy("Download Era Card", "Descargar tarjeta");
+      cardBtn.onclick = () => exportEraCompletionCard(era);
+      actions.appendChild(cardBtn);
+      hallEraGrid.appendChild(card);
+    });
+  }
+}
+
+function renderDailyChallengeCalendar() {
+  ensureExperienceSections();
+  if (!dailyCalendarSection || !dailyCalendarGrid || !dailyCalendarSummary || !dailyCalendarEvent) return;
+  const today = new Date();
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const monthName = monthStart.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const firstCell = new Date(monthStart);
+  firstCell.setDate(firstCell.getDate() - firstCell.getDay());
+  const entries = state.dailyCalendar || {};
+  const activeDays = Object.values(entries).filter((entry) => entry && (entry.challenge || entry.devotion || entry.reward)).length;
+  dailyCalendarSummary.textContent = `${monthName} • ${activeDays} active day${activeDays === 1 ? "" : "s"} tracked • Faith day streak: ${state.dailyStrike.count}`;
+  const event = weekendEventForDate(today);
+  dailyCalendarEvent.textContent = event
+    ? `${event.name} • ${event.description}`
+    : challengeCopy("Weekday focus: one faithful challenge at a time.", "Enfoque entre semana: un desafio fiel a la vez.");
+
+  dailyCalendarGrid.innerHTML = "";
+  ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach((label) => {
+    const head = document.createElement("div");
+    head.className = "calendar-weekday";
+    head.textContent = label;
+    dailyCalendarGrid.appendChild(head);
+  });
+
+  for (let offset = 0; offset < 35; offset += 1) {
+    const date = new Date(firstCell);
+    date.setDate(firstCell.getDate() + offset);
+    const dayKey = localDayKey(date);
+    const entry = entries[dayKey] || null;
+    const card = document.createElement("article");
+    card.className = `calendar-day-card ${date.getMonth() === today.getMonth() ? "" : "dim"}`.trim();
+    const tags = [];
+    if (entry && entry.challenge) tags.push('<span class="calendar-tag">Challenge</span>');
+    if (entry && entry.reflection) tags.push('<span class="calendar-tag">Reflection</span>');
+    if (entry && entry.weekendRewardClaimed) tags.push('<span class="calendar-tag weekend">Weekend Bonus</span>');
+    if (!tags.length) tags.push(`<span class="calendar-tag ${date.getDay() === 0 || date.getDay() === 6 ? "weekend" : ""}">${date.getDay() === 0 || date.getDay() === 6 ? "Weekend" : "Open"}</span>`);
+    card.innerHTML = [
+      `<p class="calendar-day-number">${date.getDate()}</p>`,
+      `<p class="meta">${entry && entry.era ? formatEraLabel(entry.era) : "&nbsp;"}</p>`,
+      `<div class="calendar-day-state">${tags.join("")}</div>`
+    ].join("");
+    dailyCalendarGrid.appendChild(card);
+  }
+}
+
 function ensureExperienceSections() {
   if (!appRoot) return;
 
@@ -5780,6 +6552,106 @@ function ensureExperienceSections() {
 
   ensureBadgeActionButtons();
   ensureShareOverlayEnhancements();
+  ensurePremiumHubStyles();
+
+  if (!profileSection || !profileSection.isConnected) {
+    profileSection = document.getElementById("profileSection");
+    if (!profileSection) {
+      profileSection = document.createElement("section");
+      profileSection.id = "profileSection";
+      profileSection.className = "feature-card";
+      profileSection.innerHTML = [
+        '<div class="feature-head">',
+        '  <h2>Family / Classroom Mode</h2>',
+        '  <p id="profileSummary" class="meta">Profiles and sync</p>',
+        '</div>',
+        '<p class="meta">Keep separate faith journeys for home, class, or siblings, and move progress between devices with a sync code.</p>',
+        '<div class="feature-actions wrap">',
+        '  <button id="addProfileBtn" class="ghost-btn" type="button">Add Profile</button>',
+        '  <button id="exportSyncCodeBtn" class="ghost-btn" type="button">Export Sync Code</button>',
+        '  <button id="importSyncCodeBtn" class="ghost-btn" type="button">Import Sync Code</button>',
+        '</div>',
+        '<div id="profileGrid" class="premium-grid" style="margin-top:16px;"></div>'
+      ].join("");
+      if (postStoryAnchor) {
+        postStoryAnchor.parentNode.insertBefore(profileSection, postStoryAnchor);
+      } else if (storySection && storySection.parentNode) {
+        storySection.parentNode.insertBefore(profileSection, storySection);
+      } else {
+        appRoot.appendChild(profileSection);
+      }
+    }
+    profileSummary = profileSection.querySelector("#profileSummary");
+    profileGrid = profileSection.querySelector("#profileGrid");
+    addProfileBtn = profileSection.querySelector("#addProfileBtn");
+    exportSyncCodeBtn = profileSection.querySelector("#exportSyncCodeBtn");
+    importSyncCodeBtn = profileSection.querySelector("#importSyncCodeBtn");
+    if (addProfileBtn) addProfileBtn.onclick = createFreshProfile;
+    if (exportSyncCodeBtn) exportSyncCodeBtn.onclick = exportCurrentProfileSyncCode;
+    if (importSyncCodeBtn) importSyncCodeBtn.onclick = importProfileFromSyncCode;
+  }
+
+  if (!hallOfFaithSection || !hallOfFaithSection.isConnected) {
+    hallOfFaithSection = document.getElementById("hallOfFaithSection");
+    if (!hallOfFaithSection) {
+      hallOfFaithSection = document.createElement("section");
+      hallOfFaithSection.id = "hallOfFaithSection";
+      hallOfFaithSection.className = "feature-card";
+      hallOfFaithSection.innerHTML = [
+        '<div class="feature-head">',
+        '  <h2>Hall of Faith</h2>',
+        '  <p id="hallOfFaithSummary" class="meta">Bosses, badges, and verses</p>',
+        '</div>',
+        '<div class="feature-head"><h3>Bosses Defeated</h3></div>',
+        '<div id="hallBossGrid" class="hall-boss-grid"></div>',
+        '<div class="feature-head" style="margin-top:18px;"><h3>Badges Earned</h3></div>',
+        '<div id="hallBadgeStrip" class="hall-badge-strip"></div>',
+        '<div class="feature-head" style="margin-top:18px;"><h3>Verses Mastered</h3></div>',
+        '<div id="hallVerseGrid" class="hall-verse-grid"></div>',
+        '<div class="feature-head" style="margin-top:18px;"><h3>Era Completion Cards</h3></div>',
+        '<div id="hallEraGrid" class="hall-era-grid"></div>'
+      ].join("");
+      if (postStoryAnchor) {
+        postStoryAnchor.parentNode.insertBefore(hallOfFaithSection, postStoryAnchor);
+      } else if (storySection && storySection.parentNode) {
+        storySection.parentNode.insertBefore(hallOfFaithSection, storySection);
+      } else {
+        appRoot.appendChild(hallOfFaithSection);
+      }
+    }
+    hallOfFaithSummary = hallOfFaithSection.querySelector("#hallOfFaithSummary");
+    hallBossGrid = hallOfFaithSection.querySelector("#hallBossGrid");
+    hallBadgeStrip = hallOfFaithSection.querySelector("#hallBadgeStrip");
+    hallVerseGrid = hallOfFaithSection.querySelector("#hallVerseGrid");
+    hallEraGrid = hallOfFaithSection.querySelector("#hallEraGrid");
+  }
+
+  if (!dailyCalendarSection || !dailyCalendarSection.isConnected) {
+    dailyCalendarSection = document.getElementById("dailyCalendarSection");
+    if (!dailyCalendarSection) {
+      dailyCalendarSection = document.createElement("section");
+      dailyCalendarSection.id = "dailyCalendarSection";
+      dailyCalendarSection.className = "feature-card";
+      dailyCalendarSection.innerHTML = [
+        '<div class="feature-head">',
+        '  <h2>Daily Challenge Calendar</h2>',
+        '  <p id="dailyCalendarSummary" class="meta">Track daily faithfulness</p>',
+        '</div>',
+        '<p id="dailyCalendarEvent" class="premium-chip"></p>',
+        '<div id="dailyCalendarGrid" class="calendar-grid" style="margin-top:16px;"></div>'
+      ].join("");
+      if (postStoryAnchor) {
+        postStoryAnchor.parentNode.insertBefore(dailyCalendarSection, postStoryAnchor);
+      } else if (storySection && storySection.parentNode) {
+        storySection.parentNode.insertBefore(dailyCalendarSection, storySection);
+      } else {
+        appRoot.appendChild(dailyCalendarSection);
+      }
+    }
+    dailyCalendarSummary = dailyCalendarSection.querySelector("#dailyCalendarSummary");
+    dailyCalendarEvent = dailyCalendarSection.querySelector("#dailyCalendarEvent");
+    dailyCalendarGrid = dailyCalendarSection.querySelector("#dailyCalendarGrid");
+  }
 
   if (!campaignMapSection || !campaignMapSection.isConnected) {
     campaignMapSection = document.getElementById("campaignMapSection");
@@ -5911,6 +6783,7 @@ function ensureExperienceSections() {
       completeDevotionChallengeBtn.onclick = () => {
         ensureDailyDevotionState();
         state.dailyDevotion.challenge = true;
+        ensureDailyCalendarEntry(localDayKey()).challenge = true;
         persist();
         render();
       };
@@ -5919,6 +6792,7 @@ function ensureExperienceSections() {
       completeDevotionActionBtn.onclick = () => {
         ensureDailyDevotionState();
         state.dailyDevotion.action = true;
+        ensureDailyCalendarEntry(localDayKey()).devotion = true;
         persist();
         render();
       };
@@ -5930,6 +6804,7 @@ function ensureExperienceSections() {
         if (!note) return;
         state.dailyDevotion.note = note.slice(0, 240);
         state.dailyDevotion.reflection = true;
+        ensureDailyCalendarEntry(localDayKey()).reflection = true;
         persist();
         render();
       };
@@ -5950,6 +6825,7 @@ function ensureExperienceSections() {
         const ready = state.dailyDevotion.challenge && state.dailyDevotion.action && state.dailyDevotion.reflection;
         if (!ready || state.dailyDevotion.reward) return;
         state.dailyDevotion.reward = true;
+        ensureDailyCalendarEntry(localDayKey()).reward = true;
         awardXp(DAILY_DEVOTION_REWARD_XP);
         state.lives = Math.min(MAX_LIVES, state.lives + DAILY_DEVOTION_REWARD_LIFE);
         playSfx("success");
@@ -6341,16 +7217,31 @@ function initDesktopControlBindings() {
 
 function trackDailyAndWeeklyCompletion(meta, replay = false) {
   ensureDailyDevotionState();
+  const todayEntry = ensureDailyCalendarEntry(localDayKey());
   ensureWeeklyChallengeState();
+  let weekendBonus = null;
   if (!replay) {
     state.dailyDevotion.challenge = true;
+    todayEntry.challenge = true;
+    if (meta && meta.theme && meta.theme.era) {
+      todayEntry.era = meta.theme.era;
+    }
     if (meta && meta.theme && meta.theme.era === state.weeklyChallenge.era) {
       state.weeklyChallenge.progress = Math.min(
         state.weeklyChallenge.target,
         Number(state.weeklyChallenge.progress || 0) + 1
       );
     }
+    const event = weekendEventForDate();
+    if (event && !todayEntry.weekendRewardClaimed) {
+      todayEntry.weekendRewardClaimed = true;
+      todayEntry.weekendEventId = event.id;
+      if (event.rewardXp) awardXp(event.rewardXp);
+      if (event.rewardLives) state.lives = Math.min(MAX_LIVES, state.lives + Number(event.rewardLives || 0));
+      weekendBonus = event;
+    }
   }
+  return weekendBonus;
 }
 
 function ensureCorePracticePlacement() {
@@ -6396,7 +7287,10 @@ function ensureHubSectionOrder() {
     streakSection,
     practiceSection,
     dailyDevotionSection,
+    dailyCalendarSection,
     weeklyChallengeSection,
+    profileSection,
+    hallOfFaithSection,
     masterySection,
     campaignMapSection,
     desktopControlsSection,
@@ -6418,6 +7312,9 @@ function ensureHubSectionOrder() {
 
 function renderExperienceSections() {
   ensureCorePracticePlacement();
+  renderProfilesSection();
+  renderDailyChallengeCalendar();
+  renderHallOfFaith();
   renderCampaignMap();
   renderMasteryPanel();
   renderDailyDevotionQuest();
@@ -6982,19 +7879,23 @@ function stageCompletionSummary(result) {
   if (!result || !result.meta) return "";
   const sourceRef = normalizeSourceRef((result.stageActivity && result.stageActivity.sourceRef) || result.meta.theme.sourceRef);
   const sourceLine = sourceRef ? `${challengeCopy("Confirmed in", "Confirmado en")} ${sourceRef.split(";")[0].trim()}.` : "";
+  const weekendLine = result.weekendBonus
+    ? `${result.weekendBonus.name}: +${Number(result.weekendBonus.rewardXp || 0)} XP${result.weekendBonus.rewardLives ? ` • +${result.weekendBonus.rewardLives} life` : ""}.`
+    : "";
   if (result.reviewFocus && result.reviewFocus.label) {
-    return [sourceLine, `${challengeCopy("Review strengthened", "Repaso fortalecido")}: ${result.reviewFocus.label}.`].filter(Boolean).join(" ");
+    return [sourceLine, weekendLine, `${challengeCopy("Review strengthened", "Repaso fortalecido")}: ${result.reviewFocus.label}.`].filter(Boolean).join(" ");
   }
   if (result.replay) {
-    return [sourceLine, challengeCopy("You strengthened this Bible section again.", "Fortaleciste esta seccion biblica otra vez.")].filter(Boolean).join(" ");
+    return [sourceLine, weekendLine, challengeCopy("You strengthened this Bible section again.", "Fortaleciste esta seccion biblica otra vez.")].filter(Boolean).join(" ");
   }
   if (result.nextMeta) {
     return [
       sourceLine,
+      weekendLine,
       `${challengeCopy("Next unlocked", "Siguiente desbloqueado")}: ${result.nextMeta.theme.name} - ${t("stageLabel")} ${result.nextMeta.stage}.`
     ].filter(Boolean).join(" ");
   }
-  return [sourceLine, challengeCopy("This section is complete. Keep moving through the story path.", "Esta seccion esta completa. Sigue avanzando por el camino de la historia.")].filter(Boolean).join(" ");
+  return [sourceLine, weekendLine, challengeCopy("This section is complete. Keep moving through the story path.", "Esta seccion esta completa. Sigue avanzando por el camino de la historia.")].filter(Boolean).join(" ");
 }
 
 function showStageCompleteMoment(result, options = {}) {
@@ -7039,7 +7940,7 @@ function eraReviewEntry(era) {
   const due = reviewDueEntries(24);
   const weak = weakestMasteryEntries(24);
   const combined = due.concat(weak.filter((entry) => !due.some((dueEntry) => dueEntry.key === entry.key)));
-  return combined.find((entry) => entry && entry.era === era && !["interactive", "timing", "pattern", "collect", "balance", "route", "discern", "slingshot"].includes(reviewKindFromEntry(entry))) || null;
+  return combined.find((entry) => entry && entry.era === era && !["interactive", "timing", "pattern", "collect", "balance", "route", "discern", "slingshot", "spotlight", "memoryflip", "sealbreak", "shieldwall"].includes(reviewKindFromEntry(entry))) || null;
 }
 
 function firstUnlockedStageForEra(era) {
@@ -7467,6 +8368,9 @@ function closeActivity() {
   maybeShowQueuedEraFinale();
 
   updateAudioState();
+  window.setTimeout(() => {
+    if (!state.activeStage && shouldKeepHubMusicAlive()) primeAudioAuto();
+  }, 60);
 }
 
 function clearStageAutoCloseTimer() {
@@ -7696,9 +8600,10 @@ function markDone(stageId, mode) {
 
   const parsed = parseStageId(stageId);
   if (parsed) recordLevelCompletionIfNeeded(parsed.level);
+  let weekendBonus = null;
   if (meta && stageActivity) {
     recordMasteryOutcome(meta, stageActivity, true);
-    trackDailyAndWeeklyCompletion(meta, false);
+    weekendBonus = trackDailyAndWeeklyCompletion(meta, false);
   }
   if (completedReviewFocus) clearReviewFocus({ silent: true });
 
@@ -7729,7 +8634,8 @@ function markDone(stageId, mode) {
           modeEngine,
           replay: false,
           difficulty: state.difficulty,
-          eraFinaleEra
+          eraFinaleEra,
+          weekendBonus
         }
       })
     );
@@ -7743,6 +8649,7 @@ function markDone(stageId, mode) {
     celebrationBadge,
     nextMeta,
     eraFinaleEra,
+    weekendBonus,
     reviewFocus: completedReviewFocus
   };
 }
@@ -7766,7 +8673,8 @@ function resetProgress() {
     flawlessLevels: 0,
     badgeSetBonuses: {},
     difficultyPass: { easy: false, medium: false, advanced: false },
-    eraFinalesSeen: {}
+    eraFinalesSeen: {},
+    chapterIntrosSeen: {}
   };
   state.activeStage = null;
   state.lastStage = null;
@@ -7793,6 +8701,8 @@ function resetProgress() {
     progress: 0,
     shared: false
   };
+  state.dailyCalendar = {};
+  ensureDailyCalendarEntry(localDayKey());
 
   stopFinaleMusic();
   stopCreditsMusic();
@@ -9792,6 +10702,16 @@ function materializeInteractiveMode(base, difficulty = currentDifficulty(), keyS
       mode.maxMisses = Math.max(2, (base.maxMisses || 4) - Math.min(cycle, 1));
     } else if (base.engine === "discern") {
       mode.maxMisses = Math.max(2, (base.maxMisses || 3) - Math.min(cycle, 1));
+    } else if (base.engine === "spotlight") {
+      mode.rounds = Math.max(3, (base.rounds || 4) + cycle);
+      mode.shuffles = Math.max(2, (base.shuffles || 3) + Math.min(cycle, 2));
+    } else if (base.engine === "memoryflip") {
+      mode.peekMs = Math.max(540, (base.peekMs || 1180) - cycle * 60);
+    } else if (base.engine === "sealbreak") {
+      mode.rounds = Math.max(3, (base.rounds || 4) + cycle);
+    } else if (base.engine === "shieldwall") {
+      mode.target = Math.max(4, (base.target || 5) + cycle);
+      mode.speedMs = Math.max(880, (base.speedMs || 1420) - cycle * 55);
     }
   }
 
@@ -9825,6 +10745,20 @@ function materializeInteractiveMode(base, difficulty = currentDifficulty(), keyS
     mode.maxMisses = Math.max(1, (mode.maxMisses || 4) + (tune.maxMissesDelta || 0));
   } else if (mode.engine === "discern") {
     mode.maxMisses = Math.max(1, (mode.maxMisses || 3) + (tune.maxMissesDelta || 0));
+  } else if (mode.engine === "spotlight") {
+    mode.rounds = Math.max(3, (mode.rounds || 4) + (tune.roundsDelta || 0));
+    mode.shuffles = Math.max(2, (mode.shuffles || 3) + (tune.shufflesDelta || 0));
+    mode.maxMisses = Math.max(1, (mode.maxMisses || 3) + (tune.maxMissesDelta || 0));
+  } else if (mode.engine === "memoryflip") {
+    mode.peekMs = Math.max(420, (mode.peekMs || 1180) + (tune.peekDelta || 0));
+    mode.maxMisses = Math.max(1, (mode.maxMisses || 4) + (tune.maxMissesDelta || 0));
+  } else if (mode.engine === "sealbreak") {
+    mode.rounds = Math.max(3, (mode.rounds || 4) + (tune.roundsDelta || 0));
+    mode.maxMisses = Math.max(1, (mode.maxMisses || 3) + (tune.maxMissesDelta || 0));
+  } else if (mode.engine === "shieldwall") {
+    mode.target = Math.max(4, (mode.target || 5) + (tune.targetDelta || 0));
+    mode.maxMisses = Math.max(1, (mode.maxMisses || 3) + (tune.maxMissesDelta || 0));
+    mode.speedMs = Math.max(820, (mode.speedMs || 1420) + (tune.speedDelta || 0));
   }
 
   return mode;
@@ -9838,7 +10772,7 @@ function themeLevelOrdinal(meta) {
   return ordinal;
 }
 
-const NON_DIRECTIONAL_STAGE_FIVE_ENGINES = new Set(["pattern", "discern", "timing", "slingshot", "collect", "balance"]);
+const NON_DIRECTIONAL_STAGE_FIVE_ENGINES = new Set(["pattern", "discern", "timing", "slingshot", "collect", "balance", "spotlight", "memoryflip", "sealbreak", "shieldwall"]);
 const STAGE_FIVE_PATTERN_FALLBACK_PADS = [
   { icon: "📜", label: "Word" },
   { icon: "🕯️", label: "Light" },
@@ -10638,6 +11572,41 @@ function stageFivePatternPadsFromChoices(base) {
   return pads.slice(0, 4);
 }
 
+function stageFiveChoiceCardsFromBase(base, limit = 4) {
+  const pool = Array.isArray(base?.cards) && base.cards.length
+    ? base.cards
+    : (Array.isArray(base?.pads) && base.pads.length
+      ? base.pads
+      : (Array.isArray(base?.routeSteps) ? base.routeSteps : []));
+  const cards = [];
+  const seen = new Set();
+
+  pool.forEach((entry) => {
+    if (cards.length >= limit) return;
+    const icon = String((entry && entry.icon) || "📜").trim() || "📜";
+    const label = String((entry && entry.label) || "Card").trim() || "Card";
+    const key = normalizeQuizAnswerKey(label) || `${icon}-${cards.length}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    cards.push({ id: `${key}-${cards.length}`, icon, label });
+  });
+
+  STAGE_FIVE_PATTERN_FALLBACK_PADS.forEach((entry) => {
+    if (cards.length >= limit) return;
+    const key = normalizeQuizAnswerKey(entry.label) || `${entry.icon}-${cards.length}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    cards.push({ id: `${key}-${cards.length}`, icon: entry.icon, label: entry.label });
+  });
+
+  while (cards.length < limit) {
+    const index = cards.length;
+    cards.push({ id: `faith-card-${index}`, icon: "✨", label: `Faith ${index + 1}` });
+  }
+
+  return cards.slice(0, limit);
+}
+
 function stageFivePatternFromBase(base, themeName = "") {
   const hash = stageFiveHashSeed(base, themeName);
   const pads = Array.isArray(base.routeSteps) && base.routeSteps.length
@@ -10759,6 +11728,133 @@ function stageFiveSlingshotFromDirectional(base, themeName = "") {
   };
 }
 
+function stageFiveSpotlightFromBase(base, themeName = "") {
+  const hash = stageFiveHashSeed(base, themeName);
+  const cue = stageFiveThemeCue(themeName);
+  const cards = stageFiveChoiceCardsFromBase(base, 4);
+  const roundsData = Array.from({ length: 4 }, (_, index) => {
+    const targetCard = cards[(hash + index) % cards.length];
+    return {
+      targetId: targetCard.id,
+      targetLabel: targetCard.label,
+      shuffleSeed: hash + index * 3
+    };
+  });
+  return {
+    id: `${base.id || "stage5-spotlight"}-spotlight`,
+    engine: "spotlight",
+    label: `${base.label || cue} Spotlight`,
+    rounds: roundsData.length,
+    shuffles: 3 + (hash % 2),
+    peekMs: 880 + ((hash % 3) * 70),
+    maxMisses: Math.max(2, Math.min(4, Number(base.maxMisses) || 3)),
+    sourceRef: base.sourceRef,
+    storyPrompt: base.storyPrompt || `Keep your eyes on the key truth in this ${cue} moment.`,
+    secondaryPrompt: "Watch the highlighted clue, let the board shuffle, then find it again.",
+    keyboardHint: "Keyboard: press 1-4 to pick the card after the shuffle.",
+    cards,
+    roundsData
+  };
+}
+
+function stageFiveMemoryFlipFromBase(base, themeName = "") {
+  const hash = stageFiveHashSeed(base, themeName);
+  const cue = stageFiveThemeCue(themeName);
+  const cards = stageFiveChoiceCardsFromBase(base, 4);
+  const board = rotateKinds(
+    cards.flatMap((card, index) => [
+      { slotId: `${card.id}-a-${index}`, cardId: card.id },
+      { slotId: `${card.id}-b-${index}`, cardId: card.id }
+    ]),
+    hash % Math.max(1, cards.length * 2)
+  );
+  return {
+    id: `${base.id || "stage5-memory"}-memoryflip`,
+    engine: "memoryflip",
+    label: `${base.label || cue} Memory`,
+    maxMisses: Math.max(2, Math.min(5, Number(base.maxMisses) || 4)),
+    peekMs: 1180 + ((hash % 3) * 90),
+    sourceRef: base.sourceRef,
+    storyPrompt: base.storyPrompt || `Study the clues in this ${cue} scene, then match them from memory.`,
+    secondaryPrompt: "Memorize the cards, then flip and match every pair.",
+    keyboardHint: "Keyboard: press 1-8 to flip cards, or click/tap the board.",
+    cards,
+    board
+  };
+}
+
+function stageFiveSealbreakFromBase(base, themeName = "") {
+  const hash = stageFiveHashSeed(base, themeName);
+  const cue = stageFiveThemeCue(themeName);
+  const cards = stageFiveChoiceCardsFromBase(base, 6);
+  const roundsData = Array.from({ length: 4 }, (_, index) => {
+    const rotated = rotateKinds(cards, (hash + index) % cards.length);
+    const targetCount = 2 + ((hash + index) % 2);
+    const targets = rotated.slice(0, targetCount);
+    const cells = targets.map((card, cellIndex) => ({
+      slotId: `seal-target-${index}-${cellIndex}`,
+      cardId: card.id
+    }));
+    const decoys = rotateKinds(cards, (hash + index + 2) % cards.length);
+    let fillIndex = 0;
+    while (cells.length < 9) {
+      const pick = decoys[fillIndex % decoys.length];
+      fillIndex += 1;
+      if (targets.some((card) => card.id === pick.id)) continue;
+      cells.push({
+        slotId: `seal-decoy-${index}-${cells.length}`,
+        cardId: pick.id
+      });
+    }
+    return {
+      prompt: `Break the seals marked ${targets.map((card) => card.label).join(" + ")}.`,
+      targetIds: targets.map((card) => card.id),
+      grid: rotateKinds(cells, (hash + index * 2) % cells.length)
+    };
+  });
+  return {
+    id: `${base.id || "stage5-sealbreak"}-sealbreak`,
+    engine: "sealbreak",
+    label: `${base.label || cue} Seal Break`,
+    rounds: roundsData.length,
+    maxMisses: Math.max(2, Math.min(4, Number(base.maxMisses) || 3)),
+    sourceRef: base.sourceRef,
+    storyPrompt: base.storyPrompt || `Identify the true seals in this ${cue} moment and break only the right ones.`,
+    secondaryPrompt: "Read the clue and break only the correct seals.",
+    keyboardHint: "Keyboard: press 1-9 to break the matching seals.",
+    cards,
+    roundsData
+  };
+}
+
+function stageFiveShieldwallFromBase(base, themeName = "") {
+  const hash = stageFiveHashSeed(base, themeName);
+  const cue = stageFiveThemeCue(themeName);
+  const cards = stageFiveChoiceCardsFromBase(base, 4);
+  const roundsData = Array.from({ length: 5 }, (_, index) => {
+    const lane = (hash + index * 2) % cards.length;
+    return {
+      lane,
+      cardId: cards[lane].id,
+      prompt: `Guard the ${cards[lane].label} lane before the strike lands.`
+    };
+  });
+  return {
+    id: `${base.id || "stage5-shieldwall"}-shieldwall`,
+    engine: "shieldwall",
+    label: `${base.label || cue} Shield Wall`,
+    target: roundsData.length,
+    maxMisses: Math.max(2, Math.min(4, Number(base.maxMisses) || 3)),
+    speedMs: 1460 - ((hash % 3) * 90),
+    sourceRef: base.sourceRef,
+    storyPrompt: base.storyPrompt || `Hold the wall in this ${cue} challenge and block the right gate in time.`,
+    secondaryPrompt: "Watch the attack lane, then raise the shield at the matching gate.",
+    keyboardHint: "Keyboard: press 1-4 to guard the right gate, or tap the shield buttons.",
+    cards,
+    roundsData
+  };
+}
+
 function shouldUseStageFiveSlingshot(base, themeName = "") {
   if (STAGE_FIVE_BATTLE_THEME_NAMES.has(themeName)) return true;
   const text = `${base?.label || ""} ${base?.storyPrompt || ""} ${base?.sourceRef || ""}`.toLowerCase();
@@ -10767,39 +11863,41 @@ function shouldUseStageFiveSlingshot(base, themeName = "") {
 
 function toNonDirectionalStageFiveMode(base, themeName = "") {
   if (!base || typeof base !== "object") return null;
-  if (base.engine === "pattern" || base.engine === "discern" || base.engine === "timing" || base.engine === "collect" || base.engine === "balance") {
+  if (base.engine === "spotlight" || base.engine === "memoryflip" || base.engine === "sealbreak" || base.engine === "shieldwall") {
     return { ...base };
   }
+  if (base.engine === "pattern") return stageFiveSpotlightFromBase(base, themeName);
+  if (base.engine === "discern") return stageFiveMemoryFlipFromBase(base, themeName);
+  if (base.engine === "timing") return stageFiveSealbreakFromBase(base, themeName);
+  if (base.engine === "collect" || base.engine === "balance") return stageFiveShieldwallFromBase(base, themeName);
   if (base.engine === "slingshot") return stageFiveSlingshotFromDirectional(base, themeName);
-  if (base.engine === "route") return stageFivePatternFromRoute(base, themeName);
+  if (base.engine === "route") return stageFiveSpotlightFromBase(base, themeName);
   if (base.engine === "dodge") {
     return shouldUseStageFiveSlingshot(base, themeName)
       ? stageFiveSlingshotFromDirectional(base, themeName)
-      : stageFiveDiscernFromDirectional(base, themeName);
+      : stageFiveShieldwallFromBase(base, themeName);
   }
   if (NON_DIRECTIONAL_STAGE_FIVE_ENGINES.has(base.engine)) {
     return { ...base };
   }
-  return stageFiveTimingFromDirectional(base, themeName);
+  return stageFiveSealbreakFromBase(base, themeName);
 }
 
 function stageFiveVariantModes(base, themeName = "") {
   if (!base || typeof base !== "object") return [];
   switch (base.engine) {
-    case "pattern":
-      return [stageFiveDiscernFromDirectional(base, themeName), stageFiveTimingFromDirectional(base, themeName)];
-    case "discern":
-      return [stageFivePatternFromBase(base, themeName), stageFiveBalanceFromBase(base, themeName)];
-    case "balance":
-      return [stageFiveTimingFromDirectional(base, themeName), stageFiveCollectFromBase(base, themeName)];
-    case "collect":
-      return [stageFiveTimingFromDirectional(base, themeName), stageFiveDiscernFromDirectional(base, themeName)];
-    case "timing":
-      return [stageFivePatternFromBase(base, themeName), stageFiveBalanceFromBase(base, themeName)];
+    case "spotlight":
+      return [stageFiveMemoryFlipFromBase(base, themeName), stageFiveSealbreakFromBase(base, themeName), stageFiveShieldwallFromBase(base, themeName)];
+    case "memoryflip":
+      return [stageFiveSpotlightFromBase(base, themeName), stageFiveSealbreakFromBase(base, themeName), stageFiveShieldwallFromBase(base, themeName)];
+    case "sealbreak":
+      return [stageFiveSpotlightFromBase(base, themeName), stageFiveMemoryFlipFromBase(base, themeName), stageFiveShieldwallFromBase(base, themeName)];
+    case "shieldwall":
+      return [stageFiveSpotlightFromBase(base, themeName), stageFiveMemoryFlipFromBase(base, themeName), stageFiveSealbreakFromBase(base, themeName)];
     case "slingshot":
-      return [stageFiveTimingFromDirectional(base, themeName), stageFiveDiscernFromDirectional(base, themeName)];
+      return [stageFiveMemoryFlipFromBase(base, themeName), stageFiveSealbreakFromBase(base, themeName)];
     default:
-      return [stageFiveTimingFromDirectional(base, themeName), stageFiveDiscernFromDirectional(base, themeName)];
+      return [stageFiveSpotlightFromBase(base, themeName), stageFiveMemoryFlipFromBase(base, themeName), stageFiveSealbreakFromBase(base, themeName), stageFiveShieldwallFromBase(base, themeName)];
   }
 }
 
@@ -10829,14 +11927,19 @@ function expandedStageFivePool(rawPool, themeName = "", requiredCount = 0) {
   };
 
   const normalized = normalizedStageFivePool(rawPool, themeName);
-  normalized.forEach(addMode);
   normalized.forEach((base) => {
+    addMode(base);
     stageFiveVariantModes(base, themeName).forEach(addMode);
   });
 
   if (expanded.length < requiredCount) {
     normalized.forEach((base) => {
-      [stageFiveCollectFromBase(base, themeName), stageFiveBalanceFromBase(base, themeName)].forEach(addMode);
+      [
+        stageFiveSpotlightFromBase(base, themeName),
+        stageFiveMemoryFlipFromBase(base, themeName),
+        stageFiveSealbreakFromBase(base, themeName),
+        stageFiveShieldwallFromBase(base, themeName)
+      ].forEach(addMode);
     });
   }
 
@@ -10973,6 +12076,7 @@ function primeAudioAuto() {
     armAudioUnlock();
   }
   updateAudioState();
+  ensureMusicHeartbeat();
 }
 
 function buildEraSections() {
@@ -13353,6 +14457,14 @@ function renderInteractive(meta, mode, sourceRef) {
 
   if (mode.engine === "boss") {
     activeCleanup = renderBoss(meta, mode, feedback);
+  } else if (mode.engine === "spotlight") {
+    activeCleanup = renderSpotlight(meta, mode, feedback);
+  } else if (mode.engine === "memoryflip") {
+    activeCleanup = renderMemoryFlip(meta, mode, feedback);
+  } else if (mode.engine === "sealbreak") {
+    activeCleanup = renderSealbreak(meta, mode, feedback);
+  } else if (mode.engine === "shieldwall") {
+    activeCleanup = renderShieldwall(meta, mode, feedback);
   } else if (mode.engine === "pattern") {
     activeCleanup = renderPattern(meta, mode, feedback);
   } else if (mode.engine === "balance") {
@@ -13876,6 +14988,33 @@ function ensureBossBattleStyles() {
       display: block;
       image-rendering: pixelated;
     }
+    .faith-boss-sheet-shell {
+      width: min(100%, 330px);
+      aspect-ratio: 1 / 1;
+      display: grid;
+      align-items: end;
+      justify-items: center;
+      transform-origin: center bottom;
+      filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.34));
+    }
+    .faith-boss-sheet-art {
+      width: calc(var(--sheet-frame-width, 320px) * var(--sheet-anchor-scale, 1));
+      height: calc(var(--sheet-frame-height, 320px) * var(--sheet-anchor-scale, 1));
+      background-repeat: no-repeat;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      background-position: center bottom;
+      background-size: cover;
+      transform-origin: center bottom;
+    }
+    .faith-boss-sheet-shell.is-telegraph {
+      animation: faithBossThreat 0.36s ease-in-out infinite;
+      filter: drop-shadow(0 0 18px rgba(240, 207, 147, 0.26)) drop-shadow(0 18px 30px rgba(0, 0, 0, 0.34));
+    }
+    .faith-boss-sheet-shell.is-strike {
+      transform: translateY(-8px) scale(1.04);
+      filter: drop-shadow(0 0 20px rgba(218, 78, 78, 0.28)) drop-shadow(0 22px 32px rgba(0, 0, 0, 0.36));
+    }
     .faith-boss-duel-foe {
       transform: translateY(6px);
     }
@@ -14067,6 +15206,17 @@ function bossVisualProfile(era, mode) {
       weaponName: challengeCopy("Promise Blade", "Espada de promesa"),
       weaponIcon: "🗡️",
       bossWeapon: "fang",
+      spriteSheet: {
+        src: "assets/bosses/serpent-of-eden-sheet.png",
+        frameWidth: 320,
+        frameHeight: 320,
+        anchorScale: 1.26,
+        idle: { row: 0, frames: 4, speed: 140 },
+        telegraph: { row: 1, frames: 4, speed: 90 },
+        strike: { row: 2, frames: 5, speed: 72 },
+        hurt: { row: 3, frames: 3, speed: 110 },
+        defeat: { row: 4, frames: 6, speed: 132 }
+      },
       skin: "#d2a180",
       hair: "#30412b",
       beard: "#30412b",
@@ -14257,11 +15407,96 @@ function bossVisualProfile(era, mode) {
     cape: profile.cape || "#2f2635",
     kind: profile.kind || "warlord",
     stature: Number.isFinite(profile.stature) ? profile.stature : 1,
+    spriteSheet: profile.spriteSheet || null,
     weaknessCopy: profile.weaknessCopy || challengeCopy(
       "Watch the attack lanes around the enemy, find the true opening, and raise the shield in the right direction.",
       "Observa los carriles de ataque alrededor del enemigo, encuentra la apertura verdadera y levanta el escudo en la direccion correcta."
     )
   };
+}
+
+function ensureBossSpriteSheetRecord(config, onResolved) {
+  if (!config || !config.src || typeof Image === "undefined") return null;
+  let record = bossSpriteSheetCache.get(config.src);
+  if (!record) {
+    const image = new Image();
+    record = {
+      src: config.src,
+      status: "loading",
+      width: 0,
+      height: 0,
+      image,
+      listeners: new Set()
+    };
+    image.onload = () => {
+      record.status = "ready";
+      record.width = image.naturalWidth || 0;
+      record.height = image.naturalHeight || 0;
+      [...record.listeners].forEach((listener) => listener(record));
+      record.listeners.clear();
+    };
+    image.onerror = () => {
+      record.status = "error";
+      [...record.listeners].forEach((listener) => listener(record));
+      record.listeners.clear();
+    };
+    image.src = config.src;
+    bossSpriteSheetCache.set(config.src, record);
+  }
+  if (typeof onResolved === "function") {
+    if (record.status === "loading") {
+      record.listeners.add(onResolved);
+    } else {
+      onResolved(record);
+    }
+  }
+  return record;
+}
+
+function bossSpriteAnimationDefinition(profile, attackPhase, bossRatio, playerRatio) {
+  const sheet = profile && profile.spriteSheet;
+  if (!sheet) return null;
+  if (bossRatio <= 0) return sheet.defeat || sheet.hurt || sheet.idle || null;
+  if (attackPhase === "strike") return sheet.strike || sheet.telegraph || sheet.idle || null;
+  if (attackPhase === "telegraph") return sheet.telegraph || sheet.idle || null;
+  if (bossRatio <= 0.5 || playerRatio <= 0.34) return sheet.hurt || sheet.idle || null;
+  return sheet.idle || null;
+}
+
+function bossSpriteSheetMarkup(profile, bossRatio, playerRatio, attackPhase, animationTick) {
+  const sheet = profile && profile.spriteSheet;
+  if (!sheet) return "";
+  const record = ensureBossSpriteSheetRecord(sheet);
+  if (!record || record.status !== "ready") return "";
+  const animation = bossSpriteAnimationDefinition(profile, attackPhase, bossRatio, playerRatio) || {};
+  const frameCount = Math.max(1, Number(animation.frames) || 1);
+  const row = Math.max(0, Number(animation.row) || 0);
+  const safeTick = Math.max(0, Number(animationTick) || 0);
+  const frameIndex = safeTick % frameCount;
+  const frameWidth = Math.max(1, Number(sheet.frameWidth) || 320);
+  const frameHeight = Math.max(1, Number(sheet.frameHeight) || 320);
+  const anchorScale = Math.max(0.6, Number(sheet.anchorScale) || 1);
+  const sheetWidth = Math.max(frameWidth * frameCount, Number(record.width) || frameWidth * frameCount);
+  const sheetHeight = Math.max(frameHeight * (row + 1), Number(record.height) || frameHeight * (row + 1));
+  const offsetX = -(frameIndex * frameWidth);
+  const offsetY = -(row * frameHeight);
+  const stanceClass = attackPhase === "strike" ? "is-strike" : attackPhase === "telegraph" ? "is-telegraph" : "is-idle";
+  return `
+    <div class="faith-boss-sheet-shell ${stanceClass}" style="--sheet-anchor-scale:${anchorScale};">
+      <div
+        class="faith-boss-sheet-art"
+        role="img"
+        aria-label="${profile.displayName}"
+        style="
+          background-image:url('${sheet.src}');
+          background-size:${sheetWidth}px ${sheetHeight}px;
+          background-position:${offsetX}px ${offsetY}px;
+          --sheet-frame-width:${frameWidth}px;
+          --sheet-frame-height:${frameHeight}px;
+        "
+      ></div>
+    </div>
+  `;
 }
 
 function retroBossSpriteMarkup(profile, bossRatio = 1, playerRatio = 1) {
@@ -14438,15 +15673,18 @@ function retroBossBattleSceneMarkup(
   playerRatio = 1,
   activeDirection = "",
   incomingDirection = "",
-  attackPhase = "idle"
+  attackPhase = "idle",
+  animationTick = 0
 ) {
   const duelClasses = ["faith-boss-duel"];
   if (attackPhase === "telegraph") duelClasses.push("is-telegraph");
   if (attackPhase === "strike") duelClasses.push("is-strike");
   if (incomingDirection) duelClasses.push(`dir-${incomingDirection}`);
+  const bossMarkup = bossSpriteSheetMarkup(profile, bossRatio, playerRatio, attackPhase, animationTick)
+    || retroBossSpriteMarkup(profile, bossRatio, playerRatio);
   return `
     <div class="${duelClasses.join(" ")}">
-      <div class="faith-boss-duel-foe">${retroBossSpriteMarkup(profile, bossRatio, playerRatio)}</div>
+      <div class="faith-boss-duel-foe">${bossMarkup}</div>
       <div class="faith-boss-duel-hero">${retroShieldHeroMarkup(profile, palette, playerRatio, activeDirection)}</div>
     </div>
   `;
@@ -14635,6 +15873,8 @@ function renderBoss(meta, mode, feedback) {
   let incomingDirection = "";
   let attackPhase = "idle";
   let roundAttackToken = 0;
+  let animationTick = 0;
+  let spriteLoopStarted = false;
   const buttons = [];
   const targetNodes = [];
   const timers = new Set();
@@ -14656,6 +15896,32 @@ function renderBoss(meta, mode, feedback) {
   const clearTimers = () => {
     timers.forEach((timer) => clearTimeout(timer));
     timers.clear();
+  };
+
+  const currentSpriteAnimationSpeed = () => {
+    const maxBoss = Math.max(1, Number(mode.bossHealth) || 1);
+    const maxPlayer = Math.max(1, Number(mode.playerHealth) || 1);
+    const animation = bossSpriteAnimationDefinition(profile, attackPhase, bossHp / maxBoss, playerHp / maxPlayer);
+    return Math.max(66, Number(animation && animation.speed) || 120);
+  };
+
+  const startSpriteLoop = () => {
+    if (spriteLoopStarted || !profile.spriteSheet) return;
+    const record = ensureBossSpriteSheetRecord(profile.spriteSheet, (resolved) => {
+      if (resolved && resolved.status === "ready") {
+        updateBars();
+        startSpriteLoop();
+      }
+    });
+    if (!record || record.status !== "ready") return;
+    spriteLoopStarted = true;
+    const tick = () => {
+      if (!running) return;
+      animationTick += 1;
+      updateBars();
+      schedule(tick, currentSpriteAnimationSpeed());
+    };
+    schedule(tick, currentSpriteAnimationSpeed());
   };
 
   const refreshBackdrop = () => {
@@ -14724,7 +15990,8 @@ function renderBoss(meta, mode, feedback) {
       playerRatio,
       defenseDirection,
       incomingDirection,
-      attackPhase
+      attackPhase,
+      animationTick
     );
     weaponChip.innerHTML = `🛡️ <span>${challengeCopy("Raise", "Levanta")}:</span> <span>${profile.guardName}</span>`;
     status.textContent = `${challengeCopy("Boss Stamina", "Resistencia del jefe")}: ${bossHp}/${maxBoss} | ${challengeCopy("Shield Guard", "Guardia del escudo")}: ${playerHp}/${maxPlayer} | ${challengeCopy("Round", "Ronda")} ${Math.min(roundIndex + 1, rounds.length)}/${rounds.length}`;
@@ -14952,6 +16219,686 @@ function renderBoss(meta, mode, feedback) {
   );
   duckMusicTemporarily(0.22, 2200);
   playSfx("boss-enter");
+
+  return () => {
+    running = false;
+    clearTimers();
+    window.removeEventListener("keydown", onKey);
+  };
+}
+
+function renderSpotlight(meta, mode, feedback) {
+  const prompt = document.createElement("p");
+  prompt.textContent = mode.secondaryPrompt || "Watch the highlighted clue, then pick it after the shuffle.";
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: press 1-4 to pick the clue after the shuffle.");
+  const status = createSkillStatus("");
+  activityPanel.append(prompt, hint, status);
+
+  const board = document.createElement("div");
+  board.style.display = "grid";
+  board.style.gridTemplateColumns = "repeat(2, minmax(150px, 1fr))";
+  board.style.gap = "0.85rem";
+  board.style.marginTop = "0.8rem";
+  activityPanel.append(board);
+
+  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice(0, 4) : stageFiveChoiceCardsFromBase(mode, 4);
+  const roundsData = Array.isArray(mode.roundsData) && mode.roundsData.length
+    ? mode.roundsData
+    : cards.map((card, index) => ({ targetId: card.id, targetLabel: card.label, shuffleSeed: index + 1 }));
+  const totalRounds = Math.max(1, Number(mode.rounds) || roundsData.length);
+  const maxMisses = Math.max(1, Number(mode.maxMisses) || 3);
+  const peekMs = Math.max(480, Number(mode.peekMs) || 900);
+  const shuffleCount = Math.max(2, Number(mode.shuffles) || 3);
+  const cardMap = new Map(cards.map((card) => [card.id, card]));
+  const timers = new Set();
+  const buttons = [];
+  let running = true;
+  let locked = true;
+  let roundIndex = 0;
+  let misses = 0;
+  let activeTargetId = "";
+  let currentOrder = cards.map((card) => card.id);
+
+  const queue = (callback, delay) => {
+    const timer = window.setTimeout(() => {
+      timers.delete(timer);
+      callback();
+    }, delay);
+    timers.add(timer);
+  };
+
+  const clearTimers = () => {
+    timers.forEach((timer) => window.clearTimeout(timer));
+    timers.clear();
+  };
+
+  const updateStatus = (line = "") => {
+    const lead = line ? `${line} ` : "";
+    status.textContent = `${lead}${challengeCopy("Round", "Ronda")} ${Math.min(roundIndex + 1, totalRounds)}/${totalRounds} | ${t("missesLabel")}: ${misses}/${maxMisses}`;
+  };
+
+  const renderBoard = (order, revealTarget = false) => {
+    board.innerHTML = "";
+    buttons.length = 0;
+    order.forEach((cardId, index) => {
+      const card = cardMap.get(cardId) || { icon: "✨", label: "Faith" };
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "ghost-btn";
+      button.style.minHeight = "108px";
+      button.style.display = "grid";
+      button.style.placeItems = "center";
+      button.style.gap = "0.35rem";
+      button.style.fontWeight = "800";
+      button.style.textAlign = "center";
+      button.style.padding = "0.85rem";
+      button.innerHTML = `<span style="font-size:1.55rem">${card.icon}</span><span>${index + 1}. ${card.label}</span>`;
+      if (revealTarget && cardId === activeTargetId) {
+        button.style.boxShadow = "0 0 0 2px rgba(229,191,93,0.46), 0 18px 36px rgba(229,191,93,0.22)";
+        button.style.transform = "translateY(-2px)";
+      }
+      button.addEventListener("click", () => handlePick(cardId));
+      buttons.push(button);
+      board.append(button);
+    });
+  };
+
+  const failStage = () => {
+    running = false;
+    const hasLives = loseLife();
+    feedback.className = "feedback warn";
+    feedback.textContent = hasLives ? t("challengeFailedReplay") : t("outOfLivesContinue");
+    playSfx("fail");
+    queueStageAutoClose(meta.id);
+  };
+
+  const beginShuffle = (seed, stepsLeft) => {
+    if (!running) return;
+    if (stepsLeft <= 0) {
+      locked = false;
+      currentOrder = rotateKinds(currentOrder, (seed % currentOrder.length) + 1);
+      renderBoard(currentOrder, false);
+      updateStatus(`Find ${roundsData[roundIndex % roundsData.length].targetLabel}.`);
+      return;
+    }
+    currentOrder = rotateKinds(currentOrder, ((seed + stepsLeft) % (currentOrder.length - 1 || 1)) + 1);
+    renderBoard(currentOrder, false);
+    queue(() => beginShuffle(seed + 1, stepsLeft - 1), 150);
+  };
+
+  const startRound = () => {
+    clearTimers();
+    if (!running) return;
+    const round = roundsData[roundIndex % roundsData.length];
+    activeTargetId = round.targetId;
+    currentOrder = cards.map((card) => card.id);
+    locked = true;
+    renderBoard(currentOrder, true);
+    feedback.className = "feedback";
+    feedback.textContent = "";
+    updateStatus(`Watch ${round.targetLabel}.`);
+    queue(() => beginShuffle(round.shuffleSeed || roundIndex + 1, shuffleCount), peekMs);
+  };
+
+  function handlePick(cardId) {
+    if (!running || locked || !canPlayStage()) return;
+    const round = roundsData[roundIndex % roundsData.length];
+    if (cardId === activeTargetId) {
+      feedback.className = "feedback ok";
+      feedback.textContent = challengeCopy("You tracked the right clue.", "Seguiste la pista correcta.");
+      playSfx("success");
+      roundIndex += 1;
+      if (roundIndex >= totalRounds) {
+        completeStage(meta, mode);
+        return;
+      }
+      locked = true;
+      queue(startRound, 520);
+      return;
+    }
+
+    misses += 1;
+    feedback.className = "feedback warn";
+    feedback.textContent = challengeCopy(
+      `That was not ${round.targetLabel}. Watch the shuffle again.`,
+      `Esa no era ${round.targetLabel}. Mira la mezcla otra vez.`
+    );
+    playSfx("fail");
+    if (misses >= maxMisses) {
+      failStage();
+      return;
+    }
+    locked = true;
+    updateStatus(`Watch ${round.targetLabel}.`);
+    queue(startRound, 520);
+  }
+
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id || !running || locked) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const index = Number(String(event.key || "").trim()) - 1;
+    if (!Number.isInteger(index) || index < 0 || index >= buttons.length) return;
+    event.preventDefault();
+    buttons[index]?.click();
+  };
+
+  window.addEventListener("keydown", onKey);
+  startRound();
+
+  return () => {
+    running = false;
+    clearTimers();
+    window.removeEventListener("keydown", onKey);
+  };
+}
+
+function renderMemoryFlip(meta, mode, feedback) {
+  const prompt = document.createElement("p");
+  prompt.textContent = mode.secondaryPrompt || "Memorize the cards, then flip and match every pair.";
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: press 1-8 to flip cards.");
+  const status = createSkillStatus("");
+  activityPanel.append(prompt, hint, status);
+
+  const board = document.createElement("div");
+  board.style.display = "grid";
+  board.style.gridTemplateColumns = "repeat(4, minmax(110px, 1fr))";
+  board.style.gap = "0.75rem";
+  board.style.marginTop = "0.8rem";
+  activityPanel.append(board);
+
+  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice(0, 4) : stageFiveChoiceCardsFromBase(mode, 4);
+  const deck = Array.isArray(mode.board) && mode.board.length
+    ? mode.board.slice(0, 8)
+    : rotateKinds(cards.flatMap((card, index) => [
+      { slotId: `${card.id}-a-${index}`, cardId: card.id },
+      { slotId: `${card.id}-b-${index}`, cardId: card.id }
+    ]), 1);
+  const peekMs = Math.max(420, Number(mode.peekMs) || 1150);
+  const maxMisses = Math.max(1, Number(mode.maxMisses) || 4);
+  const cardMap = new Map(cards.map((card) => [card.id, card]));
+  const matched = new Set();
+  const timers = new Set();
+  let openSlots = [];
+  let misses = 0;
+  let running = true;
+  let locked = true;
+
+  const queue = (callback, delay) => {
+    const timer = window.setTimeout(() => {
+      timers.delete(timer);
+      callback();
+    }, delay);
+    timers.add(timer);
+  };
+
+  const clearTimers = () => {
+    timers.forEach((timer) => window.clearTimeout(timer));
+    timers.clear();
+  };
+
+  const updateStatus = (line = "") => {
+    const lead = line ? `${line} ` : "";
+    status.textContent = `${lead}${challengeCopy("Matched", "Emparejadas")}: ${matched.size / 2}/${cards.length} | ${t("missesLabel")}: ${misses}/${maxMisses}`;
+  };
+
+  const isFaceUp = (index, revealAll = false) => revealAll || matched.has(index) || openSlots.includes(index);
+
+  const renderBoard = (revealAll = false) => {
+    board.innerHTML = "";
+    deck.forEach((slot, index) => {
+      const card = cardMap.get(slot.cardId) || { icon: "✨", label: "Faith" };
+      const faceUp = isFaceUp(index, revealAll);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "ghost-btn";
+      button.disabled = !running || matched.has(index);
+      button.style.minHeight = "96px";
+      button.style.display = "grid";
+      button.style.placeItems = "center";
+      button.style.padding = "0.75rem";
+      button.style.fontWeight = "800";
+      button.innerHTML = faceUp
+        ? `<span style="font-size:1.4rem">${card.icon}</span><span>${index + 1}. ${card.label}</span>`
+        : `<span style="font-size:1.5rem">🛡️</span><span>${index + 1}. ${challengeCopy("Hidden", "Oculta")}</span>`;
+      if (!faceUp) {
+        button.style.opacity = "0.94";
+      }
+      button.addEventListener("click", () => handleFlip(index));
+      board.append(button);
+    });
+  };
+
+  const failStage = () => {
+    running = false;
+    const hasLives = loseLife();
+    feedback.className = "feedback warn";
+    feedback.textContent = hasLives ? t("challengeFailedReplay") : t("outOfLivesContinue");
+    playSfx("fail");
+    queueStageAutoClose(meta.id);
+  };
+
+  function handleFlip(index) {
+    if (!running || locked || matched.has(index) || openSlots.includes(index) || !canPlayStage()) return;
+    openSlots = openSlots.concat(index);
+    renderBoard(false);
+    updateStatus();
+    if (openSlots.length < 2) return;
+
+    locked = true;
+    const [first, second] = openSlots;
+    const firstCard = deck[first];
+    const secondCard = deck[second];
+    const isMatch = firstCard && secondCard && firstCard.cardId === secondCard.cardId;
+    if (isMatch) {
+      matched.add(first);
+      matched.add(second);
+      feedback.className = "feedback ok";
+      feedback.textContent = challengeCopy("Strong memory. You found the pair.", "Buena memoria. Encontraste la pareja.");
+      playSfx("success");
+      openSlots = [];
+      locked = false;
+      renderBoard(false);
+      updateStatus();
+      if (matched.size >= deck.length) {
+        completeStage(meta, mode);
+      }
+      return;
+    }
+
+    misses += 1;
+    feedback.className = "feedback warn";
+    feedback.textContent = challengeCopy("Those cards do not match.", "Esas cartas no coinciden.");
+    playSfx("fail");
+    renderBoard(false);
+    updateStatus();
+    queue(() => {
+      openSlots = [];
+      renderBoard(false);
+      locked = false;
+      if (misses >= maxMisses) {
+        failStage();
+      }
+    }, 660);
+  }
+
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id || !running || locked) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const index = Number(String(event.key || "").trim()) - 1;
+    if (!Number.isInteger(index) || index < 0 || index >= deck.length) return;
+    event.preventDefault();
+    handleFlip(index);
+  };
+
+  renderBoard(true);
+  updateStatus(challengeCopy("Memorize the board.", "Memoriza el tablero."));
+  queue(() => {
+    if (!running) return;
+    locked = false;
+    renderBoard(false);
+    updateStatus();
+  }, peekMs);
+  window.addEventListener("keydown", onKey);
+
+  return () => {
+    running = false;
+    clearTimers();
+    window.removeEventListener("keydown", onKey);
+  };
+}
+
+function renderSealbreak(meta, mode, feedback) {
+  const prompt = document.createElement("p");
+  prompt.textContent = mode.secondaryPrompt || "Read the clue and break only the correct seals.";
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: press 1-9 to break a seal.");
+  const status = createSkillStatus("");
+  activityPanel.append(prompt, hint, status);
+
+  const board = document.createElement("div");
+  board.style.display = "grid";
+  board.style.gridTemplateColumns = "repeat(3, minmax(120px, 1fr))";
+  board.style.gap = "0.75rem";
+  board.style.marginTop = "0.8rem";
+  activityPanel.append(board);
+
+  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice() : stageFiveChoiceCardsFromBase(mode, 6);
+  const roundsData = Array.isArray(mode.roundsData) && mode.roundsData.length ? mode.roundsData : [];
+  const totalRounds = Math.max(1, Number(mode.rounds) || roundsData.length || 1);
+  const maxMisses = Math.max(1, Number(mode.maxMisses) || 3);
+  const cardMap = new Map(cards.map((card) => [card.id, card]));
+  const timers = new Set();
+  let roundIndex = 0;
+  let misses = 0;
+  let running = true;
+  let locked = false;
+  let currentTargets = new Set();
+  let brokenTargets = new Set();
+
+  const queue = (callback, delay) => {
+    const timer = window.setTimeout(() => {
+      timers.delete(timer);
+      callback();
+    }, delay);
+    timers.add(timer);
+  };
+
+  const clearTimers = () => {
+    timers.forEach((timer) => window.clearTimeout(timer));
+    timers.clear();
+  };
+
+  const updateStatus = (line = "") => {
+    const lead = line ? `${line} ` : "";
+    status.textContent = `${lead}${challengeCopy("Round", "Ronda")} ${Math.min(roundIndex + 1, totalRounds)}/${totalRounds} | ${t("missesLabel")}: ${misses}/${maxMisses}`;
+  };
+
+  const failStage = () => {
+    running = false;
+    const hasLives = loseLife();
+    feedback.className = "feedback warn";
+    feedback.textContent = hasLives ? t("challengeFailedReplay") : t("outOfLivesContinue");
+    playSfx("fail");
+    queueStageAutoClose(meta.id);
+  };
+
+  const renderRound = () => {
+    if (!running) return;
+    board.innerHTML = "";
+    brokenTargets = new Set();
+    const round = roundsData[roundIndex % roundsData.length];
+    currentTargets = new Set(round.targetIds || []);
+    prompt.textContent = round.prompt || mode.secondaryPrompt || "Read the clue and break only the correct seals.";
+    updateStatus();
+
+    (round.grid || []).forEach((cell, index) => {
+      const card = cardMap.get(cell.cardId) || { icon: "✨", label: "Faith" };
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "ghost-btn";
+      button.style.minHeight = "92px";
+      button.style.display = "grid";
+      button.style.placeItems = "center";
+      button.style.padding = "0.7rem";
+      button.style.fontWeight = "800";
+      button.innerHTML = `<span style="font-size:1.3rem">${card.icon}</span><span>${index + 1}. ${card.label}</span>`;
+      button.addEventListener("click", () => handleBreak(cell, button));
+      board.append(button);
+    });
+  };
+
+  function handleBreak(cell, button) {
+    if (!running || locked || !canPlayStage()) return;
+    if (currentTargets.has(cell.cardId)) {
+      button.disabled = true;
+      button.style.boxShadow = "0 0 0 2px rgba(130,211,146,0.42), 0 16px 30px rgba(70,170,88,0.18)";
+      button.style.transform = "translateY(-2px)";
+      brokenTargets.add(cell.cardId);
+      playSfx("hit");
+      feedback.className = "feedback ok";
+      feedback.textContent = challengeCopy("Correct seal broken.", "Sello correcto roto.");
+      if (brokenTargets.size >= currentTargets.size) {
+        roundIndex += 1;
+        if (roundIndex >= totalRounds) {
+          completeStage(meta, mode);
+          return;
+        }
+        locked = true;
+        queue(() => {
+          locked = false;
+          renderRound();
+        }, 420);
+      }
+      return;
+    }
+
+    misses += 1;
+    button.disabled = true;
+    button.style.boxShadow = "0 0 0 2px rgba(226,122,122,0.42), 0 16px 30px rgba(160,60,60,0.18)";
+    button.style.transform = "translateY(-2px)";
+    feedback.className = "feedback warn";
+    feedback.textContent = challengeCopy("That seal does not fit the clue.", "Ese sello no corresponde a la pista.");
+    playSfx("fail");
+    updateStatus();
+    if (misses >= maxMisses) {
+      failStage();
+      return;
+    }
+  }
+
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id || !running || locked) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const index = Number(String(event.key || "").trim()) - 1;
+    if (!Number.isInteger(index) || index < 0 || index >= board.children.length) return;
+    event.preventDefault();
+    board.children[index]?.click();
+  };
+
+  window.addEventListener("keydown", onKey);
+  renderRound();
+
+  return () => {
+    running = false;
+    clearTimers();
+    window.removeEventListener("keydown", onKey);
+  };
+}
+
+function renderShieldwall(meta, mode, feedback) {
+  const prompt = document.createElement("p");
+  prompt.textContent = mode.secondaryPrompt || "Watch the attack lane, then raise the shield at the matching gate.";
+  const hint = createChallengeHint(mode.keyboardHint || "Keyboard: press 1-4 to guard the right gate.");
+  const status = createSkillStatus("");
+  activityPanel.append(prompt, hint, status);
+
+  const arena = document.createElement("div");
+  arena.style.display = "grid";
+  arena.style.gap = "0.8rem";
+  arena.style.padding = "1rem";
+  arena.style.border = "1px solid rgba(240, 207, 147, 0.18)";
+  arena.style.borderRadius = "20px";
+  arena.style.background = "linear-gradient(180deg, rgba(12, 18, 28, 0.92), rgba(8, 13, 20, 0.96))";
+  activityPanel.append(arena);
+
+  const laneRow = document.createElement("div");
+  laneRow.style.display = "grid";
+  laneRow.style.gridTemplateColumns = "repeat(4, minmax(0, 1fr))";
+  laneRow.style.gap = "0.65rem";
+  arena.append(laneRow);
+
+  const buttonRow = document.createElement("div");
+  buttonRow.style.display = "grid";
+  buttonRow.style.gridTemplateColumns = "repeat(4, minmax(0, 1fr))";
+  buttonRow.style.gap = "0.65rem";
+  arena.append(buttonRow);
+
+  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice(0, 4) : stageFiveChoiceCardsFromBase(mode, 4);
+  const roundsData = Array.isArray(mode.roundsData) && mode.roundsData.length ? mode.roundsData : cards.map((card, index) => ({ lane: index, cardId: card.id, prompt: `Guard ${card.label}.` }));
+  const targetWins = Math.max(1, Number(mode.target) || roundsData.length);
+  const maxMisses = Math.max(1, Number(mode.maxMisses) || 3);
+  const speedMs = Math.max(820, Number(mode.speedMs) || 1420);
+  const laneNodes = [];
+  const laneBeacons = [];
+  const shieldButtons = [];
+  const timers = new Set();
+  let running = true;
+  let locked = true;
+  let wins = 0;
+  let misses = 0;
+  let roundIndex = 0;
+  let activeLane = -1;
+
+  const queue = (callback, delay) => {
+    const timer = window.setTimeout(() => {
+      timers.delete(timer);
+      callback();
+    }, delay);
+    timers.add(timer);
+  };
+
+  const clearTimers = () => {
+    timers.forEach((timer) => window.clearTimeout(timer));
+    timers.clear();
+  };
+
+  const updateStatus = (line = "") => {
+    const lead = line ? `${line} ` : "";
+    status.textContent = `${lead}${challengeCopy("Guarded", "Bloqueadas")}: ${wins}/${targetWins} | ${t("missesLabel")}: ${misses}/${maxMisses}`;
+  };
+
+  cards.forEach((card, index) => {
+    const lane = document.createElement("div");
+    lane.style.position = "relative";
+    lane.style.minHeight = "130px";
+    lane.style.padding = "0.75rem 0.55rem";
+    lane.style.borderRadius = "18px";
+    lane.style.border = "1px solid rgba(240, 207, 147, 0.18)";
+    lane.style.background = "linear-gradient(180deg, rgba(18, 25, 37, 0.92), rgba(10, 15, 23, 0.98))";
+    lane.style.overflow = "hidden";
+    lane.innerHTML = `<div style="display:grid;gap:0.25rem;text-align:center;font-weight:800;"><span style="font-size:1.45rem">${card.icon}</span><span>${card.label}</span></div>`;
+
+    const beacon = document.createElement("div");
+    beacon.style.position = "absolute";
+    beacon.style.left = "50%";
+    beacon.style.top = "6px";
+    beacon.style.transform = "translate(-50%, -28px)";
+    beacon.style.width = "32px";
+    beacon.style.height = "32px";
+    beacon.style.borderRadius = "999px";
+    beacon.style.background = "radial-gradient(circle, rgba(255,238,188,0.95), rgba(213,169,72,0.18) 68%, rgba(213,169,72,0) 100%)";
+    beacon.style.opacity = "0";
+    beacon.style.transition = "transform 0.18s ease, opacity 0.18s ease";
+    lane.append(beacon);
+
+    laneNodes.push(lane);
+    laneBeacons.push(beacon);
+    laneRow.append(lane);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "ghost-btn";
+    button.innerHTML = `🛡️ <span>${index + 1}</span>`;
+    button.addEventListener("click", () => guardLane(index));
+    shieldButtons.push(button);
+    buttonRow.append(button);
+  });
+
+  const failStage = () => {
+    running = false;
+    const hasLives = loseLife();
+    feedback.className = "feedback warn";
+    feedback.textContent = hasLives ? t("challengeFailedReplay") : t("outOfLivesContinue");
+    playSfx("fail");
+    queueStageAutoClose(meta.id);
+  };
+
+  const setLaneState = (laneIndex, phase = "idle") => {
+    laneNodes.forEach((lane, index) => {
+      lane.style.boxShadow = "";
+      lane.style.transform = "";
+      laneBeacons[index].style.opacity = "0";
+      laneBeacons[index].style.transform = "translate(-50%, -28px)";
+      if (phase === "idle" || index !== laneIndex) return;
+      lane.style.boxShadow = phase === "impact"
+        ? "0 0 0 2px rgba(226,122,122,0.42), 0 18px 38px rgba(160,60,60,0.22)"
+        : "0 0 0 2px rgba(229,191,93,0.42), 0 18px 38px rgba(229,191,93,0.18)";
+      lane.style.transform = "translateY(-2px)";
+      laneBeacons[index].style.opacity = "1";
+      laneBeacons[index].style.transform = phase === "impact" ? "translate(-50%, 78px)" : "translate(-50%, 24px)";
+    });
+  };
+
+  const setButtonsLocked = (value) => {
+    shieldButtons.forEach((button) => {
+      button.disabled = value;
+    });
+  };
+
+  const startRound = () => {
+    clearTimers();
+    if (!running) return;
+    const round = roundsData[roundIndex % roundsData.length];
+    activeLane = Math.max(0, Math.min(3, Number(round.lane) || 0));
+    prompt.textContent = round.prompt || mode.secondaryPrompt || "Watch the attack lane, then raise the shield at the matching gate.";
+    locked = true;
+    setButtonsLocked(true);
+    setLaneState(activeLane, "telegraph");
+    feedback.className = "feedback";
+    feedback.textContent = challengeCopy("An attack is forming. Hold the right gate.", "Se forma un ataque. Protege la puerta correcta.");
+    updateStatus();
+    queue(() => {
+      if (!running) return;
+      locked = false;
+      setButtonsLocked(false);
+      setLaneState(activeLane, "telegraph");
+      playSfx("boss-attack");
+    }, 220);
+    queue(() => {
+      if (!running || locked) return;
+      locked = true;
+      setButtonsLocked(true);
+      setLaneState(activeLane, "impact");
+      misses += 1;
+      feedback.className = "feedback warn";
+      feedback.textContent = challengeCopy("The strike landed before your shield was set.", "El golpe llego antes de que tu escudo estuviera listo.");
+      playSfx("boss-hurt");
+      updateStatus();
+      if (misses >= maxMisses) {
+        failStage();
+        return;
+      }
+      roundIndex += 1;
+      queue(startRound, 520);
+    }, speedMs);
+  };
+
+  function guardLane(index) {
+    if (!running || locked || !canPlayStage()) return;
+    locked = true;
+    setButtonsLocked(true);
+    clearTimers();
+    if (index === activeLane) {
+      wins += 1;
+      setLaneState(index, "telegraph");
+      feedback.className = "feedback ok";
+      feedback.textContent = challengeCopy("Shield raised in time. The wall holds.", "Escudo levantado a tiempo. La muralla resiste.");
+      playSfx("success");
+      updateStatus();
+      if (wins >= targetWins) {
+        completeStage(meta, mode);
+        return;
+      }
+      roundIndex += 1;
+      queue(startRound, 420);
+      return;
+    }
+
+    misses += 1;
+    setLaneState(activeLane, "impact");
+    feedback.className = "feedback warn";
+    feedback.textContent = challengeCopy("Wrong gate. The strike slipped through.", "Puerta equivocada. El golpe paso.");
+    playSfx("fail");
+    updateStatus();
+    if (misses >= maxMisses) {
+      failStage();
+      return;
+    }
+    roundIndex += 1;
+    queue(startRound, 520);
+  }
+
+  const onKey = (event) => {
+    if (state.activeStage !== meta.id || !running || locked) return;
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const index = Number(String(event.key || "").trim()) - 1;
+    if (!Number.isInteger(index) || index < 0 || index >= shieldButtons.length) return;
+    event.preventDefault();
+    guardLane(index);
+  };
+
+  window.addEventListener("keydown", onKey);
+  updateStatus();
+  startRound();
 
   return () => {
     running = false;
@@ -16718,6 +18665,15 @@ function renderSlingshot(meta, mode, feedback) {
     return canvasPointerPosition(canvas, event);
   }
 
+  const releaseActivePointerCapture = (pointerId = activePointerId) => {
+    if (pointerId == null || !canvas.releasePointerCapture) return;
+    try {
+      canvas.releasePointerCapture(pointerId);
+    } catch (_) {
+      // Ignore release failures on older iOS builds.
+    }
+  };
+
   const onDown = (event) => {
     if (finished || !canPlayStage()) return;
     const p = getPos(event);
@@ -16757,6 +18713,7 @@ function renderSlingshot(meta, mode, feedback) {
     if (activePointerId !== null && event.pointerId !== activePointerId) return;
     if (!dragging || finished || !canPlayStage()) return;
     dragging = false;
+    releaseActivePointerCapture(event.pointerId);
     activePointerId = null;
     stone.vx = (sling.x - dragPoint.x) * pullPowerScale();
     stone.vy = (sling.y - dragPoint.y) * pullPowerScale();
@@ -16768,6 +18725,7 @@ function renderSlingshot(meta, mode, feedback) {
   const onCancel = (event) => {
     if (activePointerId !== null && event.pointerId !== activePointerId) return;
     dragging = false;
+    releaseActivePointerCapture(event.pointerId);
     activePointerId = null;
     resetStone();
   };
@@ -16843,6 +18801,9 @@ function renderSlingshot(meta, mode, feedback) {
 
   return () => {
     running = false;
+    dragging = false;
+    releaseActivePointerCapture();
+    activePointerId = null;
     cancelAnimationFrame(raf);
     canvas.removeEventListener("pointerdown", onDown);
     window.removeEventListener("pointermove", onMove);
@@ -16879,6 +18840,12 @@ function updateAudioState() {
     stopMusicLoop();
     stopFinaleMusic();
     stopCreditsMusic();
+  }
+
+  if (state.audio.music) {
+    ensureMusicHeartbeat();
+  } else {
+    stopMusicHeartbeat();
   }
 
   persist();
@@ -17133,6 +19100,11 @@ window.addEventListener("load", () => {
   applyPerformanceMode();
   primeAudioAuto();
   scheduleViewportNormalization();
+});
+window.addEventListener("focus", () => {
+  window.setTimeout(() => {
+    if (shouldKeepHubMusicAlive()) primeAudioAuto();
+  }, 40);
 });
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
