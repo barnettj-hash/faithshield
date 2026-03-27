@@ -212,6 +212,23 @@ const THEME_KEYWORDS = {
       sourceRef: "Genesis 12:7-8",
       storyPrompt: "Stand steady in faith as Abram worships Yahweh in the land of promise.",
       keyboardHint: "Keyboard: hold Left/A or Right/D to stay centered in the trust band."
+    },
+    {
+      id: "abram-covenant-memory",
+      engine: "memoryflip",
+      label: "Covenant Signs",
+      maxMisses: 3,
+      peekMs: 1420,
+      sourceRef: "Genesis 12:2-3; 13:14-17; 15:1-6",
+      storyPrompt: "Study the covenant signs Yahweh used to strengthen Abram, then match them from memory.",
+      secondaryPrompt: "Memorize the covenant cards, then match every pair.",
+      keyboardHint: "Keyboard: press 1-8 to flip cards, or click/tap the board.",
+      cards: [
+        { icon: "🛡️", label: "Shield" },
+        { icon: "⭐", label: "Stars" },
+        { icon: "🌍", label: "Land" },
+        { icon: "✨", label: "Blessing" }
+      ]
     }
   ],
   "Promise Family": [
@@ -2328,7 +2345,7 @@ const quizBank = [
   { era: "patriarchs", prompt: "What name did Abraham call the place where God provided the ram?", options: ["Yahweh Yireh", "El Roi", "Yahweh Nissi", "Yahweh Shalom"], answer: "Yahweh Yireh", sourceRef: "Genesis 22:14" },
   { era: "patriarchs", prompt: "Which title for God did Melchizedek use when he blessed Abram?", options: ["God Most High", "God Almighty", "Yahweh of Armies", "Yahweh is peace"], answer: "God Most High", sourceRef: "Genesis 14:18-20" },
   { era: "patriarchs", prompt: "Which name did God use for Himself when He appeared to Abram at ninety-nine years old?", options: ["El Shaddai", "El Elyon", "El Roi", "Yahweh Nissi"], answer: "El Shaddai", sourceRef: "Genesis 17:1" },
-  { era: "patriarchs", prompt: "In Genesis 15:2, how does Abram address God in the WEB text?", options: ["Lord Yahweh", "God Most High", "El Roi", "Yahweh Nissi"], answer: "Lord Yahweh", sourceRef: "Genesis 15:2" },
+  { era: "patriarchs", prompt: "Who went with Abram when he departed out of Haran?", options: ["Lot", "Ishmael", "Isaac", "Esau"], answer: "Lot", sourceRef: "Genesis 12:4" },
   { era: "exodus", prompt: "Who confronted Pharaoh and led Israel out of Egypt?", options: ["Joshua", "Moses", "Aaron", "Samuel"], answer: "Moses", sourceRef: "Exodus 5:1; 12:31" },
   { era: "exodus", prompt: "What event protected Israelite homes in Egypt?", options: ["Passover", "Pentecost", "Exile", "Day of Atonement"], answer: "Passover", sourceRef: "Exodus 12:13-14" },
   { era: "exodus", prompt: "What sea did Israel cross on dry ground?", options: ["Red Sea", "Dead Sea", "Galilee", "Mediterranean Sea"], answer: "Red Sea", sourceRef: "Exodus 14:21-22" },
@@ -2390,14 +2407,14 @@ const mediumQuizBank = [
   { era: "genesis", prompt: "In Genesis 11:6, how did Yahweh describe the people?", options: ["One people", "A divided nation", "A wandering tribe", "A royal house"], answer: "One people", sourceRef: "Genesis 11:6" },
   { era: "genesis", prompt: "What did Yahweh say He would confuse in Genesis 11:7?", options: ["Their language", "Their harvest", "Their houses", "Their livestock"], answer: "Their language", sourceRef: "Genesis 11:7" },
   { era: "genesis", prompt: "What was the beginning of Nimrod's kingdom?", options: ["Babel", "Bethel", "Beersheba", "Hebron"], answer: "Babel", sourceRef: "Genesis 10:10" },
-  { era: "patriarchs", prompt: "What did God compare Abram's descendants to when He made His promise?", options: ["Stars", "Trees", "Rivers", "Mountains"], answer: "Stars", sourceRef: "Genesis 15:5" },
+  { era: "patriarchs", prompt: "How many trained men born in Abram's house did he lead to rescue Lot?", options: ["318", "153", "70", "12"], answer: "318", sourceRef: "Genesis 14:14" },
   { era: "patriarchs", prompt: "What did Jacob see in his dream reaching toward heaven?", options: ["A ladder", "A chariot", "A throne", "A rainbow"], answer: "A ladder", sourceRef: "Genesis 28:12" },
   { era: "patriarchs", prompt: "What did Joseph store during the years of plenty in Egypt?", options: ["Grain", "Gold", "Oil", "Livestock"], answer: "Grain", sourceRef: "Genesis 41:48-49" },
   { era: "patriarchs", prompt: "Who said, \"You intended to harm me, but God intended it for good\"?", options: ["Joseph", "Jacob", "Judah", "Pharaoh"], answer: "Joseph", sourceRef: "Genesis 50:20" },
   { era: "patriarchs", prompt: "What does Yahweh Yireh mean?", options: ["Yahweh will provide", "Yahweh is peace", "Yahweh our Banner", "God Almighty"], answer: "Yahweh will provide", sourceRef: "Genesis 22:14" },
   { era: "patriarchs", prompt: "What does El Shaddai mean in Genesis 17:1?", options: ["God Almighty", "God who sees me", "Yahweh will provide", "Yahweh of Armies"], answer: "God Almighty", sourceRef: "Genesis 17:1" },
   { era: "patriarchs", prompt: "What does El Elyon mean in Genesis 14:18-20?", options: ["God Most High", "God Almighty", "Yahweh will provide", "The Lord of armies"], answer: "God Most High", sourceRef: "Genesis 14:18-20" },
-  { era: "patriarchs", prompt: "Which title does Abram use for God in Genesis 15:2 in the WEB text?", options: ["Lord Yahweh", "God Most High", "El Roi", "Yahweh Shalom"], answer: "Lord Yahweh", sourceRef: "Genesis 15:2" },
+  { era: "patriarchs", prompt: "In Genesis 15:1, God told Abram not to fear because He was Abram's what?", options: ["Shield", "Judge", "Servant", "Tent"], answer: "Shield", sourceRef: "Genesis 15:1" },
   { era: "exodus", prompt: "What did Moses' staff become before Pharaoh as a sign?", options: ["A serpent", "A branch", "A torch", "A plow"], answer: "A serpent", sourceRef: "Exodus 7:10" },
   { era: "exodus", prompt: "What was placed on the doorposts and lintel at Passover?", options: ["Lamb's blood", "Oil", "Water", "Ashes"], answer: "Lamb's blood", sourceRef: "Exodus 12:7" },
   { era: "exodus", prompt: "What led Israel by night after leaving Egypt?", options: ["Pillar of fire", "Morning star", "Trumpet blast", "Cloud of smoke"], answer: "Pillar of fire", sourceRef: "Exodus 13:21" },
@@ -3003,6 +3020,103 @@ const NATIONS_BABEL_FACT_ADVANCED_EXPANSION = [
   { era: "genesis", parts: ["Terah", "lived", "two", "hundred", "five", "years"], sourceRef: "Genesis 11:32" }
 ];
 
+const CALL_OF_ABRAM_QUIZ_EASY_EXPANSION = [
+  { era: "patriarchs", prompt: "Why did Abram go down into Egypt?", options: ["Because there was a famine in the land", "Because Lot was king there", "Because Melchizedek invited him", "Because the ark landed there"], answer: "Because there was a famine in the land", sourceRef: "Genesis 12:10" },
+  { era: "patriarchs", prompt: "Between which two places did Abram pitch his tent after he came into the land?", options: ["Bethel and Ai", "Hebron and Gerar", "Sodom and Gomorrah", "Dan and Beersheba"], answer: "Bethel and Ai", sourceRef: "Genesis 12:8" },
+  { era: "patriarchs", prompt: "What did Yahweh promise Abram at Shechem?", options: ["To your offspring I will give this land", "You will return to Eden", "You will reign in Egypt", "You will build a temple"], answer: "To your offspring I will give this land", sourceRef: "Genesis 12:7" },
+  { era: "patriarchs", prompt: "What happened to Pharaoh and his house because of Sarai, Abram's wife?", options: ["They were struck with great plagues", "They received manna", "They crossed the Jordan", "They found a ram"], answer: "They were struck with great plagues", sourceRef: "Genesis 12:17" },
+  { era: "patriarchs", prompt: "Who chose all the Plain of the Jordan?", options: ["Lot", "Abram", "Melchizedek", "Pharaoh"], answer: "Lot", sourceRef: "Genesis 13:10-11" },
+  { era: "patriarchs", prompt: "What did Abram build by the oaks of Mamre in Hebron?", options: ["An altar", "A tower", "An ark", "A palace"], answer: "An altar", sourceRef: "Genesis 13:18" },
+  { era: "patriarchs", prompt: "Who brought out bread and wine to Abram after the rescue of Lot?", options: ["Melchizedek", "The king of Egypt", "Lot", "Terah"], answer: "Melchizedek", sourceRef: "Genesis 14:18" },
+  { era: "patriarchs", prompt: "What did the king of Sodom ask Abram to give back to him?", options: ["The people", "The land", "The altar", "The stars"], answer: "The people", sourceRef: "Genesis 14:21" },
+  { era: "patriarchs", prompt: "How old was Abram when he departed out of Haran?", options: ["75 years old", "70 years old", "80 years old", "100 years old"], answer: "75 years old", sourceRef: "Genesis 12:4" }
+];
+
+const CALL_OF_ABRAM_QUIZ_MEDIUM_EXPANSION = [
+  { era: "patriarchs", prompt: "At what landmark did Abram pass through when he first came to Shechem?", options: ["The oak of Moreh", "The terebinth of Mamre", "Mount Moriah", "The river of Egypt"], answer: "The oak of Moreh", sourceRef: "Genesis 12:6" },
+  { era: "patriarchs", prompt: "Why did Abram say there should be no strife between him and Lot?", options: ["Because they were relatives", "Because Pharaoh was watching", "Because they had no livestock", "Because the famine had ended"], answer: "Because they were relatives", sourceRef: "Genesis 13:8" },
+  { era: "patriarchs", prompt: "As far as what place did Abram pursue the kings who had taken Lot?", options: ["Dan", "Ai", "Gerar", "Beersheba"], answer: "Dan", sourceRef: "Genesis 14:14" },
+  { era: "patriarchs", prompt: "What title did Melchizedek hold besides king of Salem?", options: ["Priest of God Most High", "Prophet of Yahweh of Armies", "Judge in Canaan", "Priest of Egypt"], answer: "Priest of God Most High", sourceRef: "Genesis 14:18" },
+  { era: "patriarchs", prompt: "What did Abram refuse to take from the king of Sodom?", options: ["Anything that was his", "The people", "Bread and wine", "The altar stones"], answer: "Anything that was his", sourceRef: "Genesis 14:22-23" },
+  { era: "patriarchs", prompt: "What fell on Abram when the sun was going down in Genesis 15?", options: ["A deep sleep", "A rainbow", "Manna", "A strong wind"], answer: "A deep sleep", sourceRef: "Genesis 15:12" },
+  { era: "patriarchs", prompt: "How many years would Abram's offspring be afflicted in a land that was not theirs?", options: ["400 years", "40 years", "70 years", "430 years"], answer: "400 years", sourceRef: "Genesis 15:13" },
+  { era: "patriarchs", prompt: "What did Yahweh bring Abram outside to look toward?", options: ["The sky", "The sea", "The altar", "Egypt"], answer: "The sky", sourceRef: "Genesis 15:5" }
+];
+
+const CALL_OF_ABRAM_QUIZ_ADVANCED_EXPANSION = [
+  { era: "patriarchs", prompt: "What city name is attached to Eliezer in Genesis 15:2?", options: ["Damascus", "Salem", "Gerar", "Hebron"], answer: "Damascus", sourceRef: "Genesis 15:2" },
+  { era: "patriarchs", prompt: "What did Abram give Melchizedek from the spoils?", options: ["A tenth of all", "All the goods", "Only the people", "A ram"], answer: "A tenth of all", sourceRef: "Genesis 14:20" },
+  { era: "patriarchs", prompt: "What came down on Abram's sacrifice pieces before sunset?", options: ["Birds of prey", "Locusts", "A ram", "A dove only"], answer: "Birds of prey", sourceRef: "Genesis 15:11" },
+  { era: "patriarchs", prompt: "In what generation did Yahweh say Abram's descendants would come back to the land?", options: ["The fourth generation", "The second generation", "The seventh generation", "The tenth generation"], answer: "The fourth generation", sourceRef: "Genesis 15:16" },
+  { era: "patriarchs", prompt: "Why would Abram's descendants not return sooner, according to Genesis 15:16?", options: ["The iniquity of the Amorite was not yet full", "Egypt still ruled Canaan", "Lot still lived in Sodom", "Pharaoh forbade the journey"], answer: "The iniquity of the Amorite was not yet full", sourceRef: "Genesis 15:16" },
+  { era: "patriarchs", prompt: "Which river is named as the far border of the promised land in Genesis 15:18?", options: ["The Euphrates River", "The Jordan River", "The Nile River", "The Jabbok River"], answer: "The Euphrates River", sourceRef: "Genesis 15:18" },
+  { era: "patriarchs", prompt: "Which people are named among those whose land would be given to Abram's offspring?", options: ["Kenites", "Philistines", "Romans", "Babylonians"], answer: "Kenites", sourceRef: "Genesis 15:19" },
+  { era: "patriarchs", prompt: "What passed between the pieces in Abram's covenant vision?", options: ["A smoking furnace and a flaming torch", "A pillar of cloud and fire", "Two angels", "A rainbow and thunder"], answer: "A smoking furnace and a flaming torch", sourceRef: "Genesis 15:17" }
+];
+
+const CALL_OF_ABRAM_SPELLING_EASY_EXPANSION = [
+  { era: "patriarchs", prompt: "Spell Abram's nephew from Genesis 12-14.", answer: "Lot", sourceRef: "Genesis 12:5; 13:1; 14:12" },
+  { era: "patriarchs", prompt: "Spell the city beside Bethel where Abram pitched his tent.", answer: "Ai", sourceRef: "Genesis 12:8" },
+  { era: "patriarchs", prompt: "Spell the place Abram pursued the kings to.", answer: "Dan", sourceRef: "Genesis 14:14" },
+  { era: "patriarchs", prompt: "Spell the place where Abram dwelt by the oaks.", answer: "Mamre", sourceRef: "Genesis 13:18" }
+];
+
+const CALL_OF_ABRAM_SPELLING_MEDIUM_EXPANSION = [
+  { era: "patriarchs", prompt: "Type the city west of Ai in Genesis 12:8.", answer: "Bethel", sourceRef: "Genesis 12:8" },
+  { era: "patriarchs", prompt: "Type the city where Abram dwelt after Lot separated from him.", answer: "Hebron", sourceRef: "Genesis 13:18" },
+  { era: "patriarchs", prompt: "Type the place where Melchizedek ruled as king.", answer: "Salem", sourceRef: "Genesis 14:18" },
+  { era: "patriarchs", prompt: "Type the place where Yahweh first appeared to Abram in Canaan.", answer: "Shechem", sourceRef: "Genesis 12:6-7" }
+];
+
+const CALL_OF_ABRAM_SPELLING_ADVANCED_EXPANSION = [
+  { era: "patriarchs", prompt: "Type the king-priest who blessed Abram.", answer: "Melchizedek", sourceRef: "Genesis 14:18" },
+  { era: "patriarchs", prompt: "Type the city named with Eliezer in Genesis 15:2.", answer: "Damascus", sourceRef: "Genesis 15:2" },
+  { era: "patriarchs", prompt: "Type the far river named in the covenant borders.", answer: "Euphrates", sourceRef: "Genesis 15:18" },
+  { era: "patriarchs", prompt: "Type the king whom Abram pursued after Lot was taken captive.", answer: "Chedorlaomer", acceptedAnswers: ["Kedorlaomer"], sourceRef: "Genesis 14:17" }
+];
+
+const CALL_OF_ABRAM_ORDER_EASY_EXPANSION = [
+  { era: "patriarchs", items: ["Abram leaves Haran", "Yahweh appears at Shechem", "Abram builds an altar there"], sourceRef: "Genesis 12:4-7" },
+  { era: "patriarchs", items: ["Famine comes", "Abram goes down into Egypt", "Pharaoh sends Abram away"], sourceRef: "Genesis 12:10,20" },
+  { era: "patriarchs", items: ["Strife rises between herdsmen", "Lot chooses the Plain of the Jordan", "Abram dwells by Mamre"], sourceRef: "Genesis 13:7-12,18" },
+  { era: "patriarchs", items: ["Lot is taken captive", "Abram rescues him", "Melchizedek blesses Abram"], sourceRef: "Genesis 14:12-20" }
+];
+
+const CALL_OF_ABRAM_ORDER_MEDIUM_EXPANSION = [
+  { era: "patriarchs", items: ["Lot separates from Abram", "Yahweh tells Abram to lift up his eyes", "Abram builds an altar in Hebron"], sourceRef: "Genesis 13:11-18" },
+  { era: "patriarchs", items: ["Yahweh says, \"Don't be afraid\"", "Abram asks about an heir", "Yahweh brings Abram outside"], sourceRef: "Genesis 15:1-5" },
+  { era: "patriarchs", items: ["Birds of prey come down", "A deep sleep falls on Abram", "A smoking furnace passes between the pieces"], sourceRef: "Genesis 15:11-12,17" },
+  { era: "patriarchs", items: ["King of Sodom offers the goods", "Abram refuses to take them", "Abram says Yahweh made him rich"], sourceRef: "Genesis 14:21-23" }
+];
+
+const CALL_OF_ABRAM_ORDER_ADVANCED_EXPANSION = [
+  { era: "patriarchs", items: ["Abram departs Haran at seventy-five", "Lot is captured in battle", "Abram gives Melchizedek a tenth"], sourceRef: "Genesis 12:4; 14:12-20" },
+  { era: "patriarchs", items: ["Abram brings the covenant animals", "Abram divides the larger animals", "Abram drives away the birds of prey"], sourceRef: "Genesis 15:9-11" },
+  { era: "patriarchs", items: ["Yahweh says Abram's seed will be afflicted", "They will come out with great substance", "They will return in the fourth generation"], sourceRef: "Genesis 15:13-16" },
+  { era: "patriarchs", items: ["Melchizedek brings bread and wine", "Abram gives him a tenth", "King of Sodom asks for the people"], sourceRef: "Genesis 14:18-21" }
+];
+
+const CALL_OF_ABRAM_FACT_EASY_EXPANSION = [
+  { era: "patriarchs", parts: ["I", "will", "make", "of", "you", "a", "great", "nation"], sourceRef: "Genesis 12:2" },
+  { era: "patriarchs", parts: ["To", "your", "offspring", "I", "will", "give", "this", "land"], sourceRef: "Genesis 12:7" },
+  { era: "patriarchs", parts: ["There", "was", "a", "famine", "in", "the", "land"], sourceRef: "Genesis 12:10" },
+  { era: "patriarchs", parts: ["Lot", "chose", "all", "the", "Plain", "of", "the", "Jordan"], sourceRef: "Genesis 13:11" }
+];
+
+const CALL_OF_ABRAM_FACT_MEDIUM_EXPANSION = [
+  { era: "patriarchs", parts: ["Abram", "dwelt", "by", "the", "oaks", "of", "Mamre"], sourceRef: "Genesis 13:18" },
+  { era: "patriarchs", parts: ["Melchizedek", "king", "of", "Salem", "brought", "out", "bread", "and", "wine"], sourceRef: "Genesis 14:18" },
+  { era: "patriarchs", parts: ["Don't", "be", "afraid", "Abram", "I", "am", "your", "shield"], sourceRef: "Genesis 15:1" },
+  { era: "patriarchs", parts: ["He", "brought", "him", "outside"], sourceRef: "Genesis 15:5" }
+];
+
+const CALL_OF_ABRAM_FACT_ADVANCED_EXPANSION = [
+  { era: "patriarchs", parts: ["Abram", "gave", "him", "a", "tenth", "of", "all"], sourceRef: "Genesis 14:20" },
+  { era: "patriarchs", parts: ["A", "deep", "sleep", "fell", "on", "Abram"], sourceRef: "Genesis 15:12" },
+  { era: "patriarchs", parts: ["A", "smoking", "furnace", "and", "a", "flaming", "torch", "passed", "between", "these", "pieces"], sourceRef: "Genesis 15:17" },
+  { era: "patriarchs", parts: ["In", "the", "fourth", "generation", "they", "will", "come", "here", "again"], sourceRef: "Genesis 15:16" }
+];
+
 quizBank.push(...NATIONS_BABEL_QUIZ_EASY_EXPANSION);
 mediumQuizBank.push(...NATIONS_BABEL_QUIZ_MEDIUM_EXPANSION);
 advancedQuizBank.push(...NATIONS_BABEL_QUIZ_ADVANCED_EXPANSION);
@@ -3015,6 +3129,18 @@ advancedOrderBank.push(...NATIONS_BABEL_ORDER_ADVANCED_EXPANSION);
 factBank.push(...NATIONS_BABEL_FACT_EASY_EXPANSION);
 mediumFactBank.push(...NATIONS_BABEL_FACT_MEDIUM_EXPANSION);
 advancedFactBank.push(...NATIONS_BABEL_FACT_ADVANCED_EXPANSION);
+quizBank.push(...CALL_OF_ABRAM_QUIZ_EASY_EXPANSION);
+mediumQuizBank.push(...CALL_OF_ABRAM_QUIZ_MEDIUM_EXPANSION);
+advancedQuizBank.push(...CALL_OF_ABRAM_QUIZ_ADVANCED_EXPANSION);
+spellingBank.push(...CALL_OF_ABRAM_SPELLING_EASY_EXPANSION);
+mediumSpellingBank.push(...CALL_OF_ABRAM_SPELLING_MEDIUM_EXPANSION);
+advancedSpellingBank.push(...CALL_OF_ABRAM_SPELLING_ADVANCED_EXPANSION);
+orderBank.push(...CALL_OF_ABRAM_ORDER_EASY_EXPANSION);
+mediumOrderBank.push(...CALL_OF_ABRAM_ORDER_MEDIUM_EXPANSION);
+advancedOrderBank.push(...CALL_OF_ABRAM_ORDER_ADVANCED_EXPANSION);
+factBank.push(...CALL_OF_ABRAM_FACT_EASY_EXPANSION);
+mediumFactBank.push(...CALL_OF_ABRAM_FACT_MEDIUM_EXPANSION);
+advancedFactBank.push(...CALL_OF_ABRAM_FACT_ADVANCED_EXPANSION);
 
 function normalizePoolText(value) {
   return normalizeQuizAnswerKey(String(value || ""));
@@ -6371,47 +6497,25 @@ function createEraCompletionShareCardCanvas(era) {
   return canvas;
 }
 
-function exportEraCompletionCard(era) {
+async function exportEraCompletionCard(era) {
   const canvas = createEraCompletionShareCardCanvas(era);
-  if (!canvas) return;
-  const link = document.createElement("a");
-  link.href = canvas.toDataURL("image/png");
-  link.download = `faithshield-${normalizeFileSlug(era, "era")}-completion-card.png`;
-  link.click();
+  if (!canvas) return false;
+  const blob = await canvasToPngBlob(canvas);
+  if (!blob) return false;
+  downloadBlob(blob, `faithshield-${normalizeFileSlug(era, "era")}-completion-card.png`);
+  return true;
 }
 
 function renderProfilesSection() {
-  ensureExperienceSections();
-  if (!profileSection || !profileGrid || !profileSummary) return;
-  const activeMeta = activeProfileMeta();
-  profileSummary.textContent = challengeCopy(
-    `${profileIndex.length} profile${profileIndex.length === 1 ? "" : "s"} ready. Active: ${activeMeta ? activeMeta.name : "Faith Player"}.`,
-    `${profileIndex.length} perfil${profileIndex.length === 1 ? "" : "es"} listo${profileIndex.length === 1 ? "" : "s"}. Activo: ${activeMeta ? activeMeta.name : "Jugador de Fe"}.`
-  );
-  profileGrid.innerHTML = "";
-  profileIndex.forEach((profile) => {
-    const card = document.createElement("article");
-    card.className = `profile-card ${profile.id === activeProfileId ? "active" : ""}`;
-    card.innerHTML = [
-      '<div class="profile-card-head">',
-      `  <div class="profile-avatar" style="background:${profile.accent}">${profileDisplayInitials(profile)}</div>`,
-      '  <div class="profile-meta">',
-      `    <p class="hall-boss-title">${profile.name}</p>`,
-      `    <p class="meta">${profile.id === activeProfileId ? challengeCopy("Active profile", "Perfil activo") : challengeCopy("Family/Classroom profile", "Perfil familiar/clase")}</p>`,
-      "  </div>",
-      "</div>",
-      '<div class="profile-actions"></div>'
-    ].join("");
-    const actions = card.querySelector(".profile-actions");
-    const switchBtn = document.createElement("button");
-    switchBtn.type = "button";
-    switchBtn.className = profile.id === activeProfileId ? "cta-btn" : "ghost-btn";
-    switchBtn.textContent = profile.id === activeProfileId ? challengeCopy("Playing Now", "Jugando ahora") : challengeCopy("Switch Here", "Cambiar aqui");
-    switchBtn.disabled = profile.id === activeProfileId;
-    switchBtn.onclick = () => switchToProfile(profile.id);
-    actions.appendChild(switchBtn);
-    profileGrid.appendChild(card);
-  });
+  if (profileSection && profileSection.isConnected) {
+    profileSection.remove();
+  }
+  profileSection = null;
+  profileSummary = null;
+  profileGrid = null;
+  addProfileBtn = null;
+  exportSyncCodeBtn = null;
+  importSyncCodeBtn = null;
 }
 
 function renderHallOfFaith() {
@@ -6489,7 +6593,7 @@ function renderHallOfFaith() {
       cardBtn.className = complete ? "cta-btn" : "ghost-btn";
       cardBtn.disabled = !complete;
       cardBtn.textContent = challengeCopy("Download Era Card", "Descargar tarjeta");
-      cardBtn.onclick = () => exportEraCompletionCard(era);
+      cardBtn.onclick = () => { void exportEraCompletionCard(era); };
       actions.appendChild(cardBtn);
       hallEraGrid.appendChild(card);
     });
@@ -6554,42 +6658,15 @@ function ensureExperienceSections() {
   ensureShareOverlayEnhancements();
   ensurePremiumHubStyles();
 
-  if (!profileSection || !profileSection.isConnected) {
-    profileSection = document.getElementById("profileSection");
-    if (!profileSection) {
-      profileSection = document.createElement("section");
-      profileSection.id = "profileSection";
-      profileSection.className = "feature-card";
-      profileSection.innerHTML = [
-        '<div class="feature-head">',
-        '  <h2>Family / Classroom Mode</h2>',
-        '  <p id="profileSummary" class="meta">Profiles and sync</p>',
-        '</div>',
-        '<p class="meta">Keep separate faith journeys for home, class, or siblings, and move progress between devices with a sync code.</p>',
-        '<div class="feature-actions wrap">',
-        '  <button id="addProfileBtn" class="ghost-btn" type="button">Add Profile</button>',
-        '  <button id="exportSyncCodeBtn" class="ghost-btn" type="button">Export Sync Code</button>',
-        '  <button id="importSyncCodeBtn" class="ghost-btn" type="button">Import Sync Code</button>',
-        '</div>',
-        '<div id="profileGrid" class="premium-grid" style="margin-top:16px;"></div>'
-      ].join("");
-      if (postStoryAnchor) {
-        postStoryAnchor.parentNode.insertBefore(profileSection, postStoryAnchor);
-      } else if (storySection && storySection.parentNode) {
-        storySection.parentNode.insertBefore(profileSection, storySection);
-      } else {
-        appRoot.appendChild(profileSection);
-      }
-    }
-    profileSummary = profileSection.querySelector("#profileSummary");
-    profileGrid = profileSection.querySelector("#profileGrid");
-    addProfileBtn = profileSection.querySelector("#addProfileBtn");
-    exportSyncCodeBtn = profileSection.querySelector("#exportSyncCodeBtn");
-    importSyncCodeBtn = profileSection.querySelector("#importSyncCodeBtn");
-    if (addProfileBtn) addProfileBtn.onclick = createFreshProfile;
-    if (exportSyncCodeBtn) exportSyncCodeBtn.onclick = exportCurrentProfileSyncCode;
-    if (importSyncCodeBtn) importSyncCodeBtn.onclick = importProfileFromSyncCode;
+  if (profileSection && profileSection.isConnected) {
+    profileSection.remove();
   }
+  profileSection = null;
+  profileSummary = null;
+  profileGrid = null;
+  addProfileBtn = null;
+  exportSyncCodeBtn = null;
+  importSyncCodeBtn = null;
 
   if (!hallOfFaithSection || !hallOfFaithSection.isConnected) {
     hallOfFaithSection = document.getElementById("hallOfFaithSection");
@@ -7288,7 +7365,6 @@ function ensureHubSectionOrder() {
     dailyDevotionSection,
     dailyCalendarSection,
     weeklyChallengeSection,
-    profileSection,
     hallOfFaithSection,
     masterySection,
     campaignMapSection,
@@ -7317,7 +7393,6 @@ function ensureHubSectionOrder() {
 
 function renderExperienceSections() {
   ensureCorePracticePlacement();
-  renderProfilesSection();
   renderDailyChallengeCalendar();
   renderHallOfFaith();
   renderCampaignMap();
@@ -11577,7 +11652,32 @@ function stageFivePatternPadsFromChoices(base) {
   return pads.slice(0, 4);
 }
 
-function stageFiveChoiceCardsFromBase(base, limit = 4) {
+function stageFiveThemeSupportCards(themeName = "", excludeBaseId = "") {
+  const themedPool = STAGE_FIVE_THEMED_POOLS && themeName ? STAGE_FIVE_THEMED_POOLS[themeName] : null;
+  if (!Array.isArray(themedPool) || !themedPool.length) return [];
+
+  const cards = [];
+  const seen = new Set();
+  themedPool.forEach((mode) => {
+    if (!mode || (excludeBaseId && mode.id === excludeBaseId)) return;
+    const pool = Array.isArray(mode.cards) && mode.cards.length
+      ? mode.cards
+      : (Array.isArray(mode.pads) && mode.pads.length
+        ? mode.pads
+        : (Array.isArray(mode.routeSteps) ? mode.routeSteps : []));
+    pool.forEach((entry) => {
+      const icon = String((entry && entry.icon) || "📜").trim() || "📜";
+      const label = String((entry && entry.label) || "").trim();
+      const key = normalizeQuizAnswerKey(label);
+      if (!label || !key || seen.has(key)) return;
+      seen.add(key);
+      cards.push({ icon, label });
+    });
+  });
+  return cards;
+}
+
+function stageFiveChoiceCardsFromBase(base, limit = 4, themeName = "") {
   const pool = Array.isArray(base?.cards) && base.cards.length
     ? base.cards
     : (Array.isArray(base?.pads) && base.pads.length
@@ -11594,6 +11694,15 @@ function stageFiveChoiceCardsFromBase(base, limit = 4) {
     if (seen.has(key)) return;
     seen.add(key);
     cards.push({ id: `${key}-${cards.length}`, icon, label });
+  });
+
+  const siblingThemeCards = stageFiveThemeSupportCards(themeName || base?.themeName || "", base?.id || "");
+  siblingThemeCards.forEach((entry) => {
+    if (cards.length >= limit) return;
+    const key = normalizeQuizAnswerKey(entry.label) || `${entry.icon}-${cards.length}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    cards.push({ id: `${key}-${cards.length}`, icon: entry.icon, label: entry.label });
   });
 
   STAGE_FIVE_PATTERN_FALLBACK_PADS.forEach((entry) => {
@@ -11736,7 +11845,7 @@ function stageFiveSlingshotFromDirectional(base, themeName = "") {
 function stageFiveSpotlightFromBase(base, themeName = "") {
   const hash = stageFiveHashSeed(base, themeName);
   const cue = stageFiveThemeCue(themeName);
-  const cards = stageFiveChoiceCardsFromBase(base, 4);
+  const cards = stageFiveChoiceCardsFromBase(base, 4, themeName);
   const roundsData = Array.from({ length: 4 }, (_, index) => {
     const targetCard = cards[(hash + index) % cards.length];
     return {
@@ -11757,6 +11866,7 @@ function stageFiveSpotlightFromBase(base, themeName = "") {
     storyPrompt: base.storyPrompt || `Keep your eyes on the key truth in this ${cue} moment.`,
     secondaryPrompt: "Watch the highlighted clue, let the board shuffle, then find it again.",
     keyboardHint: "Keyboard: press 1-4 to pick the card after the shuffle.",
+    themeName,
     cards,
     roundsData
   };
@@ -11765,7 +11875,7 @@ function stageFiveSpotlightFromBase(base, themeName = "") {
 function stageFiveMemoryFlipFromBase(base, themeName = "") {
   const hash = stageFiveHashSeed(base, themeName);
   const cue = stageFiveThemeCue(themeName);
-  const cards = stageFiveChoiceCardsFromBase(base, 4);
+  const cards = stageFiveChoiceCardsFromBase(base, 4, themeName);
   const board = rotateKinds(
     cards.flatMap((card, index) => [
       { slotId: `${card.id}-a-${index}`, cardId: card.id },
@@ -11783,6 +11893,7 @@ function stageFiveMemoryFlipFromBase(base, themeName = "") {
     storyPrompt: base.storyPrompt || `Study the clues in this ${cue} scene, then match them from memory.`,
     secondaryPrompt: "Memorize the cards, then flip and match every pair.",
     keyboardHint: "Keyboard: press 1-8 to flip cards, or click/tap the board.",
+    themeName,
     cards,
     board
   };
@@ -11791,7 +11902,7 @@ function stageFiveMemoryFlipFromBase(base, themeName = "") {
 function stageFiveSealbreakFromBase(base, themeName = "") {
   const hash = stageFiveHashSeed(base, themeName);
   const cue = stageFiveThemeCue(themeName);
-  const cards = stageFiveChoiceCardsFromBase(base, 6);
+  const cards = stageFiveChoiceCardsFromBase(base, 6, themeName);
   const roundsData = Array.from({ length: 4 }, (_, index) => {
     const rotated = rotateKinds(cards, (hash + index) % cards.length);
     const targetCount = 2 + ((hash + index) % 2);
@@ -11827,6 +11938,7 @@ function stageFiveSealbreakFromBase(base, themeName = "") {
     storyPrompt: base.storyPrompt || `Identify the true seals in this ${cue} moment and break only the right ones.`,
     secondaryPrompt: "Read the clue and break only the correct seals.",
     keyboardHint: "Keyboard: press 1-9 to break the matching seals.",
+    themeName,
     cards,
     roundsData
   };
@@ -11835,7 +11947,7 @@ function stageFiveSealbreakFromBase(base, themeName = "") {
 function stageFiveShieldwallFromBase(base, themeName = "") {
   const hash = stageFiveHashSeed(base, themeName);
   const cue = stageFiveThemeCue(themeName);
-  const cards = stageFiveChoiceCardsFromBase(base, 4);
+  const cards = stageFiveChoiceCardsFromBase(base, 4, themeName);
   const roundsData = Array.from({ length: 5 }, (_, index) => {
     const lane = (hash + index * 2) % cards.length;
     return {
@@ -11855,6 +11967,7 @@ function stageFiveShieldwallFromBase(base, themeName = "") {
     storyPrompt: base.storyPrompt || `Hold the wall in this ${cue} challenge and block the right gate in time.`,
     secondaryPrompt: "Watch the attack lane, then raise the shield at the matching gate.",
     keyboardHint: "Keyboard: press 1-4 to guard the right gate, or tap the shield buttons.",
+    themeName,
     cards,
     roundsData
   };
@@ -11869,7 +11982,7 @@ function shouldUseStageFiveSlingshot(base, themeName = "") {
 function toNonDirectionalStageFiveMode(base, themeName = "") {
   if (!base || typeof base !== "object") return null;
   if (base.engine === "spotlight" || base.engine === "memoryflip" || base.engine === "sealbreak" || base.engine === "shieldwall") {
-    return { ...base };
+    return { ...base, themeName: base.themeName || themeName };
   }
   if (base.engine === "pattern") return stageFiveSpotlightFromBase(base, themeName);
   if (base.engine === "discern") return stageFiveMemoryFlipFromBase(base, themeName);
@@ -11883,7 +11996,7 @@ function toNonDirectionalStageFiveMode(base, themeName = "") {
       : stageFiveShieldwallFromBase(base, themeName);
   }
   if (NON_DIRECTIONAL_STAGE_FIVE_ENGINES.has(base.engine)) {
-    return { ...base };
+    return { ...base, themeName: base.themeName || themeName };
   }
   return stageFiveSealbreakFromBase(base, themeName);
 }
@@ -16246,7 +16359,7 @@ function renderSpotlight(meta, mode, feedback) {
   board.style.marginTop = "0.8rem";
   activityPanel.append(board);
 
-  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice(0, 4) : stageFiveChoiceCardsFromBase(mode, 4);
+  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice(0, 4) : stageFiveChoiceCardsFromBase(mode, 4, mode.themeName || "");
   const roundsData = Array.isArray(mode.roundsData) && mode.roundsData.length
     ? mode.roundsData
     : cards.map((card, index) => ({ targetId: card.id, targetLabel: card.label, shuffleSeed: index + 1 }));
@@ -16411,7 +16524,7 @@ function renderMemoryFlip(meta, mode, feedback) {
   board.style.marginTop = "0.8rem";
   activityPanel.append(board);
 
-  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice(0, 4) : stageFiveChoiceCardsFromBase(mode, 4);
+  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice(0, 4) : stageFiveChoiceCardsFromBase(mode, 4, mode.themeName || "");
   const deck = Array.isArray(mode.board) && mode.board.length
     ? mode.board.slice(0, 8)
     : rotateKinds(cards.flatMap((card, index) => [
@@ -16566,7 +16679,7 @@ function renderSealbreak(meta, mode, feedback) {
   board.style.marginTop = "0.8rem";
   activityPanel.append(board);
 
-  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice() : stageFiveChoiceCardsFromBase(mode, 6);
+  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice() : stageFiveChoiceCardsFromBase(mode, 6, mode.themeName || "");
   const roundsData = Array.isArray(mode.roundsData) && mode.roundsData.length ? mode.roundsData : [];
   const totalRounds = Math.max(1, Number(mode.rounds) || roundsData.length || 1);
   const maxMisses = Math.max(1, Number(mode.maxMisses) || 3);
@@ -16717,7 +16830,7 @@ function renderShieldwall(meta, mode, feedback) {
   buttonRow.style.gap = "0.65rem";
   arena.append(buttonRow);
 
-  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice(0, 4) : stageFiveChoiceCardsFromBase(mode, 4);
+  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice(0, 4) : stageFiveChoiceCardsFromBase(mode, 4, mode.themeName || "");
   const roundsData = Array.isArray(mode.roundsData) && mode.roundsData.length ? mode.roundsData : cards.map((card, index) => ({ lane: index, cardId: card.id, prompt: `Guard ${card.label}.` }));
   const targetWins = Math.max(1, Number(mode.target) || roundsData.length);
   const maxMisses = Math.max(1, Number(mode.maxMisses) || 3);
