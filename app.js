@@ -6213,6 +6213,38 @@ function beginSmartReview(mode = "smart") {
   return beginSmartReviewFromEntry(nextSmartReviewEntry(mode), mode);
 }
 
+function recommendedDailyChallengeStage() {
+  const unlockedStages = stages.filter((meta, index) => index + 1 <= state.unlocked);
+  if (!unlockedStages.length) return null;
+
+  const weeklyEra = state.weeklyChallenge && state.weeklyChallenge.era;
+  const unfinishedWeekly = unlockedStages.find((meta) => meta.theme.era === weeklyEra && !isDone(meta.id));
+  if (unfinishedWeekly) return unfinishedWeekly;
+
+  const unfinished = unlockedStages.find((meta) => !isDone(meta.id));
+  if (unfinished) return unfinished;
+
+  return unlockedStages[0] || null;
+}
+
+function openDailyDevotionChallenge() {
+  if (beginSmartReview("smart") || beginSmartReview("due")) {
+    return true;
+  }
+
+  const targetStage = recommendedDailyChallengeStage();
+  if (!targetStage) return false;
+
+  persist();
+  render();
+  jumpToEra(targetStage.theme.era);
+  window.setTimeout(() => {
+    focusStageCard(targetStage.id);
+    openStage(targetStage.id);
+  }, 180);
+  return true;
+}
+
 function activeReviewFocusForMeta(meta, kind = "") {
   const focus = state.reviewFocus;
   if (!focus || typeof focus !== "object") return null;
@@ -6859,48 +6891,112 @@ function ensureExperienceSections() {
     if (completeDevotionChallengeBtn) {
       completeDevotionChallengeBtn.onclick = () => {
         ensureDailyDevotionState();
-        state.dailyDevotion.challenge = true;
-        ensureDailyCalendarEntry(localDayKey()).challenge = true;
-        persist();
-        render();
+        const launched = openDailyDevotionChallenge();
+        if (!launched) {
+          showFeatureMoment(
+            challengeCopy("No daily challenge ready", "No hay desafio diario listo"),
+            challengeCopy("Unlock or reopen a stage to begin today's devotion challenge.", "Desbloquea o vuelve a abrir una etapa para comenzar el desafio devocional de hoy."),
+            { icon: "⚠️", sfx: null, durationMs: 2200 }
+          );
+          return;
+        }
+        showFeatureMoment(
+          challengeCopy("Daily challenge started", "Desafio diario iniciado"),
+          challengeCopy("Finish the opened stage to complete today's challenge.", "Completa la etapa abierta para terminar el desafio de hoy."),
+          { icon: "⚔️", durationMs: 2100 }
+        );
       };
     }
     if (completeDevotionActionBtn) {
       completeDevotionActionBtn.onclick = () => {
         ensureDailyDevotionState();
+        if (state.dailyDevotion.action) return;
         state.dailyDevotion.action = true;
         ensureDailyCalendarEntry(localDayKey()).devotion = true;
         persist();
         render();
+        const todayWord = dailyThoughtForToday();
+        showFeatureMoment(
+          challengeCopy("Practical action marked complete", "Accion practica marcada como completada"),
+          todayWord ? todayWord.practical : challengeCopy("You completed today's practical faith step.", "Completaste el paso practico de fe de hoy."),
+          { icon: "✓" }
+        );
       };
     }
     if (saveDevotionReflectionBtn) {
       saveDevotionReflectionBtn.onclick = () => {
         ensureDailyDevotionState();
         const note = String((dailyDevotionReflection && dailyDevotionReflection.value) || "").trim();
-        if (!note) return;
+        if (!note) {
+          showFeatureMoment(
+            challengeCopy("Write a reflection first", "Escribe primero una reflexion"),
+            challengeCopy("Add one short reflection before saving today's devotion response.", "Agrega una breve reflexion antes de guardar la respuesta devocional de hoy."),
+            { icon: "✍️", sfx: null, durationMs: 2200 }
+          );
+          return;
+        }
         state.dailyDevotion.note = note.slice(0, 240);
         state.dailyDevotion.reflection = true;
         ensureDailyCalendarEntry(localDayKey()).reflection = true;
         persist();
         render();
+        showFeatureMoment(
+          challengeCopy("Reflection saved", "Reflexion guardada"),
+          challengeCopy("Your devotion reflection is saved and ready to email or share.", "Tu reflexion devocional esta guardada y lista para enviar o compartir."),
+          { icon: "📝" }
+        );
       };
     }
     if (emailDevotionReflectionBtn) {
       emailDevotionReflectionBtn.onclick = () => {
+        if (!currentReflectionSharePayload()) {
+          showFeatureMoment(
+            challengeCopy("No reflection to email", "No hay reflexion para enviar"),
+            challengeCopy("Save a short reflection first, then email it.", "Guarda primero una breve reflexion y luego enviala por correo."),
+            { icon: "✉️", sfx: null, durationMs: 2200 }
+          );
+          return;
+        }
         emailCurrentReflection();
+        showFeatureMoment(
+          challengeCopy("Opening email draft", "Abriendo borrador de correo"),
+          challengeCopy("Your daily reflection is being prepared in email.", "Tu reflexion diaria se esta preparando en un correo."),
+          { icon: "✉️", durationMs: 1700 }
+        );
       };
     }
     if (exportDevotionReflectionCardBtn) {
       exportDevotionReflectionCardBtn.onclick = () => {
-        exportCurrentReflectionCard();
+        if (!currentReflectionSharePayload()) {
+          showFeatureMoment(
+            challengeCopy("No reflection card yet", "Aun no hay tarjeta de reflexion"),
+            challengeCopy("Save a short reflection first, then export the card.", "Guarda primero una breve reflexion y luego exporta la tarjeta."),
+            { icon: "🖼️", sfx: null, durationMs: 2200 }
+          );
+          return;
+        }
+        void exportCurrentReflectionCard().then(() => {
+          showFeatureMoment(
+            challengeCopy("Reflection card ready", "Tarjeta de reflexion lista"),
+            challengeCopy("Your daily reflection card was prepared for sharing.", "Tu tarjeta de reflexion diaria fue preparada para compartir."),
+            { icon: "🖼️", durationMs: 1800 }
+          );
+        });
       };
     }
     if (claimDevotionRewardBtn) {
       claimDevotionRewardBtn.onclick = () => {
         ensureDailyDevotionState();
         const ready = state.dailyDevotion.challenge && state.dailyDevotion.action && state.dailyDevotion.reflection;
-        if (!ready || state.dailyDevotion.reward) return;
+        if (!ready) {
+          showFeatureMoment(
+            challengeCopy("Finish all 3 devotion steps first", "Completa primero los 3 pasos devocionales"),
+            challengeCopy("Complete the challenge, practical action, and reflection before claiming the reward.", "Completa el desafio, la accion practica y la reflexion antes de reclamar la recompensa."),
+            { icon: "🎯", sfx: null, durationMs: 2300 }
+          );
+          return;
+        }
+        if (state.dailyDevotion.reward) return;
         state.dailyDevotion.reward = true;
         ensureDailyCalendarEntry(localDayKey()).reward = true;
         awardXp(DAILY_DEVOTION_REWARD_XP);
@@ -6908,6 +7004,11 @@ function ensureExperienceSections() {
         playSfx("success");
         persist();
         render();
+        showFeatureMoment(
+          challengeCopy("Daily reward claimed", "Recompensa diaria reclamada"),
+          challengeCopy(`+${DAILY_DEVOTION_REWARD_XP} XP and +${DAILY_DEVOTION_REWARD_LIFE} life awarded.`, `+${DAILY_DEVOTION_REWARD_XP} XP y +${DAILY_DEVOTION_REWARD_LIFE} vida otorgados.`),
+          { icon: "🏆", durationMs: 2100 }
+        );
       };
     }
   }
@@ -7141,9 +7242,24 @@ function renderDailyDevotionQuest() {
     dailyDevotionReflection.value = state.dailyDevotion.note || "";
   }
 
-  if (completeDevotionChallengeBtn) completeDevotionChallengeBtn.disabled = state.dailyDevotion.challenge;
-  if (completeDevotionActionBtn) completeDevotionActionBtn.disabled = state.dailyDevotion.action;
-  if (saveDevotionReflectionBtn) saveDevotionReflectionBtn.disabled = state.dailyDevotion.reflection && Boolean(state.dailyDevotion.note);
+  if (completeDevotionChallengeBtn) {
+    completeDevotionChallengeBtn.disabled = state.dailyDevotion.challenge;
+    completeDevotionChallengeBtn.textContent = state.dailyDevotion.challenge
+      ? challengeCopy("Daily Challenge Complete", "Desafio diario completado")
+      : challengeCopy("Start Daily Challenge", "Iniciar desafio diario");
+  }
+  if (completeDevotionActionBtn) {
+    completeDevotionActionBtn.disabled = state.dailyDevotion.action;
+    completeDevotionActionBtn.textContent = state.dailyDevotion.action
+      ? challengeCopy("Practical Action Complete", "Accion practica completada")
+      : challengeCopy("Mark Practical Action Done", "Marcar accion practica");
+  }
+  if (saveDevotionReflectionBtn) {
+    saveDevotionReflectionBtn.disabled = state.dailyDevotion.reflection && Boolean(state.dailyDevotion.note);
+    saveDevotionReflectionBtn.textContent = state.dailyDevotion.reflection && Boolean(state.dailyDevotion.note)
+      ? challengeCopy("Reflection Saved", "Reflexion guardada")
+      : challengeCopy("Save Reflection", "Guardar reflexion");
+  }
   if (emailDevotionReflectionBtn) {
     emailDevotionReflectionBtn.textContent = t("emailReflection");
     emailDevotionReflectionBtn.disabled = !Boolean(String(state.dailyDevotion.note || "").trim());
@@ -8006,6 +8122,33 @@ function showStageCompleteMoment(result, options = {}) {
     node.classList.remove("show");
     stageCompleteToastTimer = 0;
   }, 1500);
+}
+
+function showFeatureMoment(titleText, detailText = "", options = {}) {
+  const node = ensureStageCompleteToast();
+  if (!node) return;
+
+  const kicker = node.querySelector(".badge-unlock-kicker");
+  const icon = node.querySelector(".badge-unlock-icon");
+  const title = node.querySelector(".badge-unlock-title");
+  const sub = node.querySelector(".badge-unlock-sub");
+
+  if (kicker) kicker.textContent = options.kicker || challengeCopy("Daily Devotion Quest", "Mision devocional diaria");
+  if (icon) icon.textContent = options.icon || "✦";
+  if (title) title.textContent = titleText || challengeCopy("Updated", "Actualizado");
+  if (sub) sub.textContent = detailText || "";
+
+  node.classList.add("show");
+  duckMusicTemporarily(
+    typeof options.duckVolume === "number" ? options.duckVolume : 0.42,
+    typeof options.duckMs === "number" ? options.duckMs : 1500
+  );
+  if (options.sfx !== null) playSfx(options.sfx || "success");
+  if (stageCompleteToastTimer) window.clearTimeout(stageCompleteToastTimer);
+  stageCompleteToastTimer = window.setTimeout(() => {
+    node.classList.remove("show");
+    stageCompleteToastTimer = 0;
+  }, Math.max(1200, Number(options.durationMs || 1900)));
 }
 
 function hideStageCompleteToast() {
