@@ -705,7 +705,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 35;
+const ACTIVITY_SCHEMA_VERSION = 36;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -9317,6 +9317,7 @@ function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources, foc
     prompt: stagePrompt(meta, pick.item.prompt, pick.reuseCount),
     clue: pick.item.clue || "",
     answer: pick.item.answer,
+    acceptedAnswers: Array.isArray(pick.item.acceptedAnswers) ? pick.item.acceptedAnswers.slice() : [],
     sourceRef: pick.item.sourceRef,
     historySourceRef: pick.item.historySourceRef || historyKeyForItem(pick.item, "spelling")
   };
@@ -9688,6 +9689,32 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
   }
 
   if (kind === "spelling") {
+    const forcedAbramSpellingQuestion = !focus
+      && difficulty.id === "medium"
+      && theme && theme.name === "Call of Abram"
+      && meta && meta.stage === 2
+      && meta.level === 20
+        ? mediumSpellingBank.find((item) =>
+            itemMatchesTheme(item, theme)
+            && String(item.sourceRef || "").includes("Genesis 12:6-7")
+            && normalizeSpellingAnswer(item.answer) === "shechem"
+          )
+        : null;
+
+    if (forcedAbramSpellingQuestion) {
+      return {
+        type: "spelling",
+        prompt: stagePrompt(meta, forcedAbramSpellingQuestion.prompt, 0),
+        clue: forcedAbramSpellingQuestion.clue || "",
+        answer: forcedAbramSpellingQuestion.answer,
+        acceptedAnswers: Array.isArray(forcedAbramSpellingQuestion.acceptedAnswers)
+          ? forcedAbramSpellingQuestion.acceptedAnswers.slice()
+          : [],
+        sourceRef: forcedAbramSpellingQuestion.sourceRef,
+        historySourceRef: forcedAbramSpellingQuestion.historySourceRef || historyKeyForItem(forcedAbramSpellingQuestion, "spelling")
+      };
+    }
+
     const authoredSpellingSource = spellingBankForDifficulty(difficulty);
     const spellingSource = dedupeActivityPool(
       derivedSpellingPoolForTheme(theme, difficulty).concat(authoredSpellingSource.filter(themeFilter)),
