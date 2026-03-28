@@ -705,7 +705,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 36;
+const ACTIVITY_SCHEMA_VERSION = 37;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -3021,11 +3021,16 @@ const NATIONS_BABEL_FACT_ADVANCED_EXPANSION = [
 ];
 
 const CALL_OF_ABRAM_QUIZ_EASY_EXPANSION = [
+  { era: "patriarchs", prompt: "Who went with Abram into the land of Canaan?", options: ["Lot", "Pharaoh", "Melchizedek", "Chedorlaomer"], answer: "Lot", sourceRef: "Genesis 12:5" },
   { era: "patriarchs", prompt: "Why did Abram go down into Egypt?", options: ["Because there was a famine in the land", "Because Lot was king there", "Because Melchizedek invited him", "Because the ark landed there"], answer: "Because there was a famine in the land", sourceRef: "Genesis 12:10" },
   { era: "patriarchs", prompt: "Between which two places did Abram pitch his tent after he came into the land?", options: ["Bethel and Ai", "Hebron and Gerar", "Sodom and Gomorrah", "Dan and Beersheba"], answer: "Bethel and Ai", sourceRef: "Genesis 12:8" },
   { era: "patriarchs", prompt: "What did Yahweh promise Abram at Shechem?", options: ["To your offspring I will give this land", "You will return to Eden", "You will reign in Egypt", "You will build a temple"], answer: "To your offspring I will give this land", sourceRef: "Genesis 12:7" },
+  { era: "patriarchs", prompt: "Toward what region did Abram journey after leaving the area between Bethel and Ai?", options: ["The Negev", "Damascus", "Shinar", "Salem"], answer: "The Negev", sourceRef: "Genesis 12:9" },
+  { era: "patriarchs", prompt: "What did Abram ask Sarai to say she was when they entered Egypt?", options: ["His sister", "His daughter", "His servant", "His widow"], answer: "His sister", sourceRef: "Genesis 12:13" },
   { era: "patriarchs", prompt: "What happened to Pharaoh and his house because of Sarai, Abram's wife?", options: ["They were struck with great plagues", "They received manna", "They crossed the Jordan", "They found a ram"], answer: "They were struck with great plagues", sourceRef: "Genesis 12:17" },
+  { era: "patriarchs", prompt: "What was Abram very rich in when he came up out of Egypt?", options: ["Livestock, silver, and gold", "Horses, iron, and cedar", "Chariots, wheat, and oil", "Tents, camels, and purple cloth"], answer: "Livestock, silver, and gold", sourceRef: "Genesis 13:2" },
   { era: "patriarchs", prompt: "Who chose all the Plain of the Jordan?", options: ["Lot", "Abram", "Melchizedek", "Pharaoh"], answer: "Lot", sourceRef: "Genesis 13:10-11" },
+  { era: "patriarchs", prompt: "Why couldn't the land support Abram and Lot living together?", options: ["Their possessions were too great", "The kings had taken the wells", "Abram had no servants", "The land was under water"], answer: "Their possessions were too great", sourceRef: "Genesis 13:6" },
   { era: "patriarchs", prompt: "What did Abram build by the oaks of Mamre in Hebron?", options: ["An altar", "A tower", "An ark", "A palace"], answer: "An altar", sourceRef: "Genesis 13:18" },
   { era: "patriarchs", prompt: "Who brought out bread and wine to Abram after the rescue of Lot?", options: ["Melchizedek", "The king of Egypt", "Lot", "Terah"], answer: "Melchizedek", sourceRef: "Genesis 14:18" },
   { era: "patriarchs", prompt: "What did the king of Sodom ask Abram to give back to him?", options: ["The people", "The land", "The altar", "The stars"], answer: "The people", sourceRef: "Genesis 14:21" },
@@ -3034,49 +3039,63 @@ const CALL_OF_ABRAM_QUIZ_EASY_EXPANSION = [
 
 const CALL_OF_ABRAM_QUIZ_MEDIUM_EXPANSION = [
   { era: "patriarchs", prompt: "At what landmark did Abram pass through when he first came to Shechem?", options: ["The oak of Moreh", "The terebinth of Mamre", "Mount Moriah", "The river of Egypt"], answer: "The oak of Moreh", sourceRef: "Genesis 12:6" },
+  { era: "patriarchs", prompt: "Where did Abram return to the altar and call on Yahweh's name after coming up from Egypt?", options: ["Bethel", "Hebron", "Dan", "Gerar"], answer: "Bethel", sourceRef: "Genesis 13:3-4" },
   { era: "patriarchs", prompt: "Why did Abram say there should be no strife between him and Lot?", options: ["Because they were relatives", "Because Pharaoh was watching", "Because they had no livestock", "Because the famine had ended"], answer: "Because they were relatives", sourceRef: "Genesis 13:8" },
+  { era: "patriarchs", prompt: "If Lot chose the left hand, which direction did Abram say he would go?", options: ["To the right", "To Egypt", "To the north", "Back to Haran"], answer: "To the right", sourceRef: "Genesis 13:9" },
+  { era: "patriarchs", prompt: "How many trained men born in Abram's house went with him to rescue Lot?", options: ["318", "70", "40", "500"], answer: "318", sourceRef: "Genesis 14:14" },
   { era: "patriarchs", prompt: "As far as what place did Abram pursue the kings who had taken Lot?", options: ["Dan", "Ai", "Gerar", "Beersheba"], answer: "Dan", sourceRef: "Genesis 14:14" },
-  { era: "patriarchs", prompt: "What title did Melchizedek hold besides king of Salem?", options: ["Priest of God Most High", "Prophet of Yahweh of Armies", "Judge in Canaan", "Priest of Egypt"], answer: "Priest of God Most High", sourceRef: "Genesis 14:18" },
+  { era: "patriarchs", prompt: "In Melchizedek's blessing, who was called Possessor of heaven and earth?", options: ["God Most High", "Abram", "The king of Sodom", "Pharaoh"], answer: "God Most High", sourceRef: "Genesis 14:19" },
   { era: "patriarchs", prompt: "Which Hebrew title did Abram use for God in Genesis 15:2?", options: ["Adonai Yahweh", "El Shaddai", "El Elyon", "Yahweh Yireh"], answer: "Adonai Yahweh", sourceRef: "Genesis 15:2" },
+  { era: "patriarchs", prompt: "Who did Yahweh say would be Abram's heir?", options: ["One who would come out of Abram's own body", "Eliezer of Damascus", "Lot", "Ishmael"], answer: "One who would come out of Abram's own body", sourceRef: "Genesis 15:4" },
   { era: "patriarchs", prompt: "What did Abram refuse to take from the king of Sodom?", options: ["Anything that was his", "The people", "Bread and wine", "The altar stones"], answer: "Anything that was his", sourceRef: "Genesis 14:22-23" },
   { era: "patriarchs", prompt: "What fell on Abram when the sun was going down in Genesis 15?", options: ["A deep sleep", "A rainbow", "Manna", "A strong wind"], answer: "A deep sleep", sourceRef: "Genesis 15:12" },
   { era: "patriarchs", prompt: "How many years would Abram's offspring be afflicted in a land that was not theirs?", options: ["400 years", "40 years", "70 years", "430 years"], answer: "400 years", sourceRef: "Genesis 15:13" },
-  { era: "patriarchs", prompt: "What did Yahweh bring Abram outside to look toward?", options: ["The sky", "The sea", "The altar", "Egypt"], answer: "The sky", sourceRef: "Genesis 15:5" }
+  { era: "patriarchs", prompt: "What was counted to Abram for righteousness in Genesis 15:6?", options: ["His faith", "His tithe", "His journey", "His livestock"], answer: "His faith", sourceRef: "Genesis 15:6" }
 ];
 
 const CALL_OF_ABRAM_QUIZ_ADVANCED_EXPANSION = [
-  { era: "patriarchs", prompt: "What city name is attached to Eliezer in Genesis 15:2?", options: ["Damascus", "Salem", "Gerar", "Hebron"], answer: "Damascus", sourceRef: "Genesis 15:2" },
+  { era: "patriarchs", prompt: "To what place north of Damascus did Abram pursue the kings?", options: ["Hobah", "Bethel", "Moreh", "Hebron"], answer: "Hobah", sourceRef: "Genesis 14:15" },
   { era: "patriarchs", prompt: "What did Abram give Melchizedek from the spoils?", options: ["A tenth of all", "All the goods", "Only the people", "A ram"], answer: "A tenth of all", sourceRef: "Genesis 14:20" },
+  { era: "patriarchs", prompt: "What did Abram do to the birds of prey that came down on the carcasses?", options: ["He drove them away", "He offered them on the altar", "He fed them", "He fled from them"], answer: "He drove them away", sourceRef: "Genesis 15:11" },
   { era: "patriarchs", prompt: "What came down on Abram's sacrifice pieces before sunset?", options: ["Birds of prey", "Locusts", "A ram", "A dove only"], answer: "Birds of prey", sourceRef: "Genesis 15:11" },
   { era: "patriarchs", prompt: "In what generation did Yahweh say Abram's descendants would come back to the land?", options: ["The fourth generation", "The second generation", "The seventh generation", "The tenth generation"], answer: "The fourth generation", sourceRef: "Genesis 15:16" },
-  { era: "patriarchs", prompt: "Why would Abram's descendants not return sooner, according to Genesis 15:16?", options: ["The iniquity of the Amorite was not yet full", "Egypt still ruled Canaan", "Lot still lived in Sodom", "Pharaoh forbade the journey"], answer: "The iniquity of the Amorite was not yet full", sourceRef: "Genesis 15:16" },
+  { era: "patriarchs", prompt: "What did Yahweh say Abram himself would do before his descendants returned to the land?", options: ["Go to his fathers in peace", "Live to see the conquest", "Return to Haran", "Dwell in Sodom"], answer: "Go to his fathers in peace", sourceRef: "Genesis 15:15" },
+  { era: "patriarchs", prompt: "What did Yahweh say He had done in Genesis 15:7?", options: ["Brought Abram out of Ur of the Chaldees", "Destroyed Sodom already", "Sent Abram to Egypt", "Given Abram a son already"], answer: "Brought Abram out of Ur of the Chaldees", sourceRef: "Genesis 15:7" },
+  { era: "patriarchs", prompt: "Which river is named as the near border of the promised land in Genesis 15:18?", options: ["The river of Egypt", "The Jordan River", "The Jabbok River", "The Chebar River"], answer: "The river of Egypt", sourceRef: "Genesis 15:18" },
   { era: "patriarchs", prompt: "Which river is named as the far border of the promised land in Genesis 15:18?", options: ["The Euphrates River", "The Jordan River", "The Nile River", "The Jabbok River"], answer: "The Euphrates River", sourceRef: "Genesis 15:18" },
   { era: "patriarchs", prompt: "Which people are named among those whose land would be given to Abram's offspring?", options: ["Kenites", "Philistines", "Romans", "Babylonians"], answer: "Kenites", sourceRef: "Genesis 15:19" },
+  { era: "patriarchs", prompt: "Which birds did Abram bring in the covenant preparation?", options: ["A turtledove and a young pigeon", "Two ravens", "A dove and a sparrow", "An eagle and a pigeon"], answer: "A turtledove and a young pigeon", sourceRef: "Genesis 15:9" },
   { era: "patriarchs", prompt: "What passed between the pieces in Abram's covenant vision?", options: ["A smoking furnace and a flaming torch", "A pillar of cloud and fire", "Two angels", "A rainbow and thunder"], answer: "A smoking furnace and a flaming torch", sourceRef: "Genesis 15:17" }
 ];
 
 const CALL_OF_ABRAM_SPELLING_EASY_EXPANSION = [
   { era: "patriarchs", prompt: "Spell Abram's nephew from Genesis 12-14.", answer: "Lot", sourceRef: "Genesis 12:5; 13:1; 14:12" },
+  { era: "patriarchs", prompt: "Spell the land Abram entered in Genesis 12:5.", answer: "Canaan", sourceRef: "Genesis 12:5" },
+  { era: "patriarchs", prompt: "Spell the region Abram journeyed toward in Genesis 12:9.", answer: "Negev", sourceRef: "Genesis 12:9", acceptedAnswers: ["Negeb"] },
   { era: "patriarchs", prompt: "Spell the city beside Bethel where Abram pitched his tent.", answer: "Ai", sourceRef: "Genesis 12:8" },
-  { era: "patriarchs", prompt: "Spell the place Abram pursued the kings to.", answer: "Dan", sourceRef: "Genesis 14:14" },
+  { era: "patriarchs", prompt: "Spell Abram's wife from Genesis 12.", answer: "Sarai", sourceRef: "Genesis 12:11-17" },
   { era: "patriarchs", prompt: "Spell the place where Abram dwelt by the oaks.", answer: "Mamre", sourceRef: "Genesis 13:18" }
 ];
 
 const CALL_OF_ABRAM_SPELLING_MEDIUM_EXPANSION = [
   { era: "patriarchs", prompt: "Type the city west of Ai in Genesis 12:8.", answer: "Bethel", sourceRef: "Genesis 12:8" },
   { era: "patriarchs", prompt: "Type the city where Abram dwelt after Lot separated from him.", answer: "Hebron", sourceRef: "Genesis 13:18" },
-  { era: "patriarchs", prompt: "Type the place where Melchizedek ruled as king.", answer: "Salem", sourceRef: "Genesis 14:18" },
-  { era: "patriarchs", prompt: "Type the place where Yahweh first appeared to Abram in Canaan.", answer: "Shechem", sourceRef: "Genesis 12:6-7" }
+  { era: "patriarchs", prompt: "Type the land Abram came into in Genesis 12:5.", answer: "Canaan", sourceRef: "Genesis 12:5" },
+  { era: "patriarchs", prompt: "Type the place where Yahweh first appeared to Abram in Canaan.", answer: "Shechem", sourceRef: "Genesis 12:6-7" },
+  { era: "patriarchs", prompt: "Type the oak landmark Abram passed by at Shechem.", answer: "Moreh", sourceRef: "Genesis 12:6" },
+  { era: "patriarchs", prompt: "Type the city where Abram returned to call on Yahweh's name after Egypt.", answer: "Bethel", sourceRef: "Genesis 13:3-4" }
 ];
 
 const CALL_OF_ABRAM_SPELLING_ADVANCED_EXPANSION = [
   { era: "patriarchs", prompt: "Type the king-priest who blessed Abram.", answer: "Melchizedek", sourceRef: "Genesis 14:18" },
   { era: "patriarchs", prompt: "Type the city named with Eliezer in Genesis 15:2.", answer: "Damascus", sourceRef: "Genesis 15:2" },
   { era: "patriarchs", prompt: "Type the far river named in the covenant borders.", answer: "Euphrates", sourceRef: "Genesis 15:18" },
+  { era: "patriarchs", prompt: "Type the place north of Damascus where Abram pursued the kings.", answer: "Hobah", sourceRef: "Genesis 14:15" },
   { era: "patriarchs", prompt: "Type the king whom Abram pursued after Lot was taken captive.", answer: "Chedorlaomer", acceptedAnswers: ["Kedorlaomer"], sourceRef: "Genesis 14:17" }
 ];
 
 const CALL_OF_ABRAM_ORDER_EASY_EXPANSION = [
+  { era: "patriarchs", items: ["Yahweh tells Abram to leave", "Abram takes Sarai and Lot", "Abram comes into Canaan"], sourceRef: "Genesis 12:1-5" },
   { era: "patriarchs", items: ["Abram leaves Haran", "Yahweh appears at Shechem", "Abram builds an altar there"], sourceRef: "Genesis 12:4-7" },
   { era: "patriarchs", items: ["Famine comes", "Abram goes down into Egypt", "Pharaoh sends Abram away"], sourceRef: "Genesis 12:10,20" },
   { era: "patriarchs", items: ["Strife rises between herdsmen", "Lot chooses the Plain of the Jordan", "Abram dwells by Mamre"], sourceRef: "Genesis 13:7-12,18" },
@@ -3084,14 +3103,17 @@ const CALL_OF_ABRAM_ORDER_EASY_EXPANSION = [
 ];
 
 const CALL_OF_ABRAM_ORDER_MEDIUM_EXPANSION = [
+  { era: "patriarchs", items: ["Abram becomes very rich", "The land cannot bear Abram and Lot together", "Abram offers Lot the choice"], sourceRef: "Genesis 13:2,6,9" },
   { era: "patriarchs", items: ["Lot separates from Abram", "Yahweh tells Abram to lift up his eyes", "Abram builds an altar in Hebron"], sourceRef: "Genesis 13:11-18" },
   { era: "patriarchs", items: ["Yahweh says, \"Don't be afraid\"", "Abram asks about an heir", "Yahweh brings Abram outside"], sourceRef: "Genesis 15:1-5" },
+  { era: "patriarchs", items: ["Yahweh says Abram's heir will come from his own body", "Abram believes Yahweh", "It is counted to him for righteousness"], sourceRef: "Genesis 15:4-6" },
   { era: "patriarchs", items: ["Birds of prey come down", "A deep sleep falls on Abram", "A smoking furnace passes between the pieces"], sourceRef: "Genesis 15:11-12,17" },
   { era: "patriarchs", items: ["King of Sodom offers the goods", "Abram refuses to take them", "Abram says Yahweh made him rich"], sourceRef: "Genesis 14:21-23" }
 ];
 
 const CALL_OF_ABRAM_ORDER_ADVANCED_EXPANSION = [
   { era: "patriarchs", items: ["Abram departs Haran at seventy-five", "Lot is captured in battle", "Abram gives Melchizedek a tenth"], sourceRef: "Genesis 12:4; 14:12-20" },
+  { era: "patriarchs", items: ["Abram divides against the kings by night", "Abram brings back the goods", "Melchizedek blesses Abram"], sourceRef: "Genesis 14:15-19" },
   { era: "patriarchs", items: ["Abram brings the covenant animals", "Abram divides the larger animals", "Abram drives away the birds of prey"], sourceRef: "Genesis 15:9-11" },
   { era: "patriarchs", items: ["Yahweh says Abram's seed will be afflicted", "They will come out with great substance", "They will return in the fourth generation"], sourceRef: "Genesis 15:13-16" },
   { era: "patriarchs", items: ["Melchizedek brings bread and wine", "Abram gives him a tenth", "King of Sodom asks for the people"], sourceRef: "Genesis 14:18-21" }
@@ -3099,22 +3121,29 @@ const CALL_OF_ABRAM_ORDER_ADVANCED_EXPANSION = [
 
 const CALL_OF_ABRAM_FACT_EASY_EXPANSION = [
   { era: "patriarchs", parts: ["I", "will", "make", "of", "you", "a", "great", "nation"], sourceRef: "Genesis 12:2" },
+  { era: "patriarchs", parts: ["In", "you", "all", "the", "families", "of", "the", "earth", "will", "be", "blessed"], sourceRef: "Genesis 12:3" },
   { era: "patriarchs", parts: ["To", "your", "offspring", "I", "will", "give", "this", "land"], sourceRef: "Genesis 12:7" },
   { era: "patriarchs", parts: ["There", "was", "a", "famine", "in", "the", "land"], sourceRef: "Genesis 12:10" },
   { era: "patriarchs", parts: ["Lot", "chose", "all", "the", "Plain", "of", "the", "Jordan"], sourceRef: "Genesis 13:11" }
 ];
 
 const CALL_OF_ABRAM_FACT_MEDIUM_EXPANSION = [
-  { era: "patriarchs", parts: ["Abram", "dwelt", "by", "the", "oaks", "of", "Mamre"], sourceRef: "Genesis 13:18" },
-  { era: "patriarchs", parts: ["Melchizedek", "king", "of", "Salem", "brought", "out", "bread", "and", "wine"], sourceRef: "Genesis 14:18" },
+  { era: "patriarchs", parts: ["Abram", "called", "on", "Yahweh's", "name"], sourceRef: "Genesis 13:4" },
+  { era: "patriarchs", parts: ["The", "land", "couldn't", "bear", "them"], sourceRef: "Genesis 13:6" },
+  { era: "patriarchs", parts: ["Blessed", "be", "Abram", "of", "God", "Most", "High"], sourceRef: "Genesis 14:19" },
   { era: "patriarchs", parts: ["Don't", "be", "afraid", "Abram", "I", "am", "your", "shield"], sourceRef: "Genesis 15:1" },
   { era: "patriarchs", parts: ["Lord", "Yahweh", "what", "will", "you", "give", "me"], sourceRef: "Genesis 15:2" },
-  { era: "patriarchs", parts: ["He", "brought", "him", "outside"], sourceRef: "Genesis 15:5" }
+  { era: "patriarchs", parts: ["He", "who", "will", "come", "out", "of", "your", "own", "body"], sourceRef: "Genesis 15:4" },
+  { era: "patriarchs", parts: ["He", "believed", "in", "Yahweh"], sourceRef: "Genesis 15:6" }
 ];
 
 const CALL_OF_ABRAM_FACT_ADVANCED_EXPANSION = [
+  { era: "patriarchs", parts: ["Abram", "divided", "against", "them", "by", "night"], sourceRef: "Genesis 14:15" },
+  { era: "patriarchs", parts: ["He", "brought", "back", "all", "the", "goods"], sourceRef: "Genesis 14:16" },
   { era: "patriarchs", parts: ["Abram", "gave", "him", "a", "tenth", "of", "all"], sourceRef: "Genesis 14:20" },
   { era: "patriarchs", parts: ["A", "deep", "sleep", "fell", "on", "Abram"], sourceRef: "Genesis 15:12" },
+  { era: "patriarchs", parts: ["I", "am", "Yahweh", "who", "brought", "you", "out", "of", "Ur"], sourceRef: "Genesis 15:7" },
+  { era: "patriarchs", parts: ["Bring", "me", "a", "three-year-old", "heifer"], sourceRef: "Genesis 15:9" },
   { era: "patriarchs", parts: ["A", "smoking", "furnace", "and", "a", "flaming", "torch", "passed", "between", "these", "pieces"], sourceRef: "Genesis 15:17" },
   { era: "patriarchs", parts: ["In", "the", "fourth", "generation", "they", "will", "come", "here", "again"], sourceRef: "Genesis 15:16" }
 ];
@@ -10426,6 +10455,41 @@ function buildOrderSetsFromInteractiveSets(theme, sets = []) {
   return built;
 }
 
+const THEME_DERIVED_POOL_RULES = {
+  "Call of Abram": {
+    quiz: { perRef: 1, maxItems: 10 },
+    spelling: { perRef: 1, maxItems: 10 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  }
+};
+
+function primaryReferenceKeyForItem(item) {
+  const refs = referenceEntriesFromSourceRef(item && item.sourceRef || "");
+  if (refs.length) return refs[0].ref;
+  return normalizeSourceRef(item && item.sourceRef);
+}
+
+function trimDerivedItemsForTheme(theme, bucket, items = []) {
+  const rule = theme && THEME_DERIVED_POOL_RULES[theme.name] && THEME_DERIVED_POOL_RULES[theme.name][bucket];
+  if (!rule) return items.slice();
+
+  const perRef = Math.max(1, Number(rule.perRef || 1));
+  const counts = new Map();
+  const trimmed = [];
+
+  items.forEach((item) => {
+    const key = primaryReferenceKeyForItem(item) || itemSignature(item);
+    const seen = counts.get(key) || 0;
+    if (seen >= perRef) return;
+    counts.set(key, seen + 1);
+    trimmed.push(item);
+  });
+
+  return Number.isFinite(rule.maxItems) ? trimmed.slice(0, Math.max(1, Number(rule.maxItems))) : trimmed;
+}
+
 function derivedQuizPoolForTheme(theme, difficulty = currentDifficulty()) {
   const quizSource = themeScopedQuizItems(theme, quizPoolForDifficulty(difficulty));
   const factSource = factBankForDifficulty(difficulty).filter((item) => itemMatchesTheme(item, theme));
@@ -10434,13 +10498,13 @@ function derivedQuizPoolForTheme(theme, difficulty = currentDifficulty()) {
   const quizDerivedFacts = buildDerivedFactPoolFromQuizItems(quizSource);
   const summaryFacts = summaryFactItemsForTheme(theme);
   const interactiveQuizItems = buildQuizItemsFromInteractiveSets(theme, interactiveModeSetsForTheme(theme));
-  return dedupeActivityPool(
+  return trimDerivedItemsForTheme(theme, "quiz", dedupeActivityPool(
     interactiveQuizItems.concat(
       buildVerseFillQuizPoolFromFactItems(factSource.concat(quizDerivedFacts, summaryFacts))
         .concat(buildVerseFillQuizPoolFromFactItems(labelPartSource))
     ),
     "quiz"
-  );
+  ));
 }
 
 function derivedSpellingPoolForTheme(theme, difficulty = currentDifficulty()) {
@@ -10469,7 +10533,7 @@ function derivedSpellingPoolForTheme(theme, difficulty = currentDifficulty()) {
       sourceRef: item.sourceRef,
       historySourceRef: `${item.historySourceRef || item.sourceRef}::versefill::fallback::${index + 1}`
     }));
-  return dedupeActivityPool(factVersePool.concat(quizFallbackPool), "spelling");
+  return trimDerivedItemsForTheme(theme, "spelling", dedupeActivityPool(factVersePool.concat(quizFallbackPool), "spelling"));
 }
 
 function derivedOrderSetsForTheme(theme, difficulty = currentDifficulty()) {
@@ -10491,7 +10555,7 @@ function derivedOrderSetsForTheme(theme, difficulty = currentDifficulty()) {
     sourceRef: item.sourceRef
   }));
   const interactiveItems = buildOrderSetsFromInteractiveSets(theme, interactiveModeSetsForTheme(theme));
-  const combined = quizItems.concat(factItems, quizDerivedFacts, summaryItems);
+  const combined = trimDerivedItemsForTheme(theme, "orderBase", quizItems.concat(factItems, quizDerivedFacts, summaryItems));
   const sets = [];
 
   if (combined.length >= 3) {
@@ -10517,7 +10581,11 @@ function derivedOrderSetsForTheme(theme, difficulty = currentDifficulty()) {
     });
   }
 
-  return dedupeActivityPool(sets.concat(interactiveItems), "order").slice(0, Math.max(18, themeLevelCount(theme) * 6));
+  return trimDerivedItemsForTheme(
+    theme,
+    "order",
+    dedupeActivityPool(sets.concat(interactiveItems), "order").slice(0, Math.max(18, themeLevelCount(theme) * 6))
+  );
 }
 
 function buildDerivedFactPoolFromOrderItems(items = []) {
@@ -10643,10 +10711,10 @@ function derivedFactPoolForTheme(theme, difficulty = currentDifficulty()) {
   const derivedOrderSource = derivedOrderSetsForTheme(theme, difficulty);
   const quizDerivedSource = buildDerivedFactPoolFromQuizItems(themeScopedQuizItems(theme, quizPoolForDifficulty(difficulty)));
   const summaryFacts = summaryFactItemsForTheme(theme);
-  return dedupeActivityPool(
+  return trimDerivedItemsForTheme(theme, "fact", dedupeActivityPool(
     buildDerivedFactPoolFromOrderItems(authoredOrderSource.concat(derivedOrderSource)).concat(quizDerivedSource, summaryFacts),
     "fact"
-  ).slice(0, Math.max(24, themeLevelCount(theme) * 8));
+  ).slice(0, Math.max(24, themeLevelCount(theme) * 8)));
 }
 
 function buildFalseAnswer(question) {
