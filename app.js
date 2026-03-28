@@ -705,7 +705,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 34;
+const ACTIVITY_SCHEMA_VERSION = 35;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -3108,6 +3108,7 @@ const CALL_OF_ABRAM_FACT_MEDIUM_EXPANSION = [
   { era: "patriarchs", parts: ["Abram", "dwelt", "by", "the", "oaks", "of", "Mamre"], sourceRef: "Genesis 13:18" },
   { era: "patriarchs", parts: ["Melchizedek", "king", "of", "Salem", "brought", "out", "bread", "and", "wine"], sourceRef: "Genesis 14:18" },
   { era: "patriarchs", parts: ["Don't", "be", "afraid", "Abram", "I", "am", "your", "shield"], sourceRef: "Genesis 15:1" },
+  { era: "patriarchs", parts: ["Lord", "Yahweh", "what", "will", "you", "give", "me"], sourceRef: "Genesis 15:2" },
   { era: "patriarchs", parts: ["He", "brought", "him", "outside"], sourceRef: "Genesis 15:5" }
 ];
 
@@ -9738,6 +9739,32 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
   }
 
   if (kind === "fact") {
+    const forcedAbramFactQuestion = !focus
+      && difficulty.id === "medium"
+      && theme && theme.name === "Call of Abram"
+      && meta && meta.stage === 2
+      && meta.level === 19
+        ? mediumFactBank.find((item) =>
+            itemMatchesTheme(item, theme)
+            && String(item.sourceRef || "").includes("Genesis 15:2")
+            && Array.isArray(item.parts)
+            && item.parts.join(" ") === "Lord Yahweh what will you give me"
+          )
+        : null;
+
+    if (forcedAbramFactQuestion) {
+      const factMode = buildFactActivity(forcedAbramFactQuestion, theme.era, difficulty);
+      return {
+        type: "fact",
+        prompt: stagePrompt(meta, t("buildFactOrder"), 0),
+        answerParts: factMode.answerParts,
+        prefilled: factMode.prefilled,
+        parts: factMode.pool,
+        sourceRef: forcedAbramFactQuestion.sourceRef,
+        historySourceRef: forcedAbramFactQuestion.historySourceRef || historyKeyForItem(forcedAbramFactQuestion, "fact")
+      };
+    }
+
     const factSource = dedupeActivityPool(
       factBankForDifficulty(difficulty).filter(themeFilter).concat(derivedFactPoolForTheme(theme, difficulty)),
       "fact"
