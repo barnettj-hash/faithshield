@@ -705,7 +705,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 39;
+const ACTIVITY_SCHEMA_VERSION = 40;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -10571,6 +10571,41 @@ const THEME_DERIVED_POOL_RULES = {
     orderBase: { perRef: 1, maxItems: 8 },
     order: { perRef: 1, maxItems: 12 },
     fact: { perRef: 1, maxItems: 14 }
+  },
+  "Burning Bush": {
+    quiz: { perRef: 1, maxItems: 10 },
+    spelling: { perRef: 1, maxItems: 10 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "Plagues and Passover": {
+    quiz: { perRef: 1, maxItems: 10 },
+    spelling: { perRef: 1, maxItems: 10 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "Sea Crossing": {
+    quiz: { perRef: 1, maxItems: 10 },
+    spelling: { perRef: 1, maxItems: 10 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "Sinai Covenant": {
+    quiz: { perRef: 1, maxItems: 10 },
+    spelling: { perRef: 1, maxItems: 10 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "Wilderness Trust": {
+    quiz: { perRef: 1, maxItems: 10 },
+    spelling: { perRef: 1, maxItems: 10 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
   }
 };
 
@@ -10591,6 +10626,31 @@ const THEME_DIFFICULTY_REFERENCE_CAPS = {
     advanced: { perRef: 2 }
   },
   "Joseph in Egypt": {
+    easy: { perRef: 3 },
+    medium: { perRef: 3 },
+    advanced: { perRef: 2 }
+  },
+  "Burning Bush": {
+    easy: { perRef: 3 },
+    medium: { perRef: 3 },
+    advanced: { perRef: 2 }
+  },
+  "Plagues and Passover": {
+    easy: { perRef: 3 },
+    medium: { perRef: 3 },
+    advanced: { perRef: 2 }
+  },
+  "Sea Crossing": {
+    easy: { perRef: 3 },
+    medium: { perRef: 3 },
+    advanced: { perRef: 2 }
+  },
+  "Sinai Covenant": {
+    easy: { perRef: 3 },
+    medium: { perRef: 3 },
+    advanced: { perRef: 2 }
+  },
+  "Wilderness Trust": {
     easy: { perRef: 3 },
     medium: { perRef: 3 },
     advanced: { perRef: 2 }
