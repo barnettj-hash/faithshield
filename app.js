@@ -5866,6 +5866,44 @@ function downloadCanvasPng(canvas, fileName) {
   }
 }
 
+function openCanvasPngInNewTab(canvas, fileName, titleText = "FAITHSHIELD Era Card") {
+  if (!canvas || typeof canvas.toDataURL !== "function") return false;
+  try {
+    const dataUrl = canvas.toDataURL("image/png");
+    if (!dataUrl) return false;
+    const popup = window.open("", "_blank", "noopener,noreferrer");
+    if (!popup) return false;
+    const safeTitle = String(titleText || "FAITHSHIELD Era Card")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    const safeFileName = String(fileName || "faithshield-era-card.png")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    popup.document.write([
+      "<!doctype html>",
+      '<html lang="en"><head><meta charset="utf-8">',
+      `<title>${safeTitle}</title>`,
+      '<meta name="viewport" content="width=device-width,initial-scale=1">',
+      '<style>',
+      'body{margin:0;background:#0f1827;color:#f6e7c7;font-family:system-ui,-apple-system,Segoe UI,sans-serif;display:flex;flex-direction:column;align-items:center;gap:18px;padding:24px;}',
+      'img{max-width:min(96vw,1280px);height:auto;border:2px solid rgba(229,184,93,.48);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.35);}',
+      'a{display:inline-block;padding:12px 18px;border-radius:12px;background:#d9b56b;color:#1d1508;text-decoration:none;font-weight:700;}',
+      'p{margin:0;opacity:.9;text-align:center;}',
+      '</style></head><body>',
+      `<a href="${dataUrl}" download="${safeFileName}">Save Era Card</a>`,
+      `<p>${challengeCopy("Your browser opened the era card in a new tab. Use the button above if the download did not start automatically.", "Tu navegador abrio la tarjeta de era en una nueva pestana. Usa el boton de arriba si la descarga no comenzo automaticamente.")}</p>`,
+      `<img src="${dataUrl}" alt="${safeTitle}">`,
+      "</body></html>"
+    ].join(""));
+    popup.document.close();
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 async function exportBadgeCard(badge) {
   if (!badge) return false;
   const canvas = createBadgeShareCardCanvas(badge);
@@ -6590,6 +6628,9 @@ async function exportEraCompletionCard(era) {
   if (!canvas) return false;
   const fileName = `faithshield-${normalizeFileSlug(era, "era")}-completion-card.png`;
   if (downloadCanvasPng(canvas, fileName)) {
+    return true;
+  }
+  if (openCanvasPngInNewTab(canvas, fileName, `${formatEraLabel(era)} • FAITHSHIELD`)) {
     return true;
   }
   const blob = await canvasToPngBlob(canvas);
