@@ -705,7 +705,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 37;
+const ACTIVITY_SCHEMA_VERSION = 38;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -9298,6 +9298,7 @@ function buildFallbackQuizActivity(meta, theme, difficulty, usedSources, focus =
   const themeFilter = themeItemFilter(theme, focus);
   const scopeKey = focus ? reviewScopeKey(theme, "quiz", focus) : themeScopeKey(theme, "quiz");
   const scopedUsedSources = focus ? null : usedSources;
+  const selectionOptions = selectionConstraintsForTheme(theme, difficulty, focus);
   const authoredQuizPool = shouldIsolateThemeByDifficulty(theme)
     ? quizPoolForDifficulty(difficulty)
     : ALL_QUIZ_BANKS;
@@ -9308,7 +9309,8 @@ function buildFallbackQuizActivity(meta, theme, difficulty, usedSources, focus =
     allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
-    requireScoped: true
+    requireScoped: true,
+    ...selectionOptions
   });
   if (!pick.item) return null;
 
@@ -9327,6 +9329,7 @@ function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources, foc
   const themeFilter = themeItemFilter(theme, focus);
   const scopeKey = focus ? reviewScopeKey(theme, "spelling", focus) : themeScopeKey(theme, "spelling");
   const scopedUsedSources = focus ? null : usedSources;
+  const selectionOptions = selectionConstraintsForTheme(theme, difficulty, focus);
   const verseFillPool = derivedSpellingPoolForTheme(theme, difficulty);
   const authoredPool = shouldIsolateThemeByDifficulty(theme)
     ? spellingBankForDifficulty(difficulty).filter(themeFilter)
@@ -9337,7 +9340,8 @@ function buildFallbackSpellingActivity(meta, theme, difficulty, usedSources, foc
     allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
-    requireScoped: true
+    requireScoped: true,
+    ...selectionOptions
   });
   if (!pick.item) return null;
 
@@ -9356,6 +9360,7 @@ function buildFallbackOrderActivity(meta, theme, difficulty, usedSources, focus 
   const themeFilter = themeItemFilter(theme, focus);
   const scopeKey = focus ? reviewScopeKey(theme, "order", focus) : themeScopeKey(theme, "order");
   const scopedUsedSources = focus ? null : usedSources;
+  const selectionOptions = selectionConstraintsForTheme(theme, difficulty, focus);
   const authoredOrderPool = shouldIsolateThemeByDifficulty(theme)
     ? orderBankForDifficulty(difficulty)
     : ALL_ORDER_BANKS;
@@ -9365,7 +9370,8 @@ function buildFallbackOrderActivity(meta, theme, difficulty, usedSources, focus 
     allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
-    requireScoped: true
+    requireScoped: true,
+    ...selectionOptions
   });
   if (!pick.item) return null;
 
@@ -9384,6 +9390,7 @@ function buildFallbackFactActivity(meta, theme, difficulty, usedSources, focus =
   const themeFilter = themeItemFilter(theme, focus);
   const scopeKey = focus ? reviewScopeKey(theme, "fact", focus) : themeScopeKey(theme, "fact");
   const scopedUsedSources = focus ? null : usedSources;
+  const selectionOptions = selectionConstraintsForTheme(theme, difficulty, focus);
   const authoredFactPool = shouldIsolateThemeByDifficulty(theme)
     ? factBankForDifficulty(difficulty)
     : ALL_FACT_BANKS;
@@ -9393,7 +9400,8 @@ function buildFallbackFactActivity(meta, theme, difficulty, usedSources, focus =
     allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
-    requireScoped: true
+    requireScoped: true,
+    ...selectionOptions
   });
   if (!pick.item) return null;
 
@@ -9413,6 +9421,7 @@ function buildTrueFalseActivity(meta, theme, difficulty, usedSources, focus = nu
   const themeFilter = themeItemFilter(theme, focus);
   const scopeKey = focus ? reviewScopeKey(theme, "truefalse", focus) : themeScopeKey(theme, "truefalse");
   const scopedUsedSources = focus ? null : usedSources;
+  const selectionOptions = selectionConstraintsForTheme(theme, difficulty, focus);
   const quizPool = shouldIsolateThemeByDifficulty(theme)
     ? quizPoolForDifficulty(difficulty)
     : ALL_QUIZ_BANKS;
@@ -9421,7 +9430,8 @@ function buildTrueFalseActivity(meta, theme, difficulty, usedSources, focus = nu
     allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
-    requireScoped: true
+    requireScoped: true,
+    ...selectionOptions
   });
   if (!pick.item) return null;
 
@@ -9445,6 +9455,12 @@ function buildMatchingActivity(meta, theme, difficulty, usedSources, focus = nul
   const themeFilter = themeItemFilter(theme, focus);
   const scopeKey = focus ? reviewScopeKey(theme, "matching", focus) : themeScopeKey(theme, "matching");
   const scopedUsedSources = focus ? null : usedSources;
+  const selectionOptions = selectionConstraintsForTheme(theme, difficulty, focus);
+  const matchingReferenceCounts = selectionOptions.refUsageCounts instanceof Map ? selectionOptions.refUsageCounts : null;
+  const matchingMaxRefUses = Number.isFinite(Number(selectionOptions.maxRefUses)) ? Math.max(1, Number(selectionOptions.maxRefUses)) : null;
+  const matchingReferenceKeyForItem = typeof selectionOptions.referenceKeyForItem === "function"
+    ? selectionOptions.referenceKeyForItem
+    : ((item) => primaryReferenceKeyForItem(item));
   const quizPool = shouldIsolateThemeByDifficulty(theme)
     ? quizPoolForDifficulty(difficulty)
     : ALL_QUIZ_BANKS;
@@ -9455,7 +9471,8 @@ function buildMatchingActivity(meta, theme, difficulty, usedSources, focus = nul
     allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
-    requireScoped: true
+    requireScoped: true,
+    ...selectionOptions
   });
   if (!pick.items || pick.items.length < 2) return null;
 
@@ -9470,6 +9487,14 @@ function buildMatchingActivity(meta, theme, difficulty, usedSources, focus = nul
     if (!answerKey || seenAnswers.has(answerKey)) return false;
     const signature = itemSignature(item);
     if (seenSignatures.has(signature)) return false;
+    const refKey = matchingReferenceKeyForItem(item);
+    if (matchingMaxRefUses && matchingReferenceCounts && refKey) {
+      const currentRefCount = matchingReferenceCounts.get(refKey) || 0;
+      const selectedRefCount = selectedItems.reduce((total, entry) => {
+        return total + (matchingReferenceKeyForItem(entry) === refKey ? 1 : 0);
+      }, 0);
+      if (currentRefCount + selectedRefCount >= matchingMaxRefUses) return false;
+    }
     seenAnswers.add(answerKey);
     seenSignatures.add(signature);
     selectedItems.push(item);
@@ -9618,6 +9643,7 @@ function buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind, fo
   const themeFilter = (item) => themeItemFilter(theme, focus)(item) && kindFilter(item);
   const scopeKey = focus ? reviewScopeKey(theme, kind, focus) : themeScopeKey(theme, kind);
   const scopedUsedSources = focus ? null : usedSources;
+  const selectionOptions = selectionConstraintsForTheme(theme, difficulty, focus);
 
   const preferred = quizPoolForDifficulty(difficulty);
   const combinedPool = shouldIsolateThemeByDifficulty(theme)
@@ -9665,7 +9691,8 @@ function buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind, fo
     allowReuse: Boolean(focus),
     filter: themeFilter,
     scopeKey,
-    requireScoped: true
+    requireScoped: true,
+    ...selectionOptions
   });
   if (!pick.item) return null;
 
@@ -9687,6 +9714,7 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
   const themeFilter = themeItemFilter(theme, focus);
   const scopeKey = focus ? reviewScopeKey(theme, kind, focus) : themeScopeKey(theme, kind);
   const scopedUsedSources = focus ? null : usedSources;
+  const selectionOptions = selectionConstraintsForTheme(theme, difficulty, focus);
 
   if (kind === "speaker" || kind === "hebrew") {
     return buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind, focus);
@@ -9703,7 +9731,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
       allowReuse: Boolean(focus),
       filter: themeFilter,
       scopeKey,
-      requireScoped: true
+      requireScoped: true,
+      ...selectionOptions
     });
     if (!pick.item) return null;
     const q = pick.item;
@@ -9754,7 +9783,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
       allowReuse: Boolean(focus),
       filter: themeFilter,
       scopeKey,
-      requireScoped: true
+      requireScoped: true,
+      ...selectionOptions
     });
     if (!pick.item) return null;
     const s = pick.item;
@@ -9779,7 +9809,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
       allowReuse: Boolean(focus),
       filter: themeFilter,
       scopeKey,
-      requireScoped: true
+      requireScoped: true,
+      ...selectionOptions
     });
     if (!pick.item) return null;
     const order = pick.item;
@@ -9830,7 +9861,8 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
       allowReuse: Boolean(focus),
       filter: themeFilter,
       scopeKey,
-      requireScoped: true
+      requireScoped: true,
+      ...selectionOptions
     });
     if (!pick.item) return null;
     const fact = pick.item;
@@ -9972,7 +10004,19 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
     })
     : source;
 
-  const pickPool = usedSources ? sourceFiltered : source;
+  const refUsageCounts = options.refUsageCounts instanceof Map ? options.refUsageCounts : null;
+  const maxRefUses = Number.isFinite(Number(options.maxRefUses)) ? Math.max(1, Number(options.maxRefUses)) : null;
+  const referenceKeyForItem = typeof options.referenceKeyForItem === "function"
+    ? options.referenceKeyForItem
+    : ((item) => primaryReferenceKeyForItem(item));
+  const refFiltered = maxRefUses && refUsageCounts
+    ? sourceFiltered.filter((item) => {
+      const refKey = referenceKeyForItem(item);
+      return !refKey || (refUsageCounts.get(refKey) || 0) < maxRefUses;
+    })
+    : sourceFiltered;
+
+  const pickPool = usedSources ? (refFiltered.length ? refFiltered : sourceFiltered) : (refFiltered.length ? refFiltered : source);
   if (!pickPool.length) return { item: null, reuseCount: 0 };
 
   const historyScope = options.scopeKey || (scopedPool.length ? era : "all");
@@ -9992,11 +10036,22 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   if (unseen.length) {
     const unseenNotRecent = unseen.filter((item) => !recentSet.has(itemSignature(item)));
     const unseenPool = unseenNotRecent.length ? unseenNotRecent : unseen;
-    choice = unseenPool[Math.floor(Math.random() * unseenPool.length)];
+    const rankedUnseen = unseenPool
+      .slice()
+      .sort((a, b) => {
+        const aRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(a)) || 0) : 0;
+        const bRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(b)) || 0) : 0;
+        if (aRefCount !== bRefCount) return aRefCount - bRefCount;
+        return Math.random() - 0.5;
+      });
+    choice = rankedUnseen[0] || null;
   } else if (options.allowReuse) {
     const reusablePool = pickPool
       .slice()
       .sort((a, b) => {
+        const aRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(a)) || 0) : 0;
+        const bRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(b)) || 0) : 0;
+        if (aRefCount !== bRefCount) return aRefCount - bRefCount;
         const aCount = counts[itemSignature(a)] || 0;
         const bCount = counts[itemSignature(b)] || 0;
         if (aCount !== bCount) return aCount - bCount;
@@ -10055,8 +10110,24 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
     })
     : items);
 
+  const refUsageCounts = options.refUsageCounts instanceof Map ? options.refUsageCounts : null;
+  const maxRefUses = Number.isFinite(Number(options.maxRefUses)) ? Math.max(1, Number(options.maxRefUses)) : null;
+  const referenceKeyForItem = typeof options.referenceKeyForItem === "function"
+    ? options.referenceKeyForItem
+    : ((item) => primaryReferenceKeyForItem(item));
+
+  const filterByReferenceCap = (items) => (!maxRefUses || !refUsageCounts
+    ? items
+    : items.filter((item) => {
+      const refKey = referenceKeyForItem(item);
+      return !refKey || (refUsageCounts.get(refKey) || 0) < maxRefUses;
+    }));
+
   const buildSelection = (items) => {
     const ranked = shuffled(items).sort((a, b) => {
+      const aRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(a)) || 0) : 0;
+      const bRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(b)) || 0) : 0;
+      if (aRefCount !== bRefCount) return aRefCount - bRefCount;
       const aCount = counts[itemSignature(a)] || 0;
       const bCount = counts[itemSignature(b)] || 0;
       if (aCount !== bCount) return aCount - bCount;
@@ -10069,10 +10140,18 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
     const sourceRanked = preferredRanked.length >= count ? preferredRanked : unseenRanked;
     const picked = [];
     const seen = new Set();
+    const localRefCounts = new Map();
 
     sourceRanked.forEach((item) => {
       const signature = itemSignature(item);
       if (seen.has(signature)) return;
+      const refKey = referenceKeyForItem(item);
+      if (maxRefUses && refUsageCounts && refKey) {
+        const currentRefCount = refUsageCounts.get(refKey) || 0;
+        const localRefCount = localRefCounts.get(refKey) || 0;
+        if (currentRefCount + localRefCount >= maxRefUses) return;
+        localRefCounts.set(refKey, localRefCount + 1);
+      }
       seen.add(signature);
       picked.push(item);
     });
@@ -10080,10 +10159,13 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
     return picked.slice(0, count);
   };
 
-  let candidates = buildSelection(filterBySource(source));
+  let candidates = buildSelection(filterByReferenceCap(filterBySource(source)));
 
   if (candidates.length < count && options.allowReuse) {
-    const reusable = shuffled(filterBySource(source)).sort((a, b) => {
+    const reusable = shuffled(filterByReferenceCap(filterBySource(source))).sort((a, b) => {
+      const aRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(a)) || 0) : 0;
+      const bRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(b)) || 0) : 0;
+      if (aRefCount !== bRefCount) return aRefCount - bRefCount;
       const aCount = counts[itemSignature(a)] || 0;
       const bCount = counts[itemSignature(b)] || 0;
       if (aCount !== bCount) return aCount - bCount;
@@ -10465,6 +10547,14 @@ const THEME_DERIVED_POOL_RULES = {
   }
 };
 
+const THEME_DIFFICULTY_REFERENCE_CAPS = {
+  "Call of Abram": {
+    easy: { perRef: 3 },
+    medium: { perRef: 3 },
+    advanced: { perRef: 2 }
+  }
+};
+
 function primaryReferenceKeyForItem(item) {
   const refs = referenceEntriesFromSourceRef(item && item.sourceRef || "");
   if (refs.length) return refs[0].ref;
@@ -10488,6 +10578,50 @@ function trimDerivedItemsForTheme(theme, bucket, items = []) {
   });
 
   return Number.isFinite(rule.maxItems) ? trimmed.slice(0, Math.max(1, Number(rule.maxItems))) : trimmed;
+}
+
+function themeDifficultyReferenceRule(theme, difficultyId = state.difficulty) {
+  const caps = theme && THEME_DIFFICULTY_REFERENCE_CAPS[theme.name];
+  if (!caps) return null;
+  return caps[normalizeDifficulty(difficultyId)] || null;
+}
+
+function referenceKeysForItem(item) {
+  const refs = referenceEntriesFromSourceRef(item && item.sourceRef || "").map((entry) => entry.ref).filter(Boolean);
+  if (refs.length) return uniqueList(refs);
+  const fallback = primaryReferenceKeyForItem(item);
+  return fallback ? [fallback] : [];
+}
+
+function themeReferenceUsageCountsForDifficulty(difficultyId = state.difficulty, theme = null) {
+  const counts = new Map();
+  const cachePrefix = `${difficultyId}:`;
+  const plan = theme ? themeReferencePlan(theme) : [];
+
+  Object.entries(state.stageActivities || {}).forEach(([cacheKey, activity]) => {
+    if (!String(cacheKey || "").startsWith(cachePrefix)) return;
+    if (!activity || !QUESTION_ACTIVITY_TYPES.has(activity.type)) return;
+    if (theme && !itemMatchesTheme(activity, theme)) return;
+
+    referenceKeysForItem(activity).forEach((ref) => {
+      if (plan.length && !sourceRefMatchesPlan(ref, plan)) return;
+      counts.set(ref, (counts.get(ref) || 0) + 1);
+    });
+  });
+
+  return counts;
+}
+
+function selectionConstraintsForTheme(theme, difficulty, focus = null) {
+  if (focus) return {};
+  const difficultyId = difficulty && difficulty.id ? difficulty.id : difficulty;
+  const rule = themeDifficultyReferenceRule(theme, difficultyId);
+  if (!rule) return {};
+  return {
+    maxRefUses: Math.max(1, Number(rule.perRef || 1)),
+    refUsageCounts: themeReferenceUsageCountsForDifficulty(difficultyId, theme),
+    referenceKeyForItem: (item) => referenceKeysForItem(item)[0] || ""
+  };
 }
 
 function derivedQuizPoolForTheme(theme, difficulty = currentDifficulty()) {
