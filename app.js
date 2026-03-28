@@ -3311,6 +3311,8 @@ let storyRecapUtterance = null;
 let storyRecapTimer = 0;
 let lastStoryRecapFingerprint = "";
 let lastStoryRecapAt = 0;
+let pendingStoryRecapReason = "";
+let storyRecapRetryArmed = false;
 let activeStoryTheaterEra = null;
 let storyStillSequenceTimer = 0;
 let storyStillSequenceToken = 0;
@@ -13559,6 +13561,41 @@ function stopStoryRecap() {
   }
 }
 
+function disarmStoryRecapRetry() {
+  if (!storyRecapRetryArmed) return;
+  AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
+    document.removeEventListener(eventName, handleStoryRecapRetry, true);
+  });
+  storyRecapRetryArmed = false;
+}
+
+function queueStoryRecapRetry(reason = "return") {
+  if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return false;
+  pendingStoryRecapReason = String(reason || pendingStoryRecapReason || "return");
+  if (storyRecapRetryArmed) return true;
+  AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
+    document.addEventListener(eventName, handleStoryRecapRetry, true);
+  });
+  storyRecapRetryArmed = true;
+  return true;
+}
+
+function handleStoryRecapRetry() {
+  if (!pendingStoryRecapReason) {
+    disarmStoryRecapRetry();
+    return;
+  }
+  primeAudioAuto();
+  window.setTimeout(() => {
+    if (!pendingStoryRecapReason) return;
+    const reason = pendingStoryRecapReason;
+    if (speakStoryReturnRecap({ reason, force: true })) {
+      pendingStoryRecapReason = "";
+      disarmStoryRecapRetry();
+    }
+  }, 90);
+}
+
 function completedLevelCount() {
   const completedSet = new Set(state.completed || []);
   let total = 0;
@@ -13686,12 +13723,14 @@ function canSpeakStoryRecap() {
   if (badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden")) return false;
   if (eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden")) return false;
   if (isStoryTheaterOpen() || isFinalOpen() || isCreditsOpen()) return false;
-  if (state.audio && state.audio.sfx === false) return false;
   return true;
 }
 
 function speakStoryReturnRecap(options = {}) {
-  if (!canSpeakStoryRecap()) return false;
+  if (!canSpeakStoryRecap()) {
+    queueStoryRecapRetry(options.reason || "return");
+    return false;
+  }
 
   const payload = storyRecapPayload();
   if (!payload || !payload.text) return false;
@@ -13723,6 +13762,7 @@ function speakStoryReturnRecap(options = {}) {
 
   const speak = () => {
     if (!canSpeakStoryRecap()) {
+      queueStoryRecapRetry(options.reason || "return");
       finish();
       return;
     }
@@ -13731,7 +13771,10 @@ function speakStoryReturnRecap(options = {}) {
       window.speechSynthesis.speak(utterance);
       lastStoryRecapFingerprint = payload.fingerprint;
       lastStoryRecapAt = Date.now();
+      pendingStoryRecapReason = "";
+      disarmStoryRecapRetry();
     } catch (_) {
+      queueStoryRecapRetry(options.reason || "return");
       finish();
     }
   };

@@ -502,6 +502,7 @@
       { ref: "1 Samuel 17:47 (WEB)", text: "A batalha pertence ao Senhor, e ele entregara voces em nossas maos." }
     ]
   };
+  const MEMORY_LANGS = Object.keys(MEMORY_VERSES);
 
   const SPANISH_MEDIA_TARGETS = {
     video: [
@@ -550,7 +551,18 @@
       milestoneAwards: []
     },
     memory: {
-      verseIndexByLang: { en: 0, es: 0, de: 0, zh: 0, vi: 0, pt: 0 },
+      verseIndexByLang: MEMORY_LANGS.reduce((acc, code) => {
+        acc[code] = 0;
+        return acc;
+      }, {}),
+      dailyVerseIndexByLang: MEMORY_LANGS.reduce((acc, code) => {
+        acc[code] = 0;
+        return acc;
+      }, {}),
+      dailyVerseDayByLang: MEMORY_LANGS.reduce((acc, code) => {
+        acc[code] = "";
+        return acc;
+      }, {}),
       revealed: false,
       lastScore: 0,
       masteredByRef: {},
@@ -787,9 +799,37 @@
       .filter(Boolean);
   }
 
+  function memoryDayOrdinal(dayKey = localDayKey()) {
+    const start = dayStartFromKey(dayKey);
+    return start ? Math.floor(start / 86400000) : 0;
+  }
+
+  function syncDailyMemoryVerse(lang, pool) {
+    if (!lang || !Array.isArray(pool) || !pool.length) return false;
+
+    const today = localDayKey();
+    const lastDay = String((state.memory.dailyVerseDayByLang && state.memory.dailyVerseDayByLang[lang]) || "");
+    if (lastDay === today) return false;
+
+    const previousDailyIndex = Number((state.memory.dailyVerseIndexByLang && state.memory.dailyVerseIndexByLang[lang]) || -1);
+    let nextIndex = pool.length > 1 ? Math.abs(memoryDayOrdinal(today)) % pool.length : 0;
+    if (pool.length > 1 && nextIndex === previousDailyIndex) {
+      nextIndex = (nextIndex + 1) % pool.length;
+    }
+
+    state.memory.dailyVerseDayByLang[lang] = today;
+    state.memory.dailyVerseIndexByLang[lang] = nextIndex;
+    state.memory.verseIndexByLang[lang] = nextIndex;
+    state.memory.revealed = false;
+    state.memory.lastScore = 0;
+    saveState();
+    return true;
+  }
+
   function verseForCurrentLanguage() {
     const lang = language();
     const pool = MEMORY_VERSES[lang] || MEMORY_VERSES.en;
+    syncDailyMemoryVerse(lang, pool);
     const index = Number(state.memory.verseIndexByLang[lang] || 0);
     return {
       lang,
