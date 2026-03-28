@@ -8609,6 +8609,7 @@ function dismissWelcome() {
   primeAudioAuto();
   welcomeOverlay.classList.add("hidden");
   updateOverlayLock();
+  if (speakStoryReturnRecap({ reason: "welcome-dismiss", force: true })) return;
   scheduleStoryReturnRecap("welcome-dismiss", 260);
 }
 
