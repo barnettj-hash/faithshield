@@ -6589,6 +6589,9 @@ async function exportEraCompletionCard(era) {
   const canvas = createEraCompletionShareCardCanvas(era);
   if (!canvas) return false;
   const fileName = `faithshield-${normalizeFileSlug(era, "era")}-completion-card.png`;
+  if (downloadCanvasPng(canvas, fileName)) {
+    return true;
+  }
   const blob = await canvasToPngBlob(canvas);
   if (blob) {
     const file = typeof File !== "undefined"
