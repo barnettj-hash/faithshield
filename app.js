@@ -13521,6 +13521,15 @@ function storyBossDefeatCount() {
   return stages.filter((meta) => isEraBossStage(meta) && completedSet.has(meta.id)).length;
 }
 
+function recentStoryBadgeNames(limit = 3) {
+  return (state.badges || [])
+    .slice(-Math.max(1, limit))
+    .map((badgeId) => getBadgeById(badgeId))
+    .filter(Boolean)
+    .map((badge) => String(badge.name || "").trim())
+    .filter(Boolean);
+}
+
 function storyRecapPayload() {
   const playerName = displayPlayerName();
   const stagesCleared = Math.max(0, Number((state.completed || []).length));
@@ -13528,6 +13537,7 @@ function storyRecapPayload() {
   const badgesEarned = Math.max(0, Number((state.badges || []).length));
   const bossesDefeated = storyBossDefeatCount();
   const masteredCount = masteredVerseEntries(40).length;
+  const recentBadges = recentStoryBadgeNames(3);
   const nextMeta = nextStoryStageMeta();
   const lastMeta = getStageMeta(state.lastStage || "") || lastCompletedStageMeta();
   const focusMeta = nextMeta || lastMeta || stages[0] || null;
@@ -13546,20 +13556,34 @@ function storyRecapPayload() {
   const masteryBitEs = masteredCount > 0
     ? ` Tambien dominaste ${masteredCount} ${masteredCount === 1 ? "versiculo" : "versiculos"}.`
     : "";
+  const badgeNamesBitEn = recentBadges.length
+    ? ` Your newest ${recentBadges.length === 1 ? "badge is" : "badges are"} ${recentBadges.join(", ")}.`
+    : "";
+  const badgeNamesBitEs = recentBadges.length
+    ? ` Tus ${recentBadges.length === 1 ? "ultima insignia es" : "ultimas insignias son"} ${recentBadges.join(", ")}.`
+    : "";
+  const encouragementEn = challengeCopy(
+    " Keep going. Your shield is growing stronger.",
+    ""
+  );
+  const encouragementEs = challengeCopy(
+    "",
+    " Sigue adelante. Tu escudo se esta fortaleciendo."
+  );
 
   const text = stagesCleared <= 0
     ? challengeCopy(
-      `Welcome back, ${playerName}. Your story begins in ${focusMeta.theme.name}, ${focusMeta.theme.period}. Level 1, stage 1 is ready. Start the journey and build your shield of faith.`,
-      `Bienvenido de nuevo, ${playerName}. Tu historia comienza en ${focusMeta.theme.name}, ${focusMeta.theme.period}. El nivel 1, etapa 1 ya esta listo. Comienza el viaje y fortalece tu escudo de fe.`
+      `Welcome back, ${playerName}. Your story begins in ${focusMeta.theme.name}, ${focusMeta.theme.period}. Level 1, stage 1 is ready. Start the journey and build your shield of faith.${encouragementEn}`,
+      `Bienvenido de nuevo, ${playerName}. Tu historia comienza en ${focusMeta.theme.name}, ${focusMeta.theme.period}. El nivel 1, etapa 1 ya esta listo. Comienza el viaje y fortalece tu escudo de fe.${encouragementEs}`
     )
     : nextMeta
       ? challengeCopy(
-        `Welcome back, ${playerName}. You have cleared ${stagesCleared} story stages, finished ${levelsCleared} full levels, and earned ${badgesEarned} badges${bossBitEn}. You are now in ${focusMeta.theme.name}, ${focusMeta.theme.period}. Next, continue with level ${nextMeta.level}, stage ${nextMeta.stage}.${masteryBitEn}`,
-        `Bienvenido de nuevo, ${playerName}. Ya completaste ${stagesCleared} etapas de la historia, terminaste ${levelsCleared} niveles completos y ganaste ${badgesEarned} insignias${bossBitEs}. Ahora estas en ${focusMeta.theme.name}, ${focusMeta.theme.period}. Sigue con el nivel ${nextMeta.level}, etapa ${nextMeta.stage}.${masteryBitEs}`
+        `Welcome back, ${playerName}. You have cleared ${stagesCleared} story stages, finished ${levelsCleared} full levels, and earned ${badgesEarned} badges${bossBitEn}.${badgeNamesBitEn} You are now in ${focusMeta.theme.name}, ${focusMeta.theme.period}. Next, continue with level ${nextMeta.level}, stage ${nextMeta.stage}.${masteryBitEn}${encouragementEn}`,
+        `Bienvenido de nuevo, ${playerName}. Ya completaste ${stagesCleared} etapas de la historia, terminaste ${levelsCleared} niveles completos y ganaste ${badgesEarned} insignias${bossBitEs}.${badgeNamesBitEs} Ahora estas en ${focusMeta.theme.name}, ${focusMeta.theme.period}. Sigue con el nivel ${nextMeta.level}, etapa ${nextMeta.stage}.${masteryBitEs}${encouragementEs}`
       )
       : challengeCopy(
-        `Welcome back, ${playerName}. You completed all ${TOTAL_STAGES} story stages, earned ${badgesEarned} badges${bossBitEn}, and finished the Genesis to David journey.${masteryBitEn}`,
-        `Bienvenido de nuevo, ${playerName}. Completaste las ${TOTAL_STAGES} etapas de la historia, ganaste ${badgesEarned} insignias${bossBitEs} y terminaste el recorrido de Genesis a David.${masteryBitEs}`
+        `Welcome back, ${playerName}. You completed all ${TOTAL_STAGES} story stages, earned ${badgesEarned} badges${bossBitEn}.${badgeNamesBitEn} You finished the Genesis to David journey.${masteryBitEn}${encouragementEn}`,
+        `Bienvenido de nuevo, ${playerName}. Completaste las ${TOTAL_STAGES} etapas de la historia, ganaste ${badgesEarned} insignias${bossBitEs}.${badgeNamesBitEs} Terminaste el recorrido de Genesis a David.${masteryBitEs}${encouragementEs}`
       );
 
   const fingerprint = [
@@ -13570,6 +13594,7 @@ function storyRecapPayload() {
     badgesEarned,
     bossesDefeated,
     masteredCount,
+    recentBadges.join(","),
     focusMeta.id,
     nextMeta ? nextMeta.id : "complete",
     state.difficulty
