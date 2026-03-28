@@ -4003,6 +4003,13 @@ let hallBossGrid = null;
 let hallBadgeStrip = null;
 let hallVerseGrid = null;
 let hallEraGrid = null;
+let eraCardPreviewOverlay = null;
+let eraCardPreviewTitle = null;
+let eraCardPreviewText = null;
+let eraCardPreviewImage = null;
+let eraCardPreviewSaveBtn = null;
+let eraCardPreviewCopyBtn = null;
+let closeEraCardPreviewBtn = null;
 let dailyCalendarSection = null;
 let dailyCalendarSummary = null;
 let dailyCalendarEvent = null;
@@ -6439,9 +6446,94 @@ function ensurePremiumHubStyles() {
     ".chapter-intro-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;padding:12px 14px;border-radius:16px;background:rgba(229,184,93,.1);border:1px solid rgba(229,184,93,.24);}",
     ".era-card-title{font-size:1rem;font-weight:800;margin-bottom:6px;}",
     ".era-card-status{margin-bottom:10px;}",
+    ".era-preview-card{max-width:min(94vw,1020px)!important;}",
+    ".era-preview-card img{display:block;width:100%;height:auto;border-radius:18px;border:1px solid rgba(229,184,93,.26);box-shadow:0 18px 40px rgba(0,0,0,.22);margin:16px 0 18px;}",
+    ".era-preview-card .share-actions{justify-content:center;}",
     "@media (max-width:760px){.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.calendar-weekday{display:none;}}"
   ].join("");
   document.head.appendChild(style);
+}
+
+function ensureEraCardPreviewOverlay() {
+  if (eraCardPreviewOverlay && eraCardPreviewOverlay.isConnected) return;
+  if (!appRoot) return;
+
+  eraCardPreviewOverlay = document.createElement("div");
+  eraCardPreviewOverlay.id = "eraCardPreviewOverlay";
+  eraCardPreviewOverlay.className = "welcome-overlay hidden";
+  eraCardPreviewOverlay.setAttribute("aria-live", "polite");
+  eraCardPreviewOverlay.setAttribute("role", "dialog");
+  eraCardPreviewOverlay.setAttribute("aria-modal", "true");
+  eraCardPreviewOverlay.innerHTML = [
+    '<div class="welcome-card share-card era-preview-card">',
+    `  <p class="eyebrow">${challengeCopy("Era Completion Card", "Tarjeta de finalizacion de era")}</p>`,
+    '  <h2 id="eraCardPreviewTitle">FAITHSHIELD Era Card</h2>',
+    `  <p id="eraCardPreviewText" class="meta">${challengeCopy("Preview your completion card, then save it from here.", "Previsualiza tu tarjeta de finalizacion y luego guardala desde aqui.")}</p>`,
+    `  <img id="eraCardPreviewImage" alt="${challengeCopy("Era completion card preview", "Vista previa de la tarjeta de finalizacion de era")}">`,
+    '  <div class="share-actions">',
+    `    <a id="eraCardPreviewSaveBtn" class="cta-btn" href="#" download="faithshield-era-card.png">${challengeCopy("Save Era Card", "Guardar tarjeta")}</a>`,
+    `    <button id="eraCardPreviewCopyBtn" class="ghost-btn" type="button">${challengeCopy("Copy Share Text", "Copiar texto")}</button>`,
+    '  </div>',
+    `  <button id="closeEraCardPreviewBtn" class="ghost-btn" type="button">${challengeCopy("Close", "Cerrar")}</button>`,
+    '</div>'
+  ].join("");
+
+  appRoot.appendChild(eraCardPreviewOverlay);
+  eraCardPreviewTitle = eraCardPreviewOverlay.querySelector("#eraCardPreviewTitle");
+  eraCardPreviewText = eraCardPreviewOverlay.querySelector("#eraCardPreviewText");
+  eraCardPreviewImage = eraCardPreviewOverlay.querySelector("#eraCardPreviewImage");
+  eraCardPreviewSaveBtn = eraCardPreviewOverlay.querySelector("#eraCardPreviewSaveBtn");
+  eraCardPreviewCopyBtn = eraCardPreviewOverlay.querySelector("#eraCardPreviewCopyBtn");
+  closeEraCardPreviewBtn = eraCardPreviewOverlay.querySelector("#closeEraCardPreviewBtn");
+
+  if (closeEraCardPreviewBtn) {
+    closeEraCardPreviewBtn.onclick = () => closeEraCardPreview();
+  }
+  eraCardPreviewOverlay.addEventListener("click", (event) => {
+    if (event.target === eraCardPreviewOverlay) closeEraCardPreview();
+  });
+}
+
+function closeEraCardPreview() {
+  if (!eraCardPreviewOverlay) return;
+  eraCardPreviewOverlay.classList.add("hidden");
+  updateOverlayLock();
+}
+
+function openEraCardPreview(era) {
+  ensureEraCardPreviewOverlay();
+  if (!eraCardPreviewOverlay || !eraCardPreviewImage || !eraCardPreviewSaveBtn) return false;
+  const canvas = createEraCompletionShareCardCanvas(era);
+  if (!canvas) return false;
+  let dataUrl = "";
+  try {
+    dataUrl = canvas.toDataURL("image/png");
+  } catch (_) {
+    return false;
+  }
+  if (!dataUrl) return false;
+  const label = formatEraLabel(era);
+  const fileName = `faithshield-${normalizeFileSlug(era, "era")}-completion-card.png`;
+  if (eraCardPreviewTitle) {
+    eraCardPreviewTitle.textContent = `${label} ${challengeCopy("Completion Card", "tarjeta de finalizacion")}`;
+  }
+  if (eraCardPreviewText) {
+    eraCardPreviewText.textContent = challengeCopy(
+      "Your era card is ready. Save it here or copy the share text below.",
+      "Tu tarjeta de era esta lista. Guardala aqui o copia el texto para compartir abajo."
+    );
+  }
+  eraCardPreviewImage.src = dataUrl;
+  eraCardPreviewImage.alt = `${label} ${challengeCopy("completion card", "tarjeta de finalizacion")}`;
+  eraCardPreviewSaveBtn.href = dataUrl;
+  eraCardPreviewSaveBtn.download = fileName;
+  if (eraCardPreviewCopyBtn) {
+    eraCardPreviewCopyBtn.onclick = () => copyTextToClipboardOrPrompt(eraCompletionShareText(era));
+  }
+  eraCardPreviewOverlay.classList.remove("hidden");
+  if (eraCardPreviewOverlay.scrollTo) eraCardPreviewOverlay.scrollTo({ top: 0, behavior: "auto" });
+  updateOverlayLock();
+  return true;
 }
 
 function profileDisplayInitials(profile) {
@@ -6679,6 +6771,7 @@ function renderProfilesSection() {
 
 function renderHallOfFaith() {
   ensureExperienceSections();
+  ensureEraCardPreviewOverlay();
   if (!hallOfFaithSection) return;
   const bosses = hallBossEntries();
   const defeatedCount = bosses.filter((entry) => entry.defeated).length;
@@ -6751,20 +6844,20 @@ function renderHallOfFaith() {
       cardBtn.type = "button";
       cardBtn.className = complete ? "cta-btn" : "ghost-btn";
       cardBtn.disabled = !complete;
-      cardBtn.textContent = challengeCopy("Download Era Card", "Descargar tarjeta");
+      cardBtn.textContent = challengeCopy("Open Era Card", "Abrir tarjeta");
       cardBtn.onclick = async () => {
-        const done = await exportEraCompletionCard(era);
+        const done = openEraCardPreview(era);
         if (done) {
           showFeatureMoment(
-            challengeCopy("Era card ready", "Tarjeta de era lista"),
-            challengeCopy("Your completion card has been downloaded or shared.", "Tu tarjeta de finalizacion se descargo o compartio."),
+            challengeCopy("Era card opened", "Tarjeta de era abierta"),
+            challengeCopy("Preview the card and save it from the overlay.", "Previsualiza la tarjeta y guardala desde la ventana."),
             { icon: "🛡️", durationMs: 1800 }
           );
           return;
         }
         showFeatureMoment(
           challengeCopy("Era card unavailable", "Tarjeta de era no disponible"),
-          challengeCopy("The browser blocked this download. Try again, or check your browser download permissions.", "El navegador bloqueo esta descarga. Intentalo otra vez o revisa los permisos de descarga del navegador."),
+          challengeCopy("The preview could not be opened. Try again, or check whether your browser is blocking canvas images.", "No se pudo abrir la vista previa. Intentalo otra vez o revisa si tu navegador esta bloqueando imagenes de canvas."),
           { icon: "⚠️", sfx: null, durationMs: 2600 }
         );
       };
@@ -8708,11 +8801,12 @@ function updateOverlayLock() {
   const welcomeOpen = welcomeOverlay && !welcomeOverlay.classList.contains("hidden");
   const shareOpen = shareOverlay && !shareOverlay.classList.contains("hidden");
   const shieldOpen = badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden");
+  const eraCardOpen = eraCardPreviewOverlay && !eraCardPreviewOverlay.classList.contains("hidden");
   const eraFinaleOpen = eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden");
   const finalOpen = finalOverlay && !finalOverlay.classList.contains("hidden");
   const creditsOpen = creditsOverlay && !creditsOverlay.classList.contains("hidden");
   const theaterOpen = storyTheaterOverlay && !storyTheaterOverlay.classList.contains("hidden");
-  document.body.classList.toggle("has-overlay", Boolean(activityOpen || welcomeOpen || shareOpen || shieldOpen || eraFinaleOpen || finalOpen || creditsOpen || theaterOpen));
+  document.body.classList.toggle("has-overlay", Boolean(activityOpen || welcomeOpen || shareOpen || shieldOpen || eraCardOpen || eraFinaleOpen || finalOpen || creditsOpen || theaterOpen));
 
 }
 
@@ -13843,6 +13937,7 @@ function canSpeakStoryRecap() {
   if (activityOverlay && !activityOverlay.classList.contains("hidden")) return false;
   if (shareOverlay && !shareOverlay.classList.contains("hidden")) return false;
   if (badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden")) return false;
+  if (eraCardPreviewOverlay && !eraCardPreviewOverlay.classList.contains("hidden")) return false;
   if (eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden")) return false;
   if (isStoryTheaterOpen() || isFinalOpen() || isCreditsOpen()) return false;
   return true;
