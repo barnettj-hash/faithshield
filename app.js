@@ -5848,6 +5848,24 @@ function downloadBlob(blob, fileName) {
   window.setTimeout(() => URL.revokeObjectURL(url), 600);
 }
 
+function downloadCanvasPng(canvas, fileName) {
+  if (!canvas || typeof canvas.toDataURL !== "function") return false;
+  try {
+    const dataUrl = canvas.toDataURL("image/png");
+    if (!dataUrl) return false;
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = fileName;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 async function exportBadgeCard(badge) {
   if (!badge) return false;
   const canvas = createBadgeShareCardCanvas(badge);
@@ -6570,10 +6588,37 @@ function createEraCompletionShareCardCanvas(era) {
 async function exportEraCompletionCard(era) {
   const canvas = createEraCompletionShareCardCanvas(era);
   if (!canvas) return false;
+  const fileName = `faithshield-${normalizeFileSlug(era, "era")}-completion-card.png`;
   const blob = await canvasToPngBlob(canvas);
-  if (!blob) return false;
-  downloadBlob(blob, `faithshield-${normalizeFileSlug(era, "era")}-completion-card.png`);
-  return true;
+  if (blob) {
+    const file = typeof File !== "undefined"
+      ? new File([blob], fileName, { type: "image/png" })
+      : null;
+
+    if (file && navigator.share && typeof navigator.canShare === "function") {
+      try {
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: `${formatEraLabel(era)} • FAITHSHIELD`,
+            text: eraCompletionShareText(era),
+            files: [file]
+          });
+          return true;
+        }
+      } catch (_) {
+        // Fall through to direct download.
+      }
+    }
+
+    try {
+      downloadBlob(blob, fileName);
+      return true;
+    } catch (_) {
+      // Fall through to data URL download below.
+    }
+  }
+
+  return downloadCanvasPng(canvas, fileName);
 }
 
 function renderProfilesSection() {
@@ -6663,7 +6708,22 @@ function renderHallOfFaith() {
       cardBtn.className = complete ? "cta-btn" : "ghost-btn";
       cardBtn.disabled = !complete;
       cardBtn.textContent = challengeCopy("Download Era Card", "Descargar tarjeta");
-      cardBtn.onclick = () => { void exportEraCompletionCard(era); };
+      cardBtn.onclick = async () => {
+        const done = await exportEraCompletionCard(era);
+        if (done) {
+          showFeatureMoment(
+            challengeCopy("Era card ready", "Tarjeta de era lista"),
+            challengeCopy("Your completion card has been downloaded or shared.", "Tu tarjeta de finalizacion se descargo o compartio."),
+            { icon: "🛡️", durationMs: 1800 }
+          );
+          return;
+        }
+        showFeatureMoment(
+          challengeCopy("Era card unavailable", "Tarjeta de era no disponible"),
+          challengeCopy("The browser blocked this download. Try again, or check your browser download permissions.", "El navegador bloqueo esta descarga. Intentalo otra vez o revisa los permisos de descarga del navegador."),
+          { icon: "⚠️", sfx: null, durationMs: 2600 }
+        );
+      };
       actions.appendChild(cardBtn);
       hallEraGrid.appendChild(card);
     });
