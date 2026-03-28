@@ -13713,6 +13713,15 @@ function storyRecapPayload() {
   return { text, fingerprint };
 }
 
+function storyRecapNeedsUserActivation() {
+  try {
+    if (!navigator || !navigator.userActivation) return false;
+    return !navigator.userActivation.hasBeenActive;
+  } catch (_) {
+    return false;
+  }
+}
+
 function canSpeakStoryRecap() {
   if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return false;
   if (document.visibilityState && document.visibilityState !== "visible") return false;
@@ -13728,6 +13737,11 @@ function canSpeakStoryRecap() {
 }
 
 function speakStoryReturnRecap(options = {}) {
+  if (storyRecapNeedsUserActivation()) {
+    queueStoryRecapRetry(options.reason || "return");
+    return false;
+  }
+
   if (!canSpeakStoryRecap()) {
     queueStoryRecapRetry(options.reason || "return");
     return false;
