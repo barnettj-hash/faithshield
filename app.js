@@ -705,7 +705,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 38;
+const ACTIVITY_SCHEMA_VERSION = 39;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -10564,6 +10564,13 @@ const THEME_DERIVED_POOL_RULES = {
     orderBase: { perRef: 1, maxItems: 8 },
     order: { perRef: 1, maxItems: 12 },
     fact: { perRef: 1, maxItems: 14 }
+  },
+  "Joseph in Egypt": {
+    quiz: { perRef: 1, maxItems: 10 },
+    spelling: { perRef: 1, maxItems: 10 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
   }
 };
 
@@ -10579,6 +10586,11 @@ const THEME_DIFFICULTY_REFERENCE_CAPS = {
     advanced: { perRef: 2 }
   },
   "Jacob to Israel": {
+    easy: { perRef: 3 },
+    medium: { perRef: 3 },
+    advanced: { perRef: 2 }
+  },
+  "Joseph in Egypt": {
     easy: { perRef: 3 },
     medium: { perRef: 3 },
     advanced: { perRef: 2 }
