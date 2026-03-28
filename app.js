@@ -10544,11 +10544,35 @@ const THEME_DERIVED_POOL_RULES = {
     orderBase: { perRef: 1, maxItems: 8 },
     order: { perRef: 1, maxItems: 12 },
     fact: { perRef: 1, maxItems: 14 }
+  },
+  "Promise Family": {
+    quiz: { perRef: 1, maxItems: 10 },
+    spelling: { perRef: 1, maxItems: 10 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "Jacob to Israel": {
+    quiz: { perRef: 1, maxItems: 10 },
+    spelling: { perRef: 1, maxItems: 10 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
   }
 };
 
 const THEME_DIFFICULTY_REFERENCE_CAPS = {
   "Call of Abram": {
+    easy: { perRef: 3 },
+    medium: { perRef: 3 },
+    advanced: { perRef: 2 }
+  },
+  "Promise Family": {
+    easy: { perRef: 3 },
+    medium: { perRef: 3 },
+    advanced: { perRef: 2 }
+  },
+  "Jacob to Israel": {
     easy: { perRef: 3 },
     medium: { perRef: 3 },
     advanced: { perRef: 2 }
