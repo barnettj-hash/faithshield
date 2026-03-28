@@ -3037,6 +3037,7 @@ const CALL_OF_ABRAM_QUIZ_MEDIUM_EXPANSION = [
   { era: "patriarchs", prompt: "Why did Abram say there should be no strife between him and Lot?", options: ["Because they were relatives", "Because Pharaoh was watching", "Because they had no livestock", "Because the famine had ended"], answer: "Because they were relatives", sourceRef: "Genesis 13:8" },
   { era: "patriarchs", prompt: "As far as what place did Abram pursue the kings who had taken Lot?", options: ["Dan", "Ai", "Gerar", "Beersheba"], answer: "Dan", sourceRef: "Genesis 14:14" },
   { era: "patriarchs", prompt: "What title did Melchizedek hold besides king of Salem?", options: ["Priest of God Most High", "Prophet of Yahweh of Armies", "Judge in Canaan", "Priest of Egypt"], answer: "Priest of God Most High", sourceRef: "Genesis 14:18" },
+  { era: "patriarchs", prompt: "Which Hebrew title did Abram use for God in Genesis 15:2?", options: ["Adonai Yahweh", "El Shaddai", "El Elyon", "Yahweh Yireh"], answer: "Adonai Yahweh", sourceRef: "Genesis 15:2" },
   { era: "patriarchs", prompt: "What did Abram refuse to take from the king of Sodom?", options: ["Anything that was his", "The people", "Bread and wine", "The altar stones"], answer: "Anything that was his", sourceRef: "Genesis 14:22-23" },
   { era: "patriarchs", prompt: "What fell on Abram when the sun was going down in Genesis 15?", options: ["A deep sleep", "A rainbow", "Manna", "A strong wind"], answer: "A deep sleep", sourceRef: "Genesis 15:12" },
   { era: "patriarchs", prompt: "How many years would Abram's offspring be afflicted in a land that was not theirs?", options: ["400 years", "40 years", "70 years", "430 years"], answer: "400 years", sourceRef: "Genesis 15:13" },
@@ -9527,6 +9528,7 @@ function buildMatchingActivity(meta, theme, difficulty, usedSources, focus = nul
 const HEBREW_NAME_MARKERS = [
   "yahweh",
   "lord yahweh",
+  "adonai yahweh",
   "yahweh yireh",
   "yahweh nissi",
   "yahweh shalom",
@@ -9601,6 +9603,31 @@ function buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind, fo
     seen.add(key);
     dedupedPool.push(item);
   });
+
+  const forcedAbramHebrewQuestion = !focus
+    && kind === "hebrew"
+    && difficulty.id === "medium"
+    && theme && theme.name === "Call of Abram"
+    && meta && meta.stage === 3
+    && meta.level === 20
+      ? dedupedPool.find((item) =>
+          itemMatchesTheme(item, theme)
+          && String(item.sourceRef || "").includes("Genesis 15:2")
+          && normalizeQuizAnswerKey(item.answer) === "adonai yahweh"
+        )
+      : null;
+
+  if (forcedAbramHebrewQuestion) {
+    const q = forcedAbramHebrewQuestion;
+    return {
+      type: kind,
+      prompt: stagePrompt(meta, `${challengeCopy("Names of God mode", "Modo Nombres de Dios")}: ${q.prompt}`, 0),
+      options: buildQuizOptions(q, theme.era, difficulty.quizOptions, dedupedPool.filter(themeFilter)),
+      answer: q.answer,
+      sourceRef: q.sourceRef,
+      historySourceRef: q.historySourceRef || historyKeyForItem(q, kind)
+    };
+  }
 
   const pick = pickWithoutRepeat(dedupedPool, theme.era, kind, {
     usedSources: scopedUsedSources,
