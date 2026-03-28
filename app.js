@@ -3307,6 +3307,10 @@ let storyTheaterAutoCloseTimer = 0;
 let storyTheaterAutoCloseToken = 0;
 let storyNarrationUtterance = null;
 let storyNarrationAudio = null;
+let storyRecapUtterance = null;
+let storyRecapTimer = 0;
+let lastStoryRecapFingerprint = "";
+let lastStoryRecapAt = 0;
 let activeStoryTheaterEra = null;
 let storyStillSequenceTimer = 0;
 let storyStillSequenceToken = 0;
@@ -8002,6 +8006,7 @@ function speakBadgePraise(badge) {
   if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return;
   const badgeName = String((badge && badge.name) || "this badge").trim();
   const line = `Good Job, for earning ${badgeName}.`;
+  stopStoryRecap();
   const utterance = new SpeechSynthesisUtterance(line);
   const voice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
 
@@ -8602,6 +8607,7 @@ function dismissWelcome() {
   primeAudioAuto();
   welcomeOverlay.classList.add("hidden");
   updateOverlayLock();
+  scheduleStoryReturnRecap("welcome-dismiss", 260);
 }
 
 function closeActivity() {
@@ -13463,6 +13469,207 @@ function pickNarrationVoice() {
   return voices[0] || null;
 }
 
+function clearStoryRecapTimer() {
+  if (!storyRecapTimer) return;
+  window.clearTimeout(storyRecapTimer);
+  storyRecapTimer = 0;
+}
+
+function stopStoryRecap() {
+  clearStoryRecapTimer();
+  const activeUtterance = storyRecapUtterance;
+  storyRecapUtterance = null;
+  if (!activeUtterance || !("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+  } catch (_) {
+    // Ignore speech engine teardown errors.
+  }
+}
+
+function completedLevelCount() {
+  const completedSet = new Set(state.completed || []);
+  let total = 0;
+  for (let level = 1; level <= TOTAL_LEVELS; level += 1) {
+    let done = true;
+    for (let stage = 1; stage <= STAGES_PER_LEVEL; stage += 1) {
+      if (!completedSet.has(`l${level}-s${stage}`)) {
+        done = false;
+        break;
+      }
+    }
+    if (done) total += 1;
+  }
+  return total;
+}
+
+function lastCompletedStageMeta() {
+  const completedSet = new Set(state.completed || []);
+  for (let index = stages.length - 1; index >= 0; index -= 1) {
+    if (completedSet.has(stages[index].id)) return stages[index];
+  }
+  return null;
+}
+
+function nextStoryStageMeta() {
+  const completedSet = new Set(state.completed || []);
+  return stages.find((meta) => !completedSet.has(meta.id)) || null;
+}
+
+function storyBossDefeatCount() {
+  const completedSet = new Set(state.completed || []);
+  return stages.filter((meta) => isEraBossStage(meta) && completedSet.has(meta.id)).length;
+}
+
+function storyRecapPayload() {
+  const playerName = displayPlayerName();
+  const stagesCleared = Math.max(0, Number((state.completed || []).length));
+  const levelsCleared = completedLevelCount();
+  const badgesEarned = Math.max(0, Number((state.badges || []).length));
+  const bossesDefeated = storyBossDefeatCount();
+  const masteredCount = masteredVerseEntries(40).length;
+  const nextMeta = nextStoryStageMeta();
+  const lastMeta = getStageMeta(state.lastStage || "") || lastCompletedStageMeta();
+  const focusMeta = nextMeta || lastMeta || stages[0] || null;
+
+  if (!focusMeta) return null;
+
+  const bossBitEn = bossesDefeated > 0
+    ? `, and defeated ${bossesDefeated} ${bossesDefeated === 1 ? "boss" : "bosses"}`
+    : "";
+  const bossBitEs = bossesDefeated > 0
+    ? ` y derrotaste ${bossesDefeated} ${bossesDefeated === 1 ? "jefe" : "jefes"}`
+    : "";
+  const masteryBitEn = masteredCount > 0
+    ? ` You have also mastered ${masteredCount} ${masteredCount === 1 ? "verse" : "verses"}.`
+    : "";
+  const masteryBitEs = masteredCount > 0
+    ? ` Tambien dominaste ${masteredCount} ${masteredCount === 1 ? "versiculo" : "versiculos"}.`
+    : "";
+
+  const text = stagesCleared <= 0
+    ? challengeCopy(
+      `Welcome back, ${playerName}. Your story begins in ${focusMeta.theme.name}, ${focusMeta.theme.period}. Level 1, stage 1 is ready. Start the journey and build your shield of faith.`,
+      `Bienvenido de nuevo, ${playerName}. Tu historia comienza en ${focusMeta.theme.name}, ${focusMeta.theme.period}. El nivel 1, etapa 1 ya esta listo. Comienza el viaje y fortalece tu escudo de fe.`
+    )
+    : nextMeta
+      ? challengeCopy(
+        `Welcome back, ${playerName}. You have cleared ${stagesCleared} story stages, finished ${levelsCleared} full levels, and earned ${badgesEarned} badges${bossBitEn}. You are now in ${focusMeta.theme.name}, ${focusMeta.theme.period}. Next, continue with level ${nextMeta.level}, stage ${nextMeta.stage}.${masteryBitEn}`,
+        `Bienvenido de nuevo, ${playerName}. Ya completaste ${stagesCleared} etapas de la historia, terminaste ${levelsCleared} niveles completos y ganaste ${badgesEarned} insignias${bossBitEs}. Ahora estas en ${focusMeta.theme.name}, ${focusMeta.theme.period}. Sigue con el nivel ${nextMeta.level}, etapa ${nextMeta.stage}.${masteryBitEs}`
+      )
+      : challengeCopy(
+        `Welcome back, ${playerName}. You completed all ${TOTAL_STAGES} story stages, earned ${badgesEarned} badges${bossBitEn}, and finished the Genesis to David journey.${masteryBitEn}`,
+        `Bienvenido de nuevo, ${playerName}. Completaste las ${TOTAL_STAGES} etapas de la historia, ganaste ${badgesEarned} insignias${bossBitEs} y terminaste el recorrido de Genesis a David.${masteryBitEs}`
+      );
+
+  const fingerprint = [
+    state.language,
+    state.playerName || "",
+    stagesCleared,
+    levelsCleared,
+    badgesEarned,
+    bossesDefeated,
+    masteredCount,
+    focusMeta.id,
+    nextMeta ? nextMeta.id : "complete",
+    state.difficulty
+  ].join("|");
+
+  return { text, fingerprint };
+}
+
+function canSpeakStoryRecap() {
+  if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return false;
+  if (document.visibilityState && document.visibilityState !== "visible") return false;
+  if (state.activeStage) return false;
+  if (storyRecapUtterance || storyNarrationUtterance || verseAudioUtterance || badgePraiseUtterance) return false;
+  if (welcomeOverlay && !welcomeOverlay.classList.contains("hidden")) return false;
+  if (activityOverlay && !activityOverlay.classList.contains("hidden")) return false;
+  if (shareOverlay && !shareOverlay.classList.contains("hidden")) return false;
+  if (badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden")) return false;
+  if (eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden")) return false;
+  if (isStoryTheaterOpen() || isFinalOpen() || isCreditsOpen()) return false;
+  if (state.audio && state.audio.sfx === false) return false;
+  return true;
+}
+
+function speakStoryReturnRecap(options = {}) {
+  if (!canSpeakStoryRecap()) return false;
+
+  const payload = storyRecapPayload();
+  if (!payload || !payload.text) return false;
+
+  const now = Date.now();
+  if (!options.force && payload.fingerprint === lastStoryRecapFingerprint && now - lastStoryRecapAt < 60000) {
+    return false;
+  }
+
+  stopStoryRecap();
+  const utterance = new SpeechSynthesisUtterance(payload.text);
+  const voice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang || "en-US";
+  } else {
+    utterance.lang = state.language === "es" ? "es-ES" : "en-US";
+  }
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  utterance.rate = state.language === "es" ? 0.9 : 0.88;
+  storyRecapUtterance = utterance;
+
+  const finish = () => {
+    if (storyRecapUtterance === utterance) storyRecapUtterance = null;
+  };
+  utterance.onend = finish;
+  utterance.onerror = finish;
+
+  const speak = () => {
+    if (!canSpeakStoryRecap()) {
+      finish();
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+      lastStoryRecapFingerprint = payload.fingerprint;
+      lastStoryRecapAt = Date.now();
+    } catch (_) {
+      finish();
+    }
+  };
+
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) {
+    const onVoices = () => {
+      window.speechSynthesis.removeEventListener("voiceschanged", onVoices);
+      if (storyRecapUtterance !== utterance) return;
+      const lateVoice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
+      if (lateVoice) {
+        utterance.voice = lateVoice;
+        utterance.lang = lateVoice.lang || utterance.lang || "en-US";
+      }
+      speak();
+    };
+    window.speechSynthesis.addEventListener("voiceschanged", onVoices);
+    window.setTimeout(() => {
+      if (storyRecapUtterance === utterance) speak();
+    }, 180);
+    return true;
+  }
+
+  speak();
+  return true;
+}
+
+function scheduleStoryReturnRecap(reason = "return", delayMs = 420) {
+  clearStoryRecapTimer();
+  storyRecapTimer = window.setTimeout(() => {
+    storyRecapTimer = 0;
+    speakStoryReturnRecap({ reason });
+  }, Math.max(0, delayMs));
+}
+
 function stopStoryNarration() {
   storyNarrationUtterance = null;
 
@@ -13555,6 +13762,7 @@ function speakVerseAudio(reference, button = null, fallbackText = "") {
     return;
   }
 
+  stopStoryRecap();
   stopVerseAudio();
   const utterance = new SpeechSynthesisUtterance(verseAudioTextForReference(reference, fallbackText));
   const voice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
@@ -13660,6 +13868,7 @@ function speakStoryNarration(era, onComplete = null) {
     return;
   }
 
+  stopStoryRecap();
   stopStoryNarration();
   const script = narrationScriptForEra(era);
   const spokenScript = (state.language === "en" && era === "david")
@@ -14204,6 +14413,7 @@ function openStage(stageId) {
 
   clearActiveChallenge();
   hideStageCompleteToast();
+  stopStoryRecap();
   stopStoryNarration();
   state.activeStage = stageId;
   state.lastStage = stageId;
@@ -19663,16 +19873,19 @@ window.addEventListener("pageshow", () => {
   trimPreloadedMediaCaches();
   primeAudioAuto();
   scheduleViewportNormalization();
+  scheduleStoryReturnRecap("pageshow", 520);
 });
 window.addEventListener("load", () => {
   applyPerformanceMode();
   primeAudioAuto();
   scheduleViewportNormalization();
+  scheduleStoryReturnRecap("load", 680);
 });
 window.addEventListener("focus", () => {
   window.setTimeout(() => {
     if (shouldKeepHubMusicAlive()) primeAudioAuto();
   }, 40);
+  scheduleStoryReturnRecap("focus", 520);
 });
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
@@ -19681,6 +19894,7 @@ document.addEventListener("visibilitychange", () => {
     trimPreloadedMediaCaches();
     if (!hubMediaWarmupScheduled) scheduleHubMediaWarmup();
     primeAudioAuto();
+    scheduleStoryReturnRecap("visible", 460);
     return;
   }
 
@@ -19693,6 +19907,7 @@ document.addEventListener("visibilitychange", () => {
 });
 window.addEventListener("pagehide", () => {
   clearHiddenCleanupTimer();
+  stopStoryRecap();
   stopStoryNarration();
   trimPreloadedMediaCaches({ aggressive: true });
 });
@@ -19701,5 +19916,6 @@ window.requestAnimationFrame(() => {
   if (!hasResumedSession) {
     resumeLastSession();
     hasResumedSession = true;
+    scheduleStoryReturnRecap("resume", 540);
   }
 });
