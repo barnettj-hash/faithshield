@@ -3308,6 +3308,8 @@ let storyTheaterAutoCloseToken = 0;
 let storyNarrationUtterance = null;
 let storyNarrationAudio = null;
 let storyRecapUtterance = null;
+let storyRecapAudio = null;
+let storyRecapAudioToken = 0;
 let storyRecapTimer = 0;
 let lastStoryRecapFingerprint = "";
 let lastStoryRecapAt = 0;
@@ -13758,6 +13760,17 @@ function clearStoryRecapTimer() {
 
 function stopStoryRecap() {
   clearStoryRecapTimer();
+  storyRecapAudioToken += 1;
+  if (storyRecapAudio) {
+    try {
+      storyRecapAudio.pause();
+      storyRecapAudio.src = "";
+      storyRecapAudio.load();
+    } catch (_) {
+      // Ignore media teardown errors.
+    }
+    storyRecapAudio = null;
+  }
   const activeUtterance = storyRecapUtterance;
   storyRecapUtterance = null;
   if (!activeUtterance || !("speechSynthesis" in window)) return;
@@ -13777,7 +13790,6 @@ function disarmStoryRecapRetry() {
 }
 
 function queueStoryRecapRetry(reason = "return") {
-  if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return false;
   pendingStoryRecapReason = String(reason || pendingStoryRecapReason || "return");
   if (storyRecapRetryArmed) return true;
   AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
@@ -13796,10 +13808,12 @@ function handleStoryRecapRetry() {
   window.setTimeout(() => {
     if (!pendingStoryRecapReason) return;
     const reason = pendingStoryRecapReason;
-    if (speakStoryReturnRecap({ reason, force: true })) {
-      pendingStoryRecapReason = "";
-      disarmStoryRecapRetry();
-    }
+    playPreferredStoryRecap({ reason, force: true }).then((spoken) => {
+      if (spoken) {
+        pendingStoryRecapReason = "";
+        disarmStoryRecapRetry();
+      }
+    });
   }, 90);
 }
 
@@ -13916,7 +13930,14 @@ function storyRecapPayload() {
     state.difficulty
   ].join("|");
 
-  return { text, fingerprint };
+  return {
+    text,
+    fingerprint,
+    stagesCleared,
+    recentBadges,
+    focusThemeName: String((focusMeta.theme && focusMeta.theme.name) || "").trim(),
+    completeJourney: !nextMeta
+  };
 }
 
 function storyRecapNeedsUserActivation() {
@@ -13932,7 +13953,7 @@ function canSpeakStoryRecap() {
   if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return false;
   if (document.visibilityState && document.visibilityState !== "visible") return false;
   if (state.activeStage) return false;
-  if (storyRecapUtterance || storyNarrationUtterance || verseAudioUtterance || badgePraiseUtterance) return false;
+  if (storyRecapUtterance || storyRecapAudio || storyNarrationUtterance || storyNarrationAudio || verseAudioUtterance || badgePraiseUtterance) return false;
   if (welcomeOverlay && !welcomeOverlay.classList.contains("hidden")) return false;
   if (activityOverlay && !activityOverlay.classList.contains("hidden")) return false;
   if (shareOverlay && !shareOverlay.classList.contains("hidden")) return false;
@@ -13941,6 +13962,190 @@ function canSpeakStoryRecap() {
   if (eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden")) return false;
   if (isStoryTheaterOpen() || isFinalOpen() || isCreditsOpen()) return false;
   return true;
+}
+
+function canPlayStoryRecapMedia() {
+  if (document.visibilityState && document.visibilityState !== "visible") return false;
+  if (state.activeStage) return false;
+  if (storyRecapUtterance || storyRecapAudio || storyNarrationUtterance || storyNarrationAudio || verseAudioUtterance || badgePraiseUtterance) return false;
+  if (welcomeOverlay && !welcomeOverlay.classList.contains("hidden")) return false;
+  if (activityOverlay && !activityOverlay.classList.contains("hidden")) return false;
+  if (shareOverlay && !shareOverlay.classList.contains("hidden")) return false;
+  if (badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden")) return false;
+  if (eraCardPreviewOverlay && !eraCardPreviewOverlay.classList.contains("hidden")) return false;
+  if (eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden")) return false;
+  if (isStoryTheaterOpen() || isFinalOpen() || isCreditsOpen()) return false;
+  return true;
+}
+
+function recapAudioSlug(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function storyRecapAudioBasePath() {
+  return "./assets/cutscenes/hq/recap/en";
+}
+
+function buildRecordedStoryRecapClips(payload) {
+  if (!payload || state.language !== "en") return [];
+
+  const base = storyRecapAudioBasePath();
+  const clips = [];
+  const pushFixed = (name) => clips.push(`${base}/fixed/${name}.wav`);
+  const pushTheme = (themeName) => {
+    const slug = recapAudioSlug(themeName);
+    if (slug) clips.push(`${base}/themes/${slug}.wav`);
+  };
+  const pushBadge = (badgeName) => {
+    const slug = recapAudioSlug(badgeName);
+    if (slug) clips.push(`${base}/badges/${slug}.wav`);
+  };
+
+  pushFixed("welcome-back");
+
+  if (payload.completeJourney) {
+    pushFixed("you-finished-the-journey");
+  } else if (payload.stagesCleared <= 0) {
+    pushFixed("your-story-begins-in");
+    pushTheme(payload.focusThemeName);
+  } else {
+    pushFixed("you-are-now-in");
+    pushTheme(payload.focusThemeName);
+  }
+
+  const badges = (payload.recentBadges || []).slice(0, 3);
+  if (badges.length === 1) {
+    pushFixed("your-newest-badge-is");
+    pushBadge(badges[0]);
+  } else if (badges.length > 1) {
+    pushFixed("your-newest-badges-are");
+    badges.forEach(pushBadge);
+  }
+
+  pushFixed("keep-going");
+  return clips;
+}
+
+function playRecordedStoryRecap(options = {}) {
+  if (storyRecapNeedsUserActivation()) {
+    queueStoryRecapRetry(options.reason || "return");
+    return Promise.resolve(false);
+  }
+
+  if (!canPlayStoryRecapMedia()) {
+    queueStoryRecapRetry(options.reason || "return");
+    return Promise.resolve(false);
+  }
+
+  const payload = storyRecapPayload();
+  if (!payload || !payload.text) return Promise.resolve(false);
+
+  const now = Date.now();
+  if (!options.force && payload.fingerprint === lastStoryRecapFingerprint && now - lastStoryRecapAt < 60000) {
+    return Promise.resolve(false);
+  }
+
+  const clips = buildRecordedStoryRecapClips(payload);
+  if (!clips.length) return Promise.resolve(false);
+
+  stopStoryRecap();
+  const token = ++storyRecapAudioToken;
+  let resolved = false;
+  let started = false;
+  let index = 0;
+
+  return new Promise((resolve) => {
+    const finishResolve = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value);
+    };
+
+    const clearActive = () => {
+      if (storyRecapAudioToken !== token) return;
+      storyRecapAudio = null;
+    };
+
+    const playNext = () => {
+      if (storyRecapAudioToken !== token) {
+        finishResolve(started);
+        return;
+      }
+      if (index >= clips.length) {
+        clearActive();
+        finishResolve(started);
+        return;
+      }
+
+      const src = clips[index];
+      index += 1;
+      const audio = new Audio(src);
+      audio.preload = "auto";
+      storyRecapAudio = audio;
+
+      audio.onended = () => {
+        playNext();
+      };
+      audio.onerror = () => {
+        if (!started && index <= 1) {
+          clearActive();
+          finishResolve(false);
+          return;
+        }
+        playNext();
+      };
+
+      try {
+        const attempt = audio.play();
+        if (attempt && typeof attempt.then === "function") {
+          attempt.then(() => {
+            if (!started) {
+              started = true;
+              lastStoryRecapFingerprint = payload.fingerprint;
+              lastStoryRecapAt = Date.now();
+              pendingStoryRecapReason = "";
+              disarmStoryRecapRetry();
+              finishResolve(true);
+            }
+          }).catch(() => {
+            if (!started && index <= 1) {
+              clearActive();
+              finishResolve(false);
+              return;
+            }
+            playNext();
+          });
+        } else if (!started) {
+          started = true;
+          lastStoryRecapFingerprint = payload.fingerprint;
+          lastStoryRecapAt = Date.now();
+          pendingStoryRecapReason = "";
+          disarmStoryRecapRetry();
+          finishResolve(true);
+        }
+      } catch (_) {
+        if (!started && index <= 1) {
+          clearActive();
+          finishResolve(false);
+          return;
+        }
+        playNext();
+      }
+    };
+
+    playNext();
+  });
+}
+
+function playPreferredStoryRecap(options = {}) {
+  return playRecordedStoryRecap(options).then((played) => {
+    if (played) return true;
+    return speakStoryReturnRecap(options);
+  });
 }
 
 function speakStoryReturnRecap(options = {}) {
@@ -14017,7 +14222,7 @@ function scheduleStoryReturnRecap(reason = "return", delayMs = 420) {
   clearStoryRecapTimer();
   storyRecapTimer = window.setTimeout(() => {
     storyRecapTimer = 0;
-    speakStoryReturnRecap({ reason });
+    playPreferredStoryRecap({ reason });
   }, Math.max(0, delayMs));
 }
 
@@ -14030,21 +14235,22 @@ function playStoryRecapNow() {
   }
   pendingStoryRecapReason = "";
   disarmStoryRecapRetry();
-  const spoken = speakStoryReturnRecap({ reason: "manual-button", force: true });
-  if (spoken) {
+  playPreferredStoryRecap({ reason: "manual-button", force: true }).then((spoken) => {
+    if (spoken) {
+      showFeatureMoment(
+        challengeCopy("Welcome recap playing", "Reproduciendo resumen de bienvenida"),
+        challengeCopy("Your story progress is now being read aloud.", "Tu progreso de la historia se esta leyendo en voz alta."),
+        { icon: "🔊", durationMs: 1600 }
+      );
+      return;
+    }
     showFeatureMoment(
-      challengeCopy("Welcome recap playing", "Reproduciendo resumen de bienvenida"),
-      challengeCopy("Your story progress is now being read aloud.", "Tu progreso de la historia se esta leyendo en voz alta."),
-      { icon: "🔊", durationMs: 1600 }
+      challengeCopy("Recap unavailable", "Resumen no disponible"),
+      challengeCopy("If you still hear nothing, check your browser sound and speech permissions, then tap this button again.", "Si aun no escuchas nada, revisa el sonido y los permisos de voz del navegador, y luego toca este boton otra vez."),
+      { icon: "⚠️", sfx: null, durationMs: 2600 }
     );
-    return true;
-  }
-  showFeatureMoment(
-    challengeCopy("Recap unavailable", "Resumen no disponible"),
-    challengeCopy("If you still hear nothing, check your browser sound and speech permissions, then tap this button again.", "Si aun no escuchas nada, revisa el sonido y los permisos de voz del navegador, y luego toca este boton otra vez."),
-    { icon: "⚠️", sfx: null, durationMs: 2600 }
-  );
-  return false;
+  });
+  return true;
 }
 
 function stopStoryNarration() {
