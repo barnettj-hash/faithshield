@@ -13796,20 +13796,9 @@ function speakStoryReturnRecap(options = {}) {
 
   const voices = window.speechSynthesis.getVoices() || [];
   if (!voices.length) {
-    const onVoices = () => {
-      window.speechSynthesis.removeEventListener("voiceschanged", onVoices);
-      if (storyRecapUtterance !== utterance) return;
-      const lateVoice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
-      if (lateVoice) {
-        utterance.voice = lateVoice;
-        utterance.lang = lateVoice.lang || utterance.lang || "en-US";
-      }
-      speak();
-    };
-    window.speechSynthesis.addEventListener("voiceschanged", onVoices);
-    window.setTimeout(() => {
-      if (storyRecapUtterance === utterance) speak();
-    }, 180);
+    // Speak immediately with the browser default voice so we stay inside the
+    // trusted interaction window on desktop/mobile browsers.
+    speak();
     return true;
   }
 
