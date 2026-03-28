@@ -3980,6 +3980,7 @@ let dailyDevotionStatus = null;
 let dailyDevotionPrompt = null;
 let dailyDevotionAction = null;
 let dailyDevotionReflection = null;
+let playStoryRecapBtn = null;
 let completeDevotionChallengeBtn = null;
 let completeDevotionActionBtn = null;
 let saveDevotionReflectionBtn = null;
@@ -6896,6 +6897,7 @@ function ensureExperienceSections() {
         '<p id="dailyDevotionAction" class="meta"></p>',
         '<textarea id="dailyDevotionReflection" class="journal-input" rows="3" placeholder="One short reflection for today"></textarea>',
         '<div class="feature-actions">',
+        `  <button id="playStoryRecapBtn" class="ghost-btn" type="button">${challengeCopy("Play Welcome Recap", "Reproducir resumen de bienvenida")}</button>`,
         '  <button id="completeDevotionChallengeBtn" class="ghost-btn" type="button">Complete Daily Challenge</button>',
         '  <button id="completeDevotionActionBtn" class="ghost-btn" type="button">Complete Practical Action</button>',
         '  <button id="saveDevotionReflectionBtn" class="ghost-btn" type="button">Save Reflection</button>',
@@ -6918,6 +6920,7 @@ function ensureExperienceSections() {
     dailyDevotionPrompt = dailyDevotionSection.querySelector("#dailyDevotionPrompt");
     dailyDevotionAction = dailyDevotionSection.querySelector("#dailyDevotionAction");
     dailyDevotionReflection = dailyDevotionSection.querySelector("#dailyDevotionReflection");
+    playStoryRecapBtn = dailyDevotionSection.querySelector("#playStoryRecapBtn");
     completeDevotionChallengeBtn = dailyDevotionSection.querySelector("#completeDevotionChallengeBtn");
     completeDevotionActionBtn = dailyDevotionSection.querySelector("#completeDevotionActionBtn");
     saveDevotionReflectionBtn = dailyDevotionSection.querySelector("#saveDevotionReflectionBtn");
@@ -6925,6 +6928,11 @@ function ensureExperienceSections() {
     exportDevotionReflectionCardBtn = dailyDevotionSection.querySelector("#exportDevotionReflectionCardBtn");
     claimDevotionRewardBtn = dailyDevotionSection.querySelector("#claimDevotionRewardBtn");
 
+    if (playStoryRecapBtn) {
+      playStoryRecapBtn.onclick = () => {
+        playStoryRecapNow();
+      };
+    }
     if (completeDevotionChallengeBtn) {
       completeDevotionChallengeBtn.onclick = () => {
         ensureDailyDevotionState();
@@ -13812,6 +13820,32 @@ function scheduleStoryReturnRecap(reason = "return", delayMs = 420) {
     storyRecapTimer = 0;
     speakStoryReturnRecap({ reason });
   }, Math.max(0, delayMs));
+}
+
+function playStoryRecapNow() {
+  primeAudioAuto();
+  try {
+    if ("speechSynthesis" in window) window.speechSynthesis.resume();
+  } catch (_) {
+    // Ignore resume failures and rely on direct speak.
+  }
+  pendingStoryRecapReason = "";
+  disarmStoryRecapRetry();
+  const spoken = speakStoryReturnRecap({ reason: "manual-button", force: true });
+  if (spoken) {
+    showFeatureMoment(
+      challengeCopy("Welcome recap playing", "Reproduciendo resumen de bienvenida"),
+      challengeCopy("Your story progress is now being read aloud.", "Tu progreso de la historia se esta leyendo en voz alta."),
+      { icon: "🔊", durationMs: 1600 }
+    );
+    return true;
+  }
+  showFeatureMoment(
+    challengeCopy("Recap unavailable", "Resumen no disponible"),
+    challengeCopy("If you still hear nothing, check your browser sound and speech permissions, then tap this button again.", "Si aun no escuchas nada, revisa el sonido y los permisos de voz del navegador, y luego toca este boton otra vez."),
+    { icon: "⚠️", sfx: null, durationMs: 2600 }
+  );
+  return false;
 }
 
 function stopStoryNarration() {
