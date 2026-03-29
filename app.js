@@ -8812,13 +8812,21 @@ function updateOverlayLock() {
 
 }
 
-function dismissWelcome() {
-  if (!welcomeOverlay) return;
+function dismissWelcome(event) {
+  if (!welcomeOverlay || welcomeOverlay.classList.contains("hidden")) return;
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
   primeAudioAuto();
   welcomeOverlay.classList.add("hidden");
   updateOverlayLock();
-  if (speakStoryReturnRecap({ reason: "welcome-dismiss", force: true })) return;
-  scheduleStoryReturnRecap("welcome-dismiss", 260);
+  pendingStoryRecapReason = "";
+  disarmStoryRecapRetry();
+  playPreferredStoryRecap({ reason: "welcome-dismiss", force: true }).then((played) => {
+    if (played) return;
+    scheduleStoryReturnRecap("welcome-dismiss", 180);
+  });
 }
 
 function closeActivity() {
@@ -20258,7 +20266,10 @@ window.addEventListener("keydown", (event) => {
   requestActivityClose(event);
 });
 
-if (acceptChallengeBtn) acceptChallengeBtn.addEventListener("click", dismissWelcome);
+if (acceptChallengeBtn) {
+  acceptChallengeBtn.addEventListener("pointerdown", dismissWelcome);
+  acceptChallengeBtn.addEventListener("click", dismissWelcome);
+}
 if (welcomeOverlay) {
   welcomeOverlay.addEventListener("click", (event) => {
     if (event.target === welcomeOverlay) dismissWelcome();

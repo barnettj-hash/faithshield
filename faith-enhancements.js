@@ -1343,6 +1343,27 @@ function memoryScore(expected, typed) {
     renderAccessibility();
   }
 
+  function bindTapButton(button, handler) {
+    if (!button || typeof handler !== "function") return;
+
+    let lastHandledAt = -Infinity;
+    const invoke = (event) => {
+      if (button.disabled) return;
+      const stamp = event && typeof event.timeStamp === "number" ? event.timeStamp : Date.now();
+      if (stamp - lastHandledAt < 280) return;
+      lastHandledAt = stamp;
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      handler(event);
+    };
+
+    button.addEventListener("pointerup", invoke);
+    button.addEventListener("touchend", invoke, { passive: false });
+    button.addEventListener("click", invoke);
+  }
+
   function bindEvents() {
     const applyCoachBtn = dom("applyCoachBtn");
     const graceDayBtn = dom("graceDayBtn");
@@ -1354,13 +1375,13 @@ function memoryScore(expected, typed) {
     const languageGuideSelect = dom("languageGuideSelect");
     const memoryInput = dom("memoryInput");
 
-    if (applyCoachBtn) applyCoachBtn.addEventListener("click", onApplyCoach);
-    if (graceDayBtn) graceDayBtn.addEventListener("click", onUseGraceDay);
-    if (previousVerseBtn) previousVerseBtn.addEventListener("click", onPreviousVerse);
-    if (revealVerseBtn) revealVerseBtn.addEventListener("click", onRevealVerse);
-    if (nextVerseBtn) nextVerseBtn.addEventListener("click", onNextVerse);
-    if (checkVerseBtn) checkVerseBtn.addEventListener("click", onCheckMemory);
-    if (saveJournalBtn) saveJournalBtn.addEventListener("click", onSaveJournal);
+    bindTapButton(applyCoachBtn, onApplyCoach);
+    bindTapButton(graceDayBtn, onUseGraceDay);
+    bindTapButton(previousVerseBtn, onPreviousVerse);
+    bindTapButton(revealVerseBtn, onRevealVerse);
+    bindTapButton(nextVerseBtn, onNextVerse);
+    bindTapButton(checkVerseBtn, onCheckMemory);
+    bindTapButton(saveJournalBtn, onSaveJournal);
     if (memoryInput) {
       memoryInput.addEventListener("focus", onMemoryRecallStart);
       memoryInput.addEventListener("input", onMemoryRecallStart);
