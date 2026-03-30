@@ -7861,11 +7861,11 @@ function ensureHubQuickNav() {
         `    <p class="meta">${challengeCopy("Jump to the section you need.", "Ve rapido a la seccion que necesitas.")}</p>`,
         "  </div>",
         '  <div class="hub-quick-actions">',
-        `    <button id="jumpTopHubBtn" class="ghost-btn" type="button">${challengeCopy("Top of Hub", "Inicio del Hub")}</button>`,
-        `    <button id="jumpDailyDevotionBtn" class="ghost-btn" type="button">${challengeCopy("Daily Devotion", "Devocional diario")}</button>`,
-        `    <button id="jumpStoryPathBtn" class="ghost-btn" type="button">${challengeCopy("Story Path", "Camino de historia")}</button>`,
-        `    <button id="jumpBadgesBtn" class="ghost-btn" type="button">${challengeCopy("Badge Collection", "Coleccion de insignias")}</button>`,
-        `    <button id="jumpHallBtn" class="ghost-btn" type="button">${challengeCopy("Hall of Faith", "Salon de Fe")}</button>`,
+        `    <button id="jumpTopHubBtnHub" class="ghost-btn" type="button">${challengeCopy("Top of Hub", "Inicio del Hub")}</button>`,
+        `    <button id="jumpDailyDevotionBtnHub" class="ghost-btn" type="button">${challengeCopy("Daily Devotion", "Devocional diario")}</button>`,
+        `    <button id="jumpStoryPathBtnHub" class="ghost-btn" type="button">${challengeCopy("Story Path", "Camino de historia")}</button>`,
+        `    <button id="jumpBadgesBtnHub" class="ghost-btn" type="button">${challengeCopy("Badge Collection", "Coleccion de insignias")}</button>`,
+        `    <button id="jumpHallBtnHub" class="ghost-btn" type="button">${challengeCopy("Hall of Faith", "Salon de Fe")}</button>`,
         "  </div>"
       ].join("");
       const parent = progressSection.parentNode;
@@ -7885,17 +7885,30 @@ function ensureHubQuickNav() {
     : document.querySelector(".badge-section");
   const hallTarget = hallOfFaithSection || document.getElementById("hallOfFaithSection");
 
-  const topBtn = hubQuickNav.querySelector("#jumpTopHubBtn");
-  const dailyBtn = hubQuickNav.querySelector("#jumpDailyDevotionBtn");
-  const storyBtn = hubQuickNav.querySelector("#jumpStoryPathBtn");
-  const badgeBtn = hubQuickNav.querySelector("#jumpBadgesBtn");
-  const hallBtn = hubQuickNav.querySelector("#jumpHallBtn");
+  const topBtn = hubQuickNav.querySelector("#jumpTopHubBtnHub");
+  const dailyBtn = hubQuickNav.querySelector("#jumpDailyDevotionBtnHub");
+  const storyBtn = hubQuickNav.querySelector("#jumpStoryPathBtnHub");
+  const badgeBtn = hubQuickNav.querySelector("#jumpBadgesBtnHub");
+  const hallBtn = hubQuickNav.querySelector("#jumpHallBtnHub");
 
-  if (topBtn) topBtn.onclick = () => smoothScrollToNode(gameDashboard || appRoot || progressSection);
-  if (dailyBtn) dailyBtn.onclick = () => smoothScrollToNode(dailyTarget || storyTarget || progressSection);
-  if (storyBtn) storyBtn.onclick = () => smoothScrollToNode(storyTarget || progressSection);
-  if (badgeBtn) badgeBtn.onclick = () => smoothScrollToNode(badgeTarget || hallTarget || storyTarget || progressSection);
-  if (hallBtn) hallBtn.onclick = () => smoothScrollToNode(hallTarget || badgeTarget || storyTarget || progressSection);
+  const dailyBtnPrimary = document.querySelector("#gameDashboard #jumpDailyDevotionBtn");
+  const storyBtnPrimary = document.querySelector("#gameDashboard #jumpStoryPathBtn");
+  const badgeBtnPrimary = document.querySelector("#gameDashboard #jumpBadgesBtn");
+
+  const goTop = () => smoothScrollToNode(gameDashboard || appRoot || progressSection);
+  const goDaily = () => smoothScrollToNode(dailyTarget || storyTarget || progressSection);
+  const goStory = () => smoothScrollToNode(storyTarget || progressSection);
+  const goBadges = () => smoothScrollToNode(badgeTarget || hallTarget || storyTarget || progressSection);
+  const goHall = () => smoothScrollToNode(hallTarget || badgeTarget || storyTarget || progressSection);
+
+  if (topBtn) topBtn.onclick = goTop;
+  if (dailyBtn) dailyBtn.onclick = goDaily;
+  if (storyBtn) storyBtn.onclick = goStory;
+  if (badgeBtn) badgeBtn.onclick = goBadges;
+  if (hallBtn) hallBtn.onclick = goHall;
+  if (dailyBtnPrimary) dailyBtnPrimary.onclick = goDaily;
+  if (storyBtnPrimary) storyBtnPrimary.onclick = goStory;
+  if (badgeBtnPrimary) badgeBtnPrimary.onclick = goBadges;
 }
 
 function ensureHubSectionOrder() {
@@ -13182,21 +13195,9 @@ function armFirstInteractionRecap() {
     });
     primeAudioAuto();
     if (state.audio.music && shouldKeepHubMusicAlive()) startMusicLoop();
-    playPreferredStoryRecap({ reason: "first-interaction", force: true, ignoreUserActivation: true }).then((spoken) => {
-      if (spoken) {
-        showFeatureMoment(
-          challengeCopy("Welcome recap playing", "Reproduciendo resumen de bienvenida"),
-          challengeCopy("Your story progress is now being read aloud.", "Tu progreso de la historia se esta leyendo en voz alta."),
-          { icon: "🔊", durationMs: 1800 }
-        );
-        return;
-      }
-      showFeatureMoment(
-        challengeCopy("Recap unavailable", "Resumen no disponible"),
-        challengeCopy("Check device volume and silent mode, then tap the recap button in Daily Devotion.", "Revisa el volumen y el modo silencio, y luego toca el boton de resumen en Devocional diario."),
-        { icon: "⚠️", sfx: null, durationMs: 2600 }
-      );
-    });
+    if (!state.activeStage) {
+      playStoryRecapNow();
+    }
   };
   AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
     document.addEventListener(eventName, handler, true);
@@ -14502,6 +14503,11 @@ function playStoryRecapNow() {
   } catch (_) {
     // Ignore resume failures and rely on direct speak.
   }
+  showFeatureMoment(
+    challengeCopy("Welcome recap starting", "Iniciando resumen de bienvenida"),
+    challengeCopy("Audio will begin if your device allows it.", "El audio comenzara si tu dispositivo lo permite."),
+    { icon: "🔊", durationMs: 1600 }
+  );
   pendingStoryRecapReason = "";
   disarmStoryRecapRetry();
   playPreferredStoryRecap({ reason: "manual-button", force: true, ignoreUserActivation: true }).then((spoken) => {
