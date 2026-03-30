@@ -13178,7 +13178,21 @@ function armFirstInteractionRecap() {
     });
     primeAudioAuto();
     if (state.audio.music && shouldKeepHubMusicAlive()) startMusicLoop();
-    playPreferredStoryRecap({ reason: "first-interaction", force: true, ignoreUserActivation: true });
+    playPreferredStoryRecap({ reason: "first-interaction", force: true, ignoreUserActivation: true }).then((spoken) => {
+      if (spoken) {
+        showFeatureMoment(
+          challengeCopy("Welcome recap playing", "Reproduciendo resumen de bienvenida"),
+          challengeCopy("Your story progress is now being read aloud.", "Tu progreso de la historia se esta leyendo en voz alta."),
+          { icon: "🔊", durationMs: 1800 }
+        );
+        return;
+      }
+      showFeatureMoment(
+        challengeCopy("Recap unavailable", "Resumen no disponible"),
+        challengeCopy("Check device volume and silent mode, then tap the recap button in Daily Devotion.", "Revisa el volumen y el modo silencio, y luego toca el boton de resumen en Devocional diario."),
+        { icon: "⚠️", sfx: null, durationMs: 2600 }
+      );
+    });
   };
   AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
     document.addEventListener(eventName, handler, true);
