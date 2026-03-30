@@ -5620,6 +5620,7 @@ function reviewDueEntries(limit = 5) {
 function smoothScrollToNode(node) {
   if (!node) return;
   const findScrollParent = (el) => {
+    if (appRoot && appRoot.scrollHeight > appRoot.clientHeight + 8) return appRoot;
     let parent = el ? el.parentElement : null;
     while (parent) {
       const style = window.getComputedStyle(parent);
@@ -7876,10 +7877,12 @@ function ensureHubQuickNav() {
   const dailyTarget = document.querySelector(".daily-word-card")
     || dailyDevotionSection
     || document.getElementById("dailyDevotionSection");
-  const storyTarget = storyPathHeading ? storyPathHeading.closest("section") : null;
+  const storyTarget = storyPathHeading
+    ? storyPathHeading.closest("section")
+    : (stageGrid ? stageGrid.closest("section") : stageGrid);
   const badgeTarget = document.getElementById("badgeCollectionHeading")
     ? document.getElementById("badgeCollectionHeading").closest("section")
-    : null;
+    : document.querySelector(".badge-section");
   const hallTarget = hallOfFaithSection || document.getElementById("hallOfFaithSection");
 
   const topBtn = hubQuickNav.querySelector("#jumpTopHubBtn");
@@ -7914,6 +7917,7 @@ function ensureHubSectionOrder() {
     : null;
   const badgeSection = document.querySelector(".badge-section");
   const preferredSections = [
+    hubQuickNav,
     dailyThoughtCard,
     todayPlanSection,
     streakSection,
