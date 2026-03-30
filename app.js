@@ -4012,10 +4012,16 @@ let eraCardPreviewImage = null;
 let eraCardPreviewSaveBtn = null;
 let eraCardPreviewCopyBtn = null;
 let closeEraCardPreviewBtn = null;
+let shareTextOverlay = null;
+let shareTextTitle = null;
+let shareTextArea = null;
+let shareTextCopyBtn = null;
+let shareTextCloseBtn = null;
 let dailyCalendarSection = null;
 let dailyCalendarSummary = null;
 let dailyCalendarEvent = null;
 let dailyCalendarGrid = null;
+let hubQuickNav = null;
 let desktopControlsSection = null;
 let hotkeysToggle = null;
 let controllerToggle = null;
@@ -5618,6 +5624,13 @@ function smoothScrollToNode(node) {
   } catch (_) {
     node.scrollIntoView();
   }
+  try {
+    const rect = node.getBoundingClientRect();
+    const top = rect.top + (window.pageYOffset || document.documentElement.scrollTop || 0) - 12;
+    window.scrollTo({ top, behavior: "smooth" });
+  } catch (_) {
+    // Ignore scroll fallback errors.
+  }
 }
 
 function jumpToEra(era) {
@@ -5639,13 +5652,13 @@ function copyTextToClipboardOrPrompt(text, onCopied = null) {
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(message).then(notifyCopied).catch(() => {
-      window.prompt("Copy and share this text:", message);
+      openShareTextOverlay(challengeCopy("Share Text", "Texto para compartir"), message);
       notifyCopied();
     });
     return;
   }
 
-  window.prompt("Copy and share this text:", message);
+  openShareTextOverlay(challengeCopy("Share Text", "Texto para compartir"), message);
   notifyCopied();
 }
 
@@ -6427,6 +6440,9 @@ function ensurePremiumHubStyles() {
     ".profile-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#0b1525;}",
     ".profile-meta p,.hall-card p,.calendar-day-card p{margin:0;}",
     ".profile-actions,.hall-actions,.feature-actions.wrap{display:flex;flex-wrap:wrap;gap:10px;}",
+    ".hub-quick-nav{margin-top:16px;}",
+    ".hub-quick-actions{display:flex;flex-wrap:wrap;gap:10px;}",
+    ".hub-quick-actions .ghost-btn{min-width:160px;justify-content:center;}",
     ".hall-badge-strip{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));}",
     ".hall-badge-pill{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(229,184,93,.16);min-height:108px;text-align:center;}",
     ".hall-badge-pill.locked{opacity:.38;filter:saturate(.4);}",
@@ -6451,7 +6467,7 @@ function ensurePremiumHubStyles() {
     ".era-preview-card{max-width:min(94vw,1020px)!important;}",
     ".era-preview-card img{display:block;width:100%;height:auto;border-radius:18px;border:1px solid rgba(229,184,93,.26);box-shadow:0 18px 40px rgba(0,0,0,.22);margin:16px 0 18px;}",
     ".era-preview-card .share-actions{justify-content:center;}",
-    "@media (max-width:760px){.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.calendar-weekday{display:none;}}"
+    "@media (max-width:760px){.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.calendar-weekday{display:none;}.hub-quick-actions .ghost-btn{width:100%;}}"
   ].join("");
   document.head.appendChild(style);
 }
@@ -6500,6 +6516,87 @@ function closeEraCardPreview() {
   if (!eraCardPreviewOverlay) return;
   eraCardPreviewOverlay.classList.add("hidden");
   updateOverlayLock();
+}
+
+function ensureShareTextOverlay() {
+  if (shareTextOverlay && shareTextOverlay.isConnected) return;
+  if (!appRoot) return;
+
+  shareTextOverlay = document.createElement("div");
+  shareTextOverlay.id = "shareTextOverlay";
+  shareTextOverlay.className = "welcome-overlay hidden";
+  shareTextOverlay.setAttribute("aria-live", "polite");
+  shareTextOverlay.setAttribute("role", "dialog");
+  shareTextOverlay.setAttribute("aria-modal", "true");
+  shareTextOverlay.innerHTML = [
+    '<div class="welcome-card share-card">',
+    `  <p class="eyebrow">${challengeCopy("Share Text", "Texto para compartir")}</p>`,
+    '  <h2 id="shareTextTitle">FAITHSHIELD Share</h2>',
+    `  <p class="meta">${challengeCopy("Copy the text below to share.", "Copia el texto abajo para compartir.")}</p>`,
+    '  <textarea id="shareTextArea" class="journal-input" rows="6" readonly></textarea>',
+    '  <div class="share-actions">',
+    `    <button id="shareTextCopyBtn" class="cta-btn" type="button">${challengeCopy("Copy Text", "Copiar texto")}</button>`,
+    `    <button id="closeShareTextBtn" class="ghost-btn" type="button">${challengeCopy("Close", "Cerrar")}</button>`,
+    '  </div>',
+    '</div>'
+  ].join("");
+
+  appRoot.appendChild(shareTextOverlay);
+  shareTextTitle = shareTextOverlay.querySelector("#shareTextTitle");
+  shareTextArea = shareTextOverlay.querySelector("#shareTextArea");
+  shareTextCopyBtn = shareTextOverlay.querySelector("#shareTextCopyBtn");
+  shareTextCloseBtn = shareTextOverlay.querySelector("#closeShareTextBtn");
+
+  if (shareTextCloseBtn) {
+    shareTextCloseBtn.onclick = () => closeShareTextOverlay();
+  }
+  shareTextOverlay.addEventListener("click", (event) => {
+    if (event.target === shareTextOverlay) closeShareTextOverlay();
+  });
+}
+
+function closeShareTextOverlay() {
+  if (!shareTextOverlay) return;
+  shareTextOverlay.classList.add("hidden");
+  updateOverlayLock();
+}
+
+function openShareTextOverlay(title, text) {
+  ensureShareTextOverlay();
+  if (!shareTextOverlay || !shareTextArea) return false;
+  const message = String(text || "").trim();
+  if (!message) return false;
+  if (shareTextTitle) shareTextTitle.textContent = String(title || "FAITHSHIELD Share");
+  shareTextArea.value = message;
+  if (shareTextCopyBtn) {
+    shareTextCopyBtn.onclick = () => {
+      const attemptCopy = () => {
+        try {
+          shareTextArea.focus();
+          shareTextArea.select();
+        } catch (_) {
+          // Ignore selection issues.
+        }
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(message).then(() => {
+          showFeatureMoment(
+            challengeCopy("Share text copied", "Texto copiado"),
+            challengeCopy("You can now paste it anywhere.", "Ahora puedes pegarlo donde quieras."),
+            { icon: "✅", durationMs: 1600 }
+          );
+        }).catch(() => {
+          attemptCopy();
+        });
+      } else {
+        attemptCopy();
+      }
+    };
+  }
+  shareTextOverlay.classList.remove("hidden");
+  if (shareTextOverlay.scrollTo) shareTextOverlay.scrollTo({ top: 0, behavior: "auto" });
+  updateOverlayLock();
+  return true;
 }
 
 function openEraCardPreview(era) {
@@ -6838,16 +6935,40 @@ function renderHallOfFaith() {
       const copyBtn = document.createElement("button");
       copyBtn.type = "button";
       copyBtn.className = "ghost-btn";
-      copyBtn.disabled = !complete;
+      copyBtn.disabled = false;
       copyBtn.textContent = challengeCopy("Copy Share Text", "Copiar texto");
-      copyBtn.onclick = () => copyTextToClipboardOrPrompt(eraCompletionShareText(era));
+      copyBtn.onclick = () => {
+        if (!complete) {
+          showFeatureMoment(
+            challengeCopy("Era not finished yet", "Era aun no completada"),
+            challengeCopy("Finish every stage in this era to unlock the share text.", "Completa cada etapa de esta era para desbloquear el texto."),
+            { icon: "🔒", sfx: null, durationMs: 2200 }
+          );
+          return;
+        }
+        copyTextToClipboardOrPrompt(eraCompletionShareText(era), () => {
+          showFeatureMoment(
+            challengeCopy("Share text ready", "Texto listo"),
+            challengeCopy("You can now paste it into email or social.", "Ahora puedes pegarlo en correo o redes."),
+            { icon: "✅", durationMs: 1600 }
+          );
+        });
+      };
       actions.appendChild(copyBtn);
       const cardBtn = document.createElement("button");
       cardBtn.type = "button";
       cardBtn.className = complete ? "cta-btn" : "ghost-btn";
-      cardBtn.disabled = !complete;
+      cardBtn.disabled = false;
       cardBtn.textContent = challengeCopy("Open Era Card", "Abrir tarjeta");
       cardBtn.onclick = async () => {
+        if (!complete) {
+          showFeatureMoment(
+            challengeCopy("Era not finished yet", "Era aun no completada"),
+            challengeCopy("Finish every stage in this era to unlock the era card.", "Completa cada etapa de esta era para desbloquear la tarjeta."),
+            { icon: "🔒", sfx: null, durationMs: 2200 }
+          );
+          return;
+        }
         const done = openEraCardPreview(era);
         if (done) {
           showFeatureMoment(
@@ -6857,6 +6978,10 @@ function renderHallOfFaith() {
           );
           return;
         }
+        openShareTextOverlay(
+          challengeCopy("Era share text", "Texto de era"),
+          eraCompletionShareText(era)
+        );
         showFeatureMoment(
           challengeCopy("Era card unavailable", "Tarjeta de era no disponible"),
           challengeCopy("The preview could not be opened. Try again, or check whether your browser is blocking canvas images.", "No se pudo abrir la vista previa. Intentalo otra vez o revisa si tu navegador esta bloqueando imagenes de canvas."),
@@ -7699,6 +7824,54 @@ function ensureCorePracticePlacement() {
   }
 }
 
+function ensureHubQuickNav() {
+  const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
+  if (!progressSection || !progressSection.parentNode) return;
+
+  if (!hubQuickNav || !hubQuickNav.isConnected) {
+    hubQuickNav = document.getElementById("hubQuickNav");
+    if (!hubQuickNav) {
+      hubQuickNav = document.createElement("section");
+      hubQuickNav.id = "hubQuickNav";
+      hubQuickNav.className = "feature-card hub-quick-nav";
+      hubQuickNav.innerHTML = [
+        '  <div class="feature-head">',
+        `    <h2>${challengeCopy("Gamehub Shortcuts", "Accesos del Gamehub")}</h2>`,
+        `    <p class="meta">${challengeCopy("Jump to the section you need.", "Ve rapido a la seccion que necesitas.")}</p>`,
+        "  </div>",
+        '  <div class="hub-quick-actions">',
+        `    <button id="jumpDailyDevotionBtn" class="ghost-btn" type="button">${challengeCopy("Daily Devotion", "Devocional diario")}</button>`,
+        `    <button id="jumpStoryPathBtn" class="ghost-btn" type="button">${challengeCopy("Story Path", "Camino de historia")}</button>`,
+        `    <button id="jumpBadgesBtn" class="ghost-btn" type="button">${challengeCopy("Badge Collection", "Coleccion de insignias")}</button>`,
+        `    <button id="jumpHallBtn" class="ghost-btn" type="button">${challengeCopy("Hall of Faith", "Salon de Fe")}</button>`,
+        "  </div>"
+      ].join("");
+      const parent = progressSection.parentNode;
+      const anchor = progressSection.nextSibling;
+      parent.insertBefore(hubQuickNav, anchor);
+    }
+  }
+
+  const dailyTarget = dailyDevotionSection
+    || document.getElementById("dailyDevotionSection")
+    || document.querySelector(".daily-word-card");
+  const storyTarget = storyPathHeading ? storyPathHeading.closest("section") : null;
+  const badgeTarget = document.getElementById("badgeCollectionHeading")
+    ? document.getElementById("badgeCollectionHeading").closest("section")
+    : null;
+  const hallTarget = hallOfFaithSection || document.getElementById("hallOfFaithSection");
+
+  const dailyBtn = hubQuickNav.querySelector("#jumpDailyDevotionBtn");
+  const storyBtn = hubQuickNav.querySelector("#jumpStoryPathBtn");
+  const badgeBtn = hubQuickNav.querySelector("#jumpBadgesBtn");
+  const hallBtn = hubQuickNav.querySelector("#jumpHallBtn");
+
+  if (dailyBtn) dailyBtn.onclick = () => smoothScrollToNode(dailyTarget || storyTarget || progressSection);
+  if (storyBtn) storyBtn.onclick = () => smoothScrollToNode(storyTarget || progressSection);
+  if (badgeBtn) badgeBtn.onclick = () => smoothScrollToNode(badgeTarget || hallTarget || storyTarget || progressSection);
+  if (hallBtn) hallBtn.onclick = () => smoothScrollToNode(hallTarget || badgeTarget || storyTarget || progressSection);
+}
+
 function ensureHubSectionOrder() {
   const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
   const storySection = storyPathHeading ? storyPathHeading.closest("section") : null;
@@ -7760,6 +7933,7 @@ function renderExperienceSections() {
   renderDailyDevotionQuest();
   renderWeeklyChallenge();
   renderDesktopControls();
+  ensureHubQuickNav();
   ensureHubSectionOrder();
 }
 
@@ -8804,11 +8978,12 @@ function updateOverlayLock() {
   const shareOpen = shareOverlay && !shareOverlay.classList.contains("hidden");
   const shieldOpen = badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden");
   const eraCardOpen = eraCardPreviewOverlay && !eraCardPreviewOverlay.classList.contains("hidden");
+  const shareTextOpen = shareTextOverlay && !shareTextOverlay.classList.contains("hidden");
   const eraFinaleOpen = eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden");
   const finalOpen = finalOverlay && !finalOverlay.classList.contains("hidden");
   const creditsOpen = creditsOverlay && !creditsOverlay.classList.contains("hidden");
   const theaterOpen = storyTheaterOverlay && !storyTheaterOverlay.classList.contains("hidden");
-  document.body.classList.toggle("has-overlay", Boolean(activityOpen || welcomeOpen || shareOpen || shieldOpen || eraCardOpen || eraFinaleOpen || finalOpen || creditsOpen || theaterOpen));
+  document.body.classList.toggle("has-overlay", Boolean(activityOpen || welcomeOpen || shareOpen || shieldOpen || eraCardOpen || shareTextOpen || eraFinaleOpen || finalOpen || creditsOpen || theaterOpen));
 
 }
 
@@ -8823,7 +8998,7 @@ function dismissWelcome(event) {
   updateOverlayLock();
   pendingStoryRecapReason = "";
   disarmStoryRecapRetry();
-  playPreferredStoryRecap({ reason: "welcome-dismiss", force: true }).then((played) => {
+  playPreferredStoryRecap({ reason: "welcome-dismiss", force: true, ignoreUserActivation: true }).then((played) => {
     if (played) return;
     scheduleStoryReturnRecap("welcome-dismiss", 180);
   });
@@ -10051,6 +10226,30 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
   }
 
   if (kind === "fact") {
+    const forcedAbramFactLevel22 = !focus
+      && theme && theme.name === "Call of Abram"
+      && meta && meta.stage === 3
+      && meta.level === 22
+        ? {
+            era: theme.era,
+            parts: ["I", "am", "Yahweh", "who", "brought", "you", "out", "of", "Ur"],
+            sourceRef: "Genesis 15:7"
+          }
+        : null;
+
+    if (forcedAbramFactLevel22) {
+      const factMode = buildFactActivity(forcedAbramFactLevel22, theme.era, difficulty);
+      return {
+        type: "fact",
+        prompt: stagePrompt(meta, t("buildFactOrder"), 0),
+        answerParts: factMode.answerParts,
+        prefilled: factMode.prefilled,
+        parts: factMode.pool,
+        sourceRef: forcedAbramFactLevel22.sourceRef,
+        historySourceRef: historyKeyForItem(forcedAbramFactLevel22, "fact")
+      };
+    }
+
     const forcedAbramFactQuestion = !focus
       && difficulty.id === "medium"
       && theme && theme.name === "Call of Abram"
@@ -13816,7 +14015,7 @@ function handleStoryRecapRetry() {
   window.setTimeout(() => {
     if (!pendingStoryRecapReason) return;
     const reason = pendingStoryRecapReason;
-    playPreferredStoryRecap({ reason, force: true }).then((spoken) => {
+    playPreferredStoryRecap({ reason, force: true, ignoreUserActivation: true }).then((spoken) => {
       if (spoken) {
         pendingStoryRecapReason = "";
         disarmStoryRecapRetry();
@@ -14039,7 +14238,7 @@ function buildRecordedStoryRecapClips(payload) {
 }
 
 function playRecordedStoryRecap(options = {}) {
-  if (storyRecapNeedsUserActivation()) {
+  if (!options.ignoreUserActivation && storyRecapNeedsUserActivation()) {
     queueStoryRecapRetry(options.reason || "return");
     return Promise.resolve(false);
   }
@@ -14093,6 +14292,9 @@ function playRecordedStoryRecap(options = {}) {
       index += 1;
       const audio = new Audio(src);
       audio.preload = "auto";
+      audio.muted = false;
+      audio.volume = 1;
+      audio.currentTime = 0;
       storyRecapAudio = audio;
 
       audio.onended = () => {
@@ -14157,7 +14359,7 @@ function playPreferredStoryRecap(options = {}) {
 }
 
 function speakStoryReturnRecap(options = {}) {
-  if (storyRecapNeedsUserActivation()) {
+  if (!options.ignoreUserActivation && storyRecapNeedsUserActivation()) {
     queueStoryRecapRetry(options.reason || "return");
     return false;
   }
@@ -14243,7 +14445,7 @@ function playStoryRecapNow() {
   }
   pendingStoryRecapReason = "";
   disarmStoryRecapRetry();
-  playPreferredStoryRecap({ reason: "manual-button", force: true }).then((spoken) => {
+  playPreferredStoryRecap({ reason: "manual-button", force: true, ignoreUserActivation: true }).then((spoken) => {
     if (spoken) {
       showFeatureMoment(
         challengeCopy("Welcome recap playing", "Reproduciendo resumen de bienvenida"),
@@ -14254,7 +14456,7 @@ function playStoryRecapNow() {
     }
     showFeatureMoment(
       challengeCopy("Recap unavailable", "Resumen no disponible"),
-      challengeCopy("If you still hear nothing, check your browser sound and speech permissions, then tap this button again.", "Si aun no escuchas nada, revisa el sonido y los permisos de voz del navegador, y luego toca este boton otra vez."),
+      challengeCopy("If you still hear nothing, check device volume and silent mode, then tap again.", "Si aun no escuchas nada, revisa el volumen y el modo silencio, y toca este boton otra vez."),
       { icon: "⚠️", sfx: null, durationMs: 2600 }
     );
   });
