@@ -5619,6 +5619,19 @@ function reviewDueEntries(limit = 5) {
 
 function smoothScrollToNode(node) {
   if (!node) return;
+  const findScrollParent = (el) => {
+    let parent = el ? el.parentElement : null;
+    while (parent) {
+      const style = window.getComputedStyle(parent);
+      const overflowY = style.overflowY || style.overflow;
+      if ((overflowY === "auto" || overflowY === "scroll") && parent.scrollHeight > parent.clientHeight + 8) {
+        return parent;
+      }
+      parent = parent.parentElement;
+    }
+    return document.scrollingElement || document.documentElement || document.body;
+  };
+
   try {
     node.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
   } catch (_) {
@@ -5626,6 +5639,13 @@ function smoothScrollToNode(node) {
   }
   try {
     const rect = node.getBoundingClientRect();
+    const container = findScrollParent(node);
+    if (container && container !== document.body && container !== document.documentElement && container !== document.scrollingElement) {
+      const containerRect = container.getBoundingClientRect();
+      const offset = rect.top - containerRect.top + container.scrollTop - 12;
+      container.scrollTo({ top: Math.max(0, offset), behavior: "smooth" });
+      return;
+    }
     const top = rect.top + (window.pageYOffset || document.documentElement.scrollTop || 0) - 12;
     window.scrollTo({ top, behavior: "smooth" });
   } catch (_) {
@@ -7840,6 +7860,7 @@ function ensureHubQuickNav() {
         `    <p class="meta">${challengeCopy("Jump to the section you need.", "Ve rapido a la seccion que necesitas.")}</p>`,
         "  </div>",
         '  <div class="hub-quick-actions">',
+        `    <button id="jumpTopHubBtn" class="ghost-btn" type="button">${challengeCopy("Top of Hub", "Inicio del Hub")}</button>`,
         `    <button id="jumpDailyDevotionBtn" class="ghost-btn" type="button">${challengeCopy("Daily Devotion", "Devocional diario")}</button>`,
         `    <button id="jumpStoryPathBtn" class="ghost-btn" type="button">${challengeCopy("Story Path", "Camino de historia")}</button>`,
         `    <button id="jumpBadgesBtn" class="ghost-btn" type="button">${challengeCopy("Badge Collection", "Coleccion de insignias")}</button>`,
@@ -7852,20 +7873,22 @@ function ensureHubQuickNav() {
     }
   }
 
-  const dailyTarget = dailyDevotionSection
-    || document.getElementById("dailyDevotionSection")
-    || document.querySelector(".daily-word-card");
+  const dailyTarget = document.querySelector(".daily-word-card")
+    || dailyDevotionSection
+    || document.getElementById("dailyDevotionSection");
   const storyTarget = storyPathHeading ? storyPathHeading.closest("section") : null;
   const badgeTarget = document.getElementById("badgeCollectionHeading")
     ? document.getElementById("badgeCollectionHeading").closest("section")
     : null;
   const hallTarget = hallOfFaithSection || document.getElementById("hallOfFaithSection");
 
+  const topBtn = hubQuickNav.querySelector("#jumpTopHubBtn");
   const dailyBtn = hubQuickNav.querySelector("#jumpDailyDevotionBtn");
   const storyBtn = hubQuickNav.querySelector("#jumpStoryPathBtn");
   const badgeBtn = hubQuickNav.querySelector("#jumpBadgesBtn");
   const hallBtn = hubQuickNav.querySelector("#jumpHallBtn");
 
+  if (topBtn) topBtn.onclick = () => smoothScrollToNode(gameDashboard || appRoot || progressSection);
   if (dailyBtn) dailyBtn.onclick = () => smoothScrollToNode(dailyTarget || storyTarget || progressSection);
   if (storyBtn) storyBtn.onclick = () => smoothScrollToNode(storyTarget || progressSection);
   if (badgeBtn) badgeBtn.onclick = () => smoothScrollToNode(badgeTarget || hallTarget || storyTarget || progressSection);
@@ -13143,6 +13166,25 @@ function primeAudioAuto() {
   ensureMusicHeartbeat();
 }
 
+let firstInteractionRecapArmed = false;
+function armFirstInteractionRecap() {
+  if (firstInteractionRecapArmed) return;
+  firstInteractionRecapArmed = true;
+  const handler = () => {
+    if (!firstInteractionRecapArmed) return;
+    firstInteractionRecapArmed = false;
+    AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
+      document.removeEventListener(eventName, handler, true);
+    });
+    primeAudioAuto();
+    if (state.audio.music && shouldKeepHubMusicAlive()) startMusicLoop();
+    playPreferredStoryRecap({ reason: "first-interaction", force: true, ignoreUserActivation: true });
+  };
+  AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
+    document.addEventListener(eventName, handler, true);
+  });
+}
+
 function buildEraSections() {
   const eraSections = [];
   stages.forEach((meta, index) => {
@@ -14352,10 +14394,9 @@ function playRecordedStoryRecap(options = {}) {
 }
 
 function playPreferredStoryRecap(options = {}) {
-  return playRecordedStoryRecap(options).then((played) => {
-    if (played) return true;
-    return speakStoryReturnRecap(options);
-  });
+  const spoken = speakStoryReturnRecap(options);
+  if (spoken) return Promise.resolve(true);
+  return playRecordedStoryRecap(options);
 }
 
 function speakStoryReturnRecap(options = {}) {
@@ -20659,6 +20700,7 @@ initDesktopControlBindings();
 render();
 
 updateAudioState();
+armFirstInteractionRecap();
 
 window.setTimeout(primeAudioAuto, 0);
 window.setTimeout(primeAudioAuto, 220);
