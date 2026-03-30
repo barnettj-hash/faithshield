@@ -4017,6 +4017,8 @@ let shareTextTitle = null;
 let shareTextArea = null;
 let shareTextCopyBtn = null;
 let shareTextCloseBtn = null;
+let recapIndicator = null;
+let recapIndicatorLabel = null;
 let dailyCalendarSection = null;
 let dailyCalendarSummary = null;
 let dailyCalendarEvent = null;
@@ -6464,6 +6466,11 @@ function ensurePremiumHubStyles() {
     ".hub-quick-nav{margin-top:16px;}",
     ".hub-quick-actions{display:flex;flex-wrap:wrap;gap:10px;}",
     ".hub-quick-actions .ghost-btn{min-width:160px;justify-content:center;}",
+    ".recap-indicator{position:fixed;top:14px;right:14px;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(12,18,30,.92);border:1px solid rgba(229,184,93,.35);color:#f8ecd6;font-weight:700;font-size:.78rem;letter-spacing:.02em;opacity:0;transform:translateY(-6px);transition:opacity 220ms ease,transform 240ms ease;z-index:120;pointer-events:none;}",
+    ".recap-indicator.show{opacity:1;transform:translateY(0);}",
+    ".recap-indicator .pulse{width:10px;height:10px;border-radius:50%;background:#e5b85d;box-shadow:0 0 0 rgba(229,184,93,.6);animation:recapPulse 1.2s infinite;}",
+    ".recap-indicator .label{white-space:nowrap;}",
+    "@keyframes recapPulse{0%{box-shadow:0 0 0 0 rgba(229,184,93,.6);}70%{box-shadow:0 0 0 8px rgba(229,184,93,0);}100%{box-shadow:0 0 0 0 rgba(229,184,93,0);}}",
     ".hall-badge-strip{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));}",
     ".hall-badge-pill{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(229,184,93,.16);min-height:108px;text-align:center;}",
     ".hall-badge-pill.locked{opacity:.38;filter:saturate(.4);}",
@@ -6488,7 +6495,7 @@ function ensurePremiumHubStyles() {
     ".era-preview-card{max-width:min(94vw,1020px)!important;}",
     ".era-preview-card img{display:block;width:100%;height:auto;border-radius:18px;border:1px solid rgba(229,184,93,.26);box-shadow:0 18px 40px rgba(0,0,0,.22);margin:16px 0 18px;}",
     ".era-preview-card .share-actions{justify-content:center;}",
-    "@media (max-width:760px){.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.calendar-weekday{display:none;}.hub-quick-actions .ghost-btn{width:100%;}}"
+    "@media (max-width:760px){.calendar-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.calendar-weekday{display:none;}.hub-quick-actions .ghost-btn{width:100%;}.recap-indicator{top:10px;right:10px;}}"
   ].join("");
   document.head.appendChild(style);
 }
@@ -6580,6 +6587,29 @@ function closeShareTextOverlay() {
   if (!shareTextOverlay) return;
   shareTextOverlay.classList.add("hidden");
   updateOverlayLock();
+}
+
+function ensureRecapIndicator() {
+  if (recapIndicator && recapIndicator.isConnected) return;
+  if (!document.body) return;
+  recapIndicator = document.createElement("div");
+  recapIndicator.id = "recapIndicator";
+  recapIndicator.className = "recap-indicator";
+  recapIndicator.innerHTML = [
+    '<span class="pulse"></span>',
+    `<span class="label">${challengeCopy("Recap", "Resumen")}</span>`
+  ].join("");
+  document.body.appendChild(recapIndicator);
+  recapIndicatorLabel = recapIndicator.querySelector(".label");
+}
+
+function setRecapIndicator(active, label = "") {
+  ensureRecapIndicator();
+  if (!recapIndicator) return;
+  if (recapIndicatorLabel) {
+    recapIndicatorLabel.textContent = label || challengeCopy("Recap", "Resumen");
+  }
+  recapIndicator.classList.toggle("show", Boolean(active));
 }
 
 function openShareTextOverlay(title, text) {
@@ -7966,6 +7996,7 @@ function ensureHubSectionOrder() {
 
 function renderExperienceSections() {
   ensureCorePracticePlacement();
+  ensureRecapIndicator();
   renderDailyChallengeCalendar();
   renderHallOfFaith();
   renderCampaignMap();
@@ -14028,6 +14059,7 @@ function clearStoryRecapTimer() {
 
 function stopStoryRecap() {
   clearStoryRecapTimer();
+  setRecapIndicator(false);
   storyRecapAudioToken += 1;
   if (storyRecapAudio) {
     try {
@@ -14336,6 +14368,7 @@ function playRecordedStoryRecap(options = {}) {
     const clearActive = () => {
       if (storyRecapAudioToken !== token) return;
       storyRecapAudio = null;
+      setRecapIndicator(false);
     };
 
     const playNext = () => {
@@ -14362,11 +14395,12 @@ function playRecordedStoryRecap(options = {}) {
         playNext();
       };
       audio.onerror = () => {
-        if (!started && index <= 1) {
-          clearActive();
-          finishResolve(false);
-          return;
-        }
+    if (!started && index <= 1) {
+      clearActive();
+      setRecapIndicator(false);
+      finishResolve(false);
+      return;
+    }
         playNext();
       };
 
@@ -14376,6 +14410,7 @@ function playRecordedStoryRecap(options = {}) {
           attempt.then(() => {
             if (!started) {
               started = true;
+              setRecapIndicator(true, challengeCopy("Recap playing", "Resumen reproduciendo"));
               lastStoryRecapFingerprint = payload.fingerprint;
               lastStoryRecapAt = Date.now();
               pendingStoryRecapReason = "";
@@ -14392,6 +14427,7 @@ function playRecordedStoryRecap(options = {}) {
           });
         } else if (!started) {
           started = true;
+          setRecapIndicator(true, challengeCopy("Recap playing", "Resumen reproduciendo"));
           lastStoryRecapFingerprint = payload.fingerprint;
           lastStoryRecapAt = Date.now();
           pendingStoryRecapReason = "";
@@ -14401,6 +14437,7 @@ function playRecordedStoryRecap(options = {}) {
       } catch (_) {
         if (!started && index <= 1) {
           clearActive();
+          setRecapIndicator(false);
           finishResolve(false);
           return;
         }
@@ -14453,6 +14490,7 @@ function speakStoryReturnRecap(options = {}) {
 
   const finish = () => {
     if (storyRecapUtterance === utterance) storyRecapUtterance = null;
+    setRecapIndicator(false);
   };
   utterance.onend = finish;
   utterance.onerror = finish;
@@ -14464,6 +14502,7 @@ function speakStoryReturnRecap(options = {}) {
       return;
     }
     try {
+      setRecapIndicator(true, challengeCopy("Recap playing", "Resumen reproduciendo"));
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
       lastStoryRecapFingerprint = payload.fingerprint;
