@@ -6466,7 +6466,7 @@ function ensurePremiumHubStyles() {
     ".hub-quick-nav{margin-top:16px;}",
     ".hub-quick-actions{display:flex;flex-wrap:wrap;gap:10px;}",
     ".hub-quick-actions .ghost-btn{min-width:160px;justify-content:center;}",
-    ".recap-indicator{position:fixed;top:14px;right:14px;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(12,18,30,.92);border:1px solid rgba(229,184,93,.35);color:#f8ecd6;font-weight:700;font-size:.78rem;letter-spacing:.02em;opacity:0;transform:translateY(-6px);transition:opacity 220ms ease,transform 240ms ease;z-index:120;pointer-events:none;}",
+    ".recap-indicator{position:fixed;top:14px;right:14px;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(12,18,30,.92);border:1px solid rgba(229,184,93,.35);color:#f8ecd6;font-weight:700;font-size:.78rem;letter-spacing:.02em;opacity:0;transform:translateY(-6px);transition:opacity 220ms ease,transform 240ms ease;z-index:120;pointer-events:auto;cursor:pointer;}",
     ".recap-indicator.show{opacity:1;transform:translateY(0);}",
     ".recap-indicator .pulse{width:10px;height:10px;border-radius:50%;background:#e5b85d;box-shadow:0 0 0 rgba(229,184,93,.6);animation:recapPulse 1.2s infinite;}",
     ".recap-indicator .label{white-space:nowrap;}",
@@ -6595,12 +6595,22 @@ function ensureRecapIndicator() {
   recapIndicator = document.createElement("div");
   recapIndicator.id = "recapIndicator";
   recapIndicator.className = "recap-indicator";
+  recapIndicator.setAttribute("role", "button");
+  recapIndicator.setAttribute("tabindex", "0");
+  recapIndicator.setAttribute("aria-label", challengeCopy("Replay welcome recap", "Reproducir resumen de bienvenida"));
   recapIndicator.innerHTML = [
     '<span class="pulse"></span>',
     `<span class="label">${challengeCopy("Recap", "Resumen")}</span>`
   ].join("");
   document.body.appendChild(recapIndicator);
   recapIndicatorLabel = recapIndicator.querySelector(".label");
+  recapIndicator.addEventListener("click", () => playStoryRecapNow());
+  recapIndicator.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      playStoryRecapNow();
+    }
+  });
 }
 
 function setRecapIndicator(active, label = "") {
