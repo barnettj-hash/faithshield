@@ -6487,6 +6487,7 @@ function ensurePremiumHubStyles() {
     ".hub-quick-nav{margin-top:16px;}",
     ".hub-quick-actions{display:flex;flex-wrap:wrap;gap:10px;}",
     ".hub-quick-actions .ghost-btn{min-width:160px;justify-content:center;}",
+    ".shield-note{margin-top:0.16rem;font-size:.62rem;color:rgba(248,236,214,.72);font-weight:600;}",
     ".recap-indicator{position:fixed;top:14px;right:14px;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(12,18,30,.92);border:1px solid rgba(229,184,93,.35);color:#f8ecd6;font-weight:700;font-size:.78rem;letter-spacing:.02em;opacity:0;transform:translateY(-6px);transition:opacity 220ms ease,transform 240ms ease;z-index:120;pointer-events:auto;cursor:pointer;}",
     ".recap-indicator.show{opacity:1;transform:translateY(0);}",
     ".recap-indicator .pulse{width:10px;height:10px;border-radius:50%;background:#e5b85d;box-shadow:0 0 0 rgba(229,184,93,.6);animation:recapPulse 1.2s infinite;}",
@@ -8334,6 +8335,7 @@ function renderBadgeShield() {
 
   badgeCatalog.forEach((badge) => {
     const unlocked = state.badges.includes(badge.id);
+    const eraLocked = !unlocked && badge.era && !hasReachedEraForState(state, badge.era);
 
     const cell = document.createElement("article");
     cell.className = `shield-badge ${unlocked ? "unlocked" : "locked"}`;
@@ -8349,6 +8351,15 @@ function renderBadgeShield() {
     name.textContent = unlocked ? badge.name : "Locked";
 
     cell.append(symbol, name);
+    if (eraLocked) {
+      const note = document.createElement("span");
+      note.className = "shield-note";
+      note.textContent = challengeCopy(
+        `Unlocks in ${formatEraLabel(badge.era)}`,
+        `Se desbloquea en ${formatEraLabel(badge.era)}`
+      );
+      cell.appendChild(note);
+    }
     badgeShieldGrid.appendChild(cell);
   });
 }
