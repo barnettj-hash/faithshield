@@ -6618,10 +6618,10 @@ function ensureRecapIndicator() {
   recapIndicator.className = "recap-indicator";
   recapIndicator.setAttribute("role", "button");
   recapIndicator.setAttribute("tabindex", "0");
-  recapIndicator.setAttribute("aria-label", challengeCopy("Replay welcome recap", "Reproducir resumen de bienvenida"));
+  recapIndicator.setAttribute("aria-label", challengeCopy("Replay greeting and badge recap", "Reproducir saludo y resumen de insignias"));
   recapIndicator.innerHTML = [
     '<span class="pulse"></span>',
-    `<span class="label">${challengeCopy("Recap", "Resumen")}</span>`
+    `<span class="label">${challengeCopy("Recap + Badges", "Resumen + insignias")}</span>`
   ].join("");
   document.body.appendChild(recapIndicator);
   recapIndicatorLabel = recapIndicator.querySelector(".label");
@@ -6638,7 +6638,7 @@ function setRecapIndicator(active, label = "") {
   ensureRecapIndicator();
   if (!recapIndicator) return;
   if (recapIndicatorLabel) {
-    recapIndicatorLabel.textContent = label || challengeCopy("Recap", "Resumen");
+    recapIndicatorLabel.textContent = label || challengeCopy("Recap + Badges", "Resumen + insignias");
   }
   recapIndicator.classList.toggle("show", Boolean(active));
 }
@@ -14574,7 +14574,7 @@ function playStoryRecapNow() {
     // Ignore resume failures and rely on direct speak.
   }
   showFeatureMoment(
-    challengeCopy("Welcome recap starting", "Iniciando resumen de bienvenida"),
+    challengeCopy("Greeting + badge recap starting", "Iniciando saludo y resumen"),
     challengeCopy("Audio will begin if your device allows it.", "El audio comenzara si tu dispositivo lo permite."),
     { icon: "🔊", durationMs: 1600 }
   );
