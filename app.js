@@ -8514,7 +8514,7 @@ function speakBadgePraise(badge) {
   const line = `Good Job, for earning ${badgeName}.`;
   stopStoryRecap();
   const utterance = new SpeechSynthesisUtterance(line);
-  const voice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
+  const voice = pickMaleNarrationVoice(state.language) || pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
 
   if (voice) {
     utterance.voice = voice;
@@ -14060,6 +14060,36 @@ function pickPremiumNarrationVoice(language = "en") {
   return ranked.length ? ranked[0].voice : null;
 }
 
+function pickMaleNarrationVoice(language = "en") {
+  if (!("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+
+  const wantsSpanish = String(language || "").toLowerCase().startsWith("es");
+  const langPattern = wantsSpanish ? /^es[-_]/i : /^en[-_]/i;
+  const malePreferred = wantsSpanish
+    ? /jorge|diego|carlos|jordi|premium|enhanced|neural|siri/i
+    : /reed|evan|john|daniel|alex|aaron|fred|nathan|tom|premium|enhanced|neural|siri/i;
+
+  const localVoices = voices.filter((voice) => langPattern.test(voice.lang));
+  const pool = localVoices.length ? localVoices : voices;
+  const ranked = pool
+    .map((voice) => {
+      let score = 0;
+      if (langPattern.test(voice.lang)) score += 35;
+      if (wantsSpanish && /^es[-_]ES$/i.test(voice.lang)) score += 18;
+      if (!wantsSpanish && /^en[-_]US$/i.test(voice.lang)) score += 18;
+      if (malePreferred.test(voice.name)) score += 80;
+      if (/premium|enhanced|neural|siri/i.test(voice.name)) score += 20;
+      if (voice.localService) score += 6;
+      if (voice.default) score += 3;
+      return { voice, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  return ranked.length ? ranked[0].voice : null;
+}
+
 function pickNarrationVoice() {
   if (!("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices() || [];
@@ -14527,7 +14557,7 @@ function playVoiceTest() {
       "Prueba de voz de FAITHSHIELD. Bienvenido de nuevo. Tu voz de saludo esta lista."
     )
   );
-  const voice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
+  const voice = pickMaleNarrationVoice(state.language) || pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
   if (voice) {
     utterance.voice = voice;
     utterance.lang = voice.lang || "en-US";
@@ -14594,7 +14624,7 @@ function speakStoryReturnRecap(options = {}) {
 
   stopStoryRecap();
   const utterance = new SpeechSynthesisUtterance(payload.text);
-  const voice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
+  const voice = pickMaleNarrationVoice(state.language) || pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
   if (voice) {
     utterance.voice = voice;
     utterance.lang = voice.lang || "en-US";
