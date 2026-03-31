@@ -4000,6 +4000,7 @@ let dailyDevotionPrompt = null;
 let dailyDevotionAction = null;
 let dailyDevotionReflection = null;
 let playStoryRecapBtn = null;
+let testVoiceBtn = null;
 let completeDevotionChallengeBtn = null;
 let completeDevotionActionBtn = null;
 let saveDevotionReflectionBtn = null;
@@ -7307,6 +7308,7 @@ function ensureExperienceSections() {
         '<textarea id="dailyDevotionReflection" class="journal-input" rows="3" placeholder="One short reflection for today"></textarea>',
         '<div class="feature-actions">',
         `  <button id="playStoryRecapBtn" class="ghost-btn" type="button">${challengeCopy("Play Welcome Recap", "Reproducir resumen de bienvenida")}</button>`,
+        `  <button id="testVoiceBtn" class="ghost-btn" type="button">${challengeCopy("Test Voice", "Probar voz")}</button>`,
         '  <button id="completeDevotionChallengeBtn" class="ghost-btn" type="button">Complete Daily Challenge</button>',
         '  <button id="completeDevotionActionBtn" class="ghost-btn" type="button">Complete Practical Action</button>',
         '  <button id="saveDevotionReflectionBtn" class="ghost-btn" type="button">Save Reflection</button>',
@@ -7330,6 +7332,7 @@ function ensureExperienceSections() {
     dailyDevotionAction = dailyDevotionSection.querySelector("#dailyDevotionAction");
     dailyDevotionReflection = dailyDevotionSection.querySelector("#dailyDevotionReflection");
     playStoryRecapBtn = dailyDevotionSection.querySelector("#playStoryRecapBtn");
+    testVoiceBtn = dailyDevotionSection.querySelector("#testVoiceBtn");
     completeDevotionChallengeBtn = dailyDevotionSection.querySelector("#completeDevotionChallengeBtn");
     completeDevotionActionBtn = dailyDevotionSection.querySelector("#completeDevotionActionBtn");
     saveDevotionReflectionBtn = dailyDevotionSection.querySelector("#saveDevotionReflectionBtn");
@@ -7340,6 +7343,11 @@ function ensureExperienceSections() {
     if (playStoryRecapBtn) {
       playStoryRecapBtn.onclick = () => {
         playStoryRecapNow();
+      };
+    }
+    if (testVoiceBtn) {
+      testVoiceBtn.onclick = () => {
+        playVoiceTest();
       };
     }
     if (completeDevotionChallengeBtn) {
@@ -14293,11 +14301,11 @@ function storyRecapNeedsUserActivation() {
   }
 }
 
-function canSpeakStoryRecap() {
+function canSpeakStoryRecap(currentUtterance = null) {
   if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") return false;
   if (document.visibilityState && document.visibilityState !== "visible") return false;
   if (state.activeStage) return false;
-  if (storyRecapUtterance || storyRecapAudio || storyNarrationUtterance || storyNarrationAudio || verseAudioUtterance || badgePraiseUtterance) return false;
+  if ((storyRecapUtterance && storyRecapUtterance !== currentUtterance) || storyRecapAudio || storyNarrationUtterance || storyNarrationAudio || verseAudioUtterance || badgePraiseUtterance) return false;
   if (welcomeOverlay && !welcomeOverlay.classList.contains("hidden")) return false;
   if (activityOverlay && !activityOverlay.classList.contains("hidden")) return false;
   if (shareOverlay && !shareOverlay.classList.contains("hidden")) return false;
@@ -14499,6 +14507,72 @@ function playPreferredStoryRecap(options = {}) {
   return playRecordedStoryRecap(options);
 }
 
+function playVoiceTest() {
+  if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
+    showFeatureMoment(
+      challengeCopy("Voice unavailable", "Voz no disponible"),
+      challengeCopy("This browser or device does not support voice playback here.", "Este navegador o dispositivo no admite reproduccion de voz aqui."),
+      { icon: "⚠️", sfx: null, durationMs: 2200 }
+    );
+    return false;
+  }
+
+  stopStoryRecap();
+  stopVerseAudio();
+  stopStoryNarration();
+
+  const utterance = new SpeechSynthesisUtterance(
+    challengeCopy(
+      "FAITHSHIELD voice test. Welcome back. Your greeting voice is ready.",
+      "Prueba de voz de FAITHSHIELD. Bienvenido de nuevo. Tu voz de saludo esta lista."
+    )
+  );
+  const voice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang || "en-US";
+  } else {
+    utterance.lang = state.language === "es" ? "es-ES" : "en-US";
+  }
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  utterance.rate = state.language === "es" ? 0.9 : 0.88;
+  utterance.onstart = () => {
+    setRecapIndicator(true, challengeCopy("Voice test", "Prueba de voz"));
+    showFeatureMoment(
+      challengeCopy("Voice test playing", "Prueba de voz en reproduccion"),
+      challengeCopy("You should hear the greeting voice now.", "Ahora deberias escuchar la voz del saludo."),
+      { icon: "🔊", durationMs: 1500 }
+    );
+  };
+  utterance.onend = () => {
+    setRecapIndicator(false);
+  };
+  utterance.onerror = () => {
+    setRecapIndicator(false);
+    showFeatureMoment(
+      challengeCopy("Voice test failed", "Fallo la prueba de voz"),
+      challengeCopy("If you hear nothing, check device volume and silent mode.", "Si no escuchas nada, revisa el volumen y el modo silencio del dispositivo."),
+      { icon: "⚠️", sfx: null, durationMs: 2400 }
+    );
+  };
+
+  try {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+    window.speechSynthesis.speak(utterance);
+    return true;
+  } catch (_) {
+    setRecapIndicator(false);
+    showFeatureMoment(
+      challengeCopy("Voice test failed", "Fallo la prueba de voz"),
+      challengeCopy("This device blocked voice playback for now. Tap again after interacting with the page.", "Este dispositivo bloqueo la reproduccion de voz por ahora. Toca otra vez despues de interactuar con la pagina."),
+      { icon: "⚠️", sfx: null, durationMs: 2400 }
+    );
+    return false;
+  }
+}
+
 function speakStoryReturnRecap(options = {}) {
   if (!options.ignoreUserActivation && storyRecapNeedsUserActivation()) {
     queueStoryRecapRetry(options.reason || "return");
@@ -14531,28 +14605,52 @@ function speakStoryReturnRecap(options = {}) {
   utterance.volume = 1;
   utterance.rate = state.language === "es" ? 0.9 : 0.88;
   storyRecapUtterance = utterance;
+  let speechStarted = false;
+  let fallbackTimer = 0;
+
+  const clearFallbackTimer = () => {
+    if (!fallbackTimer) return;
+    window.clearTimeout(fallbackTimer);
+    fallbackTimer = 0;
+  };
 
   const finish = () => {
+    clearFallbackTimer();
     if (storyRecapUtterance === utterance) storyRecapUtterance = null;
     setRecapIndicator(false);
+  };
+  utterance.onstart = () => {
+    speechStarted = true;
+    clearFallbackTimer();
+    setRecapIndicator(true, challengeCopy("Recap playing", "Resumen reproduciendo"));
+    lastStoryRecapFingerprint = payload.fingerprint;
+    lastStoryRecapAt = Date.now();
+    pendingStoryRecapReason = "";
+    disarmStoryRecapRetry();
   };
   utterance.onend = finish;
   utterance.onerror = finish;
 
   const speak = () => {
-    if (!canSpeakStoryRecap()) {
+    if (!canSpeakStoryRecap(utterance)) {
       queueStoryRecapRetry(options.reason || "return");
       finish();
       return;
     }
     try {
-      setRecapIndicator(true, challengeCopy("Recap playing", "Resumen reproduciendo"));
       window.speechSynthesis.cancel();
+      window.speechSynthesis.resume();
       window.speechSynthesis.speak(utterance);
-      lastStoryRecapFingerprint = payload.fingerprint;
-      lastStoryRecapAt = Date.now();
-      pendingStoryRecapReason = "";
-      disarmStoryRecapRetry();
+      clearFallbackTimer();
+      fallbackTimer = window.setTimeout(() => {
+        if (speechStarted || storyRecapUtterance !== utterance) return;
+        finish();
+        playRecordedStoryRecap({
+          ...options,
+          force: true,
+          ignoreUserActivation: true
+        });
+      }, 900);
     } catch (_) {
       queueStoryRecapRetry(options.reason || "return");
       finish();
