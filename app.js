@@ -2239,45 +2239,45 @@ STAGE_FIVE_THEMED_POOLS = Object.freeze({
 
 
 const badgeSymbolThemes = [
-  { icon: "🌳", name: "Tree of Life" },
-  { icon: "🌈", name: "Covenant Rainbow" },
-  { icon: "🛶", name: "Noah's Ark" },
-  { icon: "🕊️", name: "Olive Branch" },
-  { icon: "⭐", name: "Abraham's Stars" },
-  { icon: "🪜", name: "Jacob's Ladder" },
-  { icon: "🧥", name: "Joseph's Coat" },
-  { icon: "🔥", name: "Burning Bush" },
-  { icon: "🪵", name: "Moses' Staff" },
-  { icon: "🐑", name: "Passover Lamb" },
-  { icon: "🌊", name: "Red Sea Path" },
-  { icon: "🪨", name: "Stone Tablets" },
-  { icon: "🍞", name: "Manna Basket" },
-  { icon: "⛺", name: "Tabernacle Tent" },
-  { icon: "📯", name: "Jericho Trumpet" },
-  { icon: "⚔️", name: "Gideon's Courage" },
-  { icon: "🌾", name: "Ruth's Harvest" },
-  { icon: "👂", name: "Samuel's Call" },
-  { icon: "👑", name: "Anointed King" },
-  { icon: "🎯", name: "David's Sling" },
-  { icon: "🕯️", name: "Lamp of Wisdom" },
-  { icon: "📜", name: "Covenant Scroll" },
-  { icon: "🏹", name: "Warrior's Aim" },
-  { icon: "🛡️", name: "Valiant Guard" },
-  { icon: "🌟", name: "Faithful Star" },
-  { icon: "🧭", name: "Wilderness Guide" },
-  { icon: "⛰️", name: "Sinai Summit" },
-  { icon: "🧎", name: "Prayer Kneeler" },
-  { icon: "🕊️", name: "Peace Dove" },
-  { icon: "🪙", name: "Treasure Keeper" },
-  { icon: "⏳", name: "Steadfast Watch" },
-  { icon: "🔔", name: "Trumpet Call" },
-  { icon: "📖", name: "Word Bearer" },
-  { icon: "🧡", name: "Covenant Heart" },
-  { icon: "🏺", name: "Jar of Oil" },
-  { icon: "🌿", name: "Branch of Hope" },
-  { icon: "⚓", name: "Anchor of Trust" },
-  { icon: "🪔", name: "Light Keeper" },
-  { icon: "🗡️", name: "Sword of Truth" }
+  { icon: "🌳", name: "Tree of Life", era: "genesis" },
+  { icon: "🌈", name: "Covenant Rainbow", era: "genesis" },
+  { icon: "🛶", name: "Noah's Ark", era: "genesis" },
+  { icon: "🕊️", name: "Olive Branch", era: "genesis" },
+  { icon: "⭐", name: "Abraham's Stars", era: "patriarchs" },
+  { icon: "🪜", name: "Jacob's Ladder", era: "patriarchs" },
+  { icon: "🧥", name: "Joseph's Coat", era: "patriarchs" },
+  { icon: "🔥", name: "Burning Bush", era: "exodus" },
+  { icon: "🪵", name: "Moses' Staff", era: "exodus" },
+  { icon: "🐑", name: "Passover Lamb", era: "exodus" },
+  { icon: "🌊", name: "Red Sea Path", era: "exodus" },
+  { icon: "🪨", name: "Stone Tablets", era: "sinai" },
+  { icon: "🍞", name: "Manna Basket", era: "wilderness" },
+  { icon: "⛺", name: "Tabernacle Tent", era: "wilderness" },
+  { icon: "📯", name: "Jericho Trumpet", era: "conquest" },
+  { icon: "⚔️", name: "Gideon's Courage", era: "judges" },
+  { icon: "🌾", name: "Ruth's Harvest", era: "judges" },
+  { icon: "👂", name: "Samuel's Call", era: "samuel" },
+  { icon: "👑", name: "Anointed King", era: "saul" },
+  { icon: "🎯", name: "David's Sling", era: "david" },
+  { icon: "🕯️", name: "Lamp of Wisdom", era: "david" },
+  { icon: "📜", name: "Covenant Scroll", era: "david" },
+  { icon: "🏹", name: "Warrior's Aim", era: "david" },
+  { icon: "🛡️", name: "Valiant Guard", era: "david" },
+  { icon: "🌟", name: "Faithful Star", era: "david" },
+  { icon: "🧭", name: "Wilderness Guide", era: "wilderness" },
+  { icon: "⛰️", name: "Sinai Summit", era: "sinai" },
+  { icon: "🧎", name: "Prayer Kneeler", era: "david" },
+  { icon: "🕊️", name: "Peace Dove", era: "david" },
+  { icon: "🪙", name: "Treasure Keeper", era: "david" },
+  { icon: "⏳", name: "Steadfast Watch", era: "david" },
+  { icon: "🔔", name: "Trumpet Call", era: "david" },
+  { icon: "📖", name: "Word Bearer", era: "david" },
+  { icon: "🧡", name: "Covenant Heart", era: "david" },
+  { icon: "🏺", name: "Jar of Oil", era: "david" },
+  { icon: "🌿", name: "Branch of Hope", era: "david" },
+  { icon: "⚓", name: "Anchor of Trust", era: "david" },
+  { icon: "🪔", name: "Light Keeper", era: "david" },
+  { icon: "🗡️", name: "Sword of Truth", era: "david" }
 ];
 
 const BADGE_SET_BONUSES = [
@@ -3424,6 +3424,23 @@ function eraOrderList() {
   return Array.from(new Set(timelineThemes.map((theme) => theme.era)));
 }
 
+function eraReachedForState(snapshot) {
+  const unlocked = Math.max(1, Number((snapshot && snapshot.unlocked) || 1));
+  const index = Math.min(Math.max(0, unlocked - 1), stages.length - 1);
+  const meta = stages[index] || stages[0];
+  return meta && meta.theme ? meta.theme.era : (eraOrderList()[0] || "genesis");
+}
+
+function hasReachedEraForState(snapshot, targetEra) {
+  if (!targetEra) return true;
+  const order = eraOrderList();
+  const targetIndex = order.indexOf(targetEra);
+  if (targetIndex < 0) return true;
+  const currentEra = eraReachedForState(snapshot);
+  const currentIndex = order.indexOf(currentEra);
+  return currentIndex >= targetIndex;
+}
+
 function t(key) {
   const langTable = UI_TEXT_BY_LANGUAGE[state.language] || UI_TEXT_BY_LANGUAGE.en;
   return langTable[key] || UI_TEXT_BY_LANGUAGE.en[key] || key;
@@ -4161,7 +4178,11 @@ function buildBadgeCatalog() {
       name: theme.name,
       icon: theme.icon,
       accomplishment,
-      check
+      era: theme.era || null,
+      check: (s) => {
+        if (theme.era && !hasReachedEraForState(s, theme.era)) return false;
+        return check(s);
+      }
     };
   };
 
