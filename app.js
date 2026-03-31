@@ -6488,7 +6488,8 @@ function ensurePremiumHubStyles() {
     ".hub-quick-actions{display:flex;flex-wrap:wrap;gap:10px;}",
     ".hub-quick-actions .ghost-btn{min-width:160px;justify-content:center;}",
     ".shield-note{margin-top:0.16rem;font-size:.62rem;color:rgba(248,236,214,.72);font-weight:600;}",
-    ".recap-indicator{position:fixed;top:14px;right:14px;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(12,18,30,.92);border:1px solid rgba(229,184,93,.35);color:#f8ecd6;font-weight:700;font-size:.78rem;letter-spacing:.02em;opacity:0;transform:translateY(-6px);transition:opacity 220ms ease,transform 240ms ease;z-index:120;pointer-events:auto;cursor:pointer;}",
+    ".recap-indicator{position:fixed;top:14px;right:14px;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(12,18,30,.92);border:1px solid rgba(229,184,93,.35);color:#f8ecd6;font-weight:700;font-size:.78rem;letter-spacing:.02em;opacity:.65;transform:translateY(0);transition:opacity 220ms ease,transform 240ms ease;z-index:120;pointer-events:auto;cursor:pointer;}",
+    ".recap-indicator.idle{opacity:.65;}",
     ".recap-indicator.show{opacity:1;transform:translateY(0);}",
     ".recap-indicator .pulse{width:10px;height:10px;border-radius:50%;background:#e5b85d;box-shadow:0 0 0 rgba(229,184,93,.6);animation:recapPulse 1.2s infinite;}",
     ".recap-indicator .label{white-space:nowrap;}",
@@ -6616,7 +6617,7 @@ function ensureRecapIndicator() {
   if (!document.body) return;
   recapIndicator = document.createElement("div");
   recapIndicator.id = "recapIndicator";
-  recapIndicator.className = "recap-indicator";
+  recapIndicator.className = "recap-indicator idle";
   recapIndicator.setAttribute("role", "button");
   recapIndicator.setAttribute("tabindex", "0");
   recapIndicator.setAttribute("aria-label", challengeCopy("Replay greeting and badge recap", "Reproducir saludo y resumen de insignias"));
@@ -6642,6 +6643,7 @@ function setRecapIndicator(active, label = "") {
     recapIndicatorLabel.textContent = label || challengeCopy("Recap + Badges", "Resumen + insignias");
   }
   recapIndicator.classList.toggle("show", Boolean(active));
+  recapIndicator.classList.toggle("idle", !active);
 }
 
 function openShareTextOverlay(title, text) {
