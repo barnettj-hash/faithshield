@@ -10556,14 +10556,27 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   const referenceKeyForItem = typeof options.referenceKeyForItem === "function"
     ? options.referenceKeyForItem
     : ((item) => primaryReferenceKeyForItem(item));
+  const conceptUsageCounts = options.conceptUsageCounts instanceof Map ? options.conceptUsageCounts : null;
+  const maxConceptUses = Number.isFinite(Number(options.maxConceptUses)) ? Math.max(1, Number(options.maxConceptUses)) : null;
+  const conceptKeyForSelectionItem = typeof options.conceptKeyForItem === "function"
+    ? options.conceptKeyForItem
+    : ((item) => conceptKeyForItem(item));
   const refFiltered = maxRefUses && refUsageCounts
     ? sourceFiltered.filter((item) => {
       const refKey = referenceKeyForItem(item);
       return !refKey || (refUsageCounts.get(refKey) || 0) < maxRefUses;
     })
     : sourceFiltered;
+  const conceptFiltered = maxConceptUses && conceptUsageCounts
+    ? refFiltered.filter((item) => {
+      const conceptKey = conceptKeyForSelectionItem(item);
+      return !conceptKey || (conceptUsageCounts.get(conceptKey) || 0) < maxConceptUses;
+    })
+    : refFiltered;
 
-  const pickPool = usedSources ? (refFiltered.length ? refFiltered : sourceFiltered) : (refFiltered.length ? refFiltered : source);
+  const pickPool = usedSources
+    ? (conceptFiltered.length ? conceptFiltered : (refFiltered.length ? refFiltered : sourceFiltered))
+    : (conceptFiltered.length ? conceptFiltered : (refFiltered.length ? refFiltered : source));
   if (!pickPool.length) return { item: null, reuseCount: 0 };
 
   const historyScope = options.scopeKey || (scopedPool.length ? era : "all");
@@ -10589,6 +10602,9 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
         const aRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(a)) || 0) : 0;
         const bRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(b)) || 0) : 0;
         if (aRefCount !== bRefCount) return aRefCount - bRefCount;
+        const aConceptCount = conceptUsageCounts ? (conceptUsageCounts.get(conceptKeyForSelectionItem(a)) || 0) : 0;
+        const bConceptCount = conceptUsageCounts ? (conceptUsageCounts.get(conceptKeyForSelectionItem(b)) || 0) : 0;
+        if (aConceptCount !== bConceptCount) return aConceptCount - bConceptCount;
         return Math.random() - 0.5;
       });
     choice = rankedUnseen[0] || null;
@@ -10599,6 +10615,9 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
         const aRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(a)) || 0) : 0;
         const bRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(b)) || 0) : 0;
         if (aRefCount !== bRefCount) return aRefCount - bRefCount;
+        const aConceptCount = conceptUsageCounts ? (conceptUsageCounts.get(conceptKeyForSelectionItem(a)) || 0) : 0;
+        const bConceptCount = conceptUsageCounts ? (conceptUsageCounts.get(conceptKeyForSelectionItem(b)) || 0) : 0;
+        if (aConceptCount !== bConceptCount) return aConceptCount - bConceptCount;
         const aCount = counts[itemSignature(a)] || 0;
         const bCount = counts[itemSignature(b)] || 0;
         if (aCount !== bCount) return aCount - bCount;
@@ -10662,6 +10681,11 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
   const referenceKeyForItem = typeof options.referenceKeyForItem === "function"
     ? options.referenceKeyForItem
     : ((item) => primaryReferenceKeyForItem(item));
+  const conceptUsageCounts = options.conceptUsageCounts instanceof Map ? options.conceptUsageCounts : null;
+  const maxConceptUses = Number.isFinite(Number(options.maxConceptUses)) ? Math.max(1, Number(options.maxConceptUses)) : null;
+  const conceptKeyForSelectionItem = typeof options.conceptKeyForItem === "function"
+    ? options.conceptKeyForItem
+    : ((item) => conceptKeyForItem(item));
 
   const filterByReferenceCap = (items) => (!maxRefUses || !refUsageCounts
     ? items
@@ -10669,12 +10693,21 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
       const refKey = referenceKeyForItem(item);
       return !refKey || (refUsageCounts.get(refKey) || 0) < maxRefUses;
     }));
+  const filterByConceptCap = (items) => (!maxConceptUses || !conceptUsageCounts
+    ? items
+    : items.filter((item) => {
+      const conceptKey = conceptKeyForSelectionItem(item);
+      return !conceptKey || (conceptUsageCounts.get(conceptKey) || 0) < maxConceptUses;
+    }));
 
   const buildSelection = (items) => {
     const ranked = shuffled(items).sort((a, b) => {
       const aRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(a)) || 0) : 0;
       const bRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(b)) || 0) : 0;
       if (aRefCount !== bRefCount) return aRefCount - bRefCount;
+      const aConceptCount = conceptUsageCounts ? (conceptUsageCounts.get(conceptKeyForSelectionItem(a)) || 0) : 0;
+      const bConceptCount = conceptUsageCounts ? (conceptUsageCounts.get(conceptKeyForSelectionItem(b)) || 0) : 0;
+      if (aConceptCount !== bConceptCount) return aConceptCount - bConceptCount;
       const aCount = counts[itemSignature(a)] || 0;
       const bCount = counts[itemSignature(b)] || 0;
       if (aCount !== bCount) return aCount - bCount;
@@ -10688,6 +10721,7 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
     const picked = [];
     const seen = new Set();
     const localRefCounts = new Map();
+    const localConceptCounts = new Map();
 
     sourceRanked.forEach((item) => {
       const signature = itemSignature(item);
@@ -10699,6 +10733,13 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
         if (currentRefCount + localRefCount >= maxRefUses) return;
         localRefCounts.set(refKey, localRefCount + 1);
       }
+      const conceptKey = conceptKeyForSelectionItem(item);
+      if (maxConceptUses && conceptUsageCounts && conceptKey) {
+        const currentConceptCount = conceptUsageCounts.get(conceptKey) || 0;
+        const localConceptCount = localConceptCounts.get(conceptKey) || 0;
+        if (currentConceptCount + localConceptCount >= maxConceptUses) return;
+        localConceptCounts.set(conceptKey, localConceptCount + 1);
+      }
       seen.add(signature);
       picked.push(item);
     });
@@ -10706,13 +10747,16 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
     return picked.slice(0, count);
   };
 
-  let candidates = buildSelection(filterByReferenceCap(filterBySource(source)));
+  let candidates = buildSelection(filterByConceptCap(filterByReferenceCap(filterBySource(source))));
 
   if (candidates.length < count && options.allowReuse) {
-    const reusable = shuffled(filterByReferenceCap(filterBySource(source))).sort((a, b) => {
+    const reusable = shuffled(filterByConceptCap(filterByReferenceCap(filterBySource(source)))).sort((a, b) => {
       const aRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(a)) || 0) : 0;
       const bRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(b)) || 0) : 0;
       if (aRefCount !== bRefCount) return aRefCount - bRefCount;
+      const aConceptCount = conceptUsageCounts ? (conceptUsageCounts.get(conceptKeyForSelectionItem(a)) || 0) : 0;
+      const bConceptCount = conceptUsageCounts ? (conceptUsageCounts.get(conceptKeyForSelectionItem(b)) || 0) : 0;
+      if (aConceptCount !== bConceptCount) return aConceptCount - bConceptCount;
       const aCount = counts[itemSignature(a)] || 0;
       const bCount = counts[itemSignature(b)] || 0;
       if (aCount !== bCount) return aCount - bCount;
@@ -11204,11 +11248,52 @@ function primaryReferenceKeyForItem(item) {
   return normalizeSourceRef(item && item.sourceRef);
 }
 
+function conceptValueForItem(item) {
+  if (!item || typeof item !== "object") return "";
+
+  if (Array.isArray(item.answerParts) && item.answerParts.length) {
+    return item.answerParts.map((part) => normalizeSpellingAnswer(part)).filter(Boolean).join(" ");
+  }
+  if (Array.isArray(item.parts) && item.parts.length) {
+    return item.parts.map((part) => normalizeSpellingAnswer(part)).filter(Boolean).join(" ");
+  }
+  if (Array.isArray(item.items) && item.items.length) {
+    return item.items.map((part) => normalizeSpellingAnswer(part)).filter(Boolean).join(" | ");
+  }
+  if (Array.isArray(item.pairs) && item.pairs.length) {
+    return item.pairs.map((pair) => {
+      const left = normalizeSpellingAnswer(pair && pair.left);
+      const right = normalizeQuizAnswerKey(pair && pair.right);
+      return `${left}:${right}`;
+    }).filter(Boolean).join(" | ");
+  }
+  if (typeof item.answer === "string" && item.answer.trim()) {
+    return normalizeQuizAnswerKey(item.answer);
+  }
+  if (typeof item.claim === "string" && item.claim.trim()) {
+    return normalizeQuizAnswerKey(item.claim);
+  }
+  if (typeof item.statement === "string" && item.statement.trim()) {
+    return normalizeQuizAnswerKey(item.statement);
+  }
+  return normalizeQuizAnswerKey(itemSignature(item));
+}
+
+function conceptKeyForItem(item) {
+  const ref = primaryReferenceKeyForItem(item) || normalizeSourceRef(item && item.sourceRef);
+  const concept = conceptValueForItem(item);
+  if (ref && concept) return `${ref}::${concept}`;
+  return concept || ref || itemSignature(item);
+}
+
 function trimDerivedItemsForTheme(theme, bucket, items = []) {
   const rule = theme && THEME_DERIVED_POOL_RULES[theme.name] && THEME_DERIVED_POOL_RULES[theme.name][bucket];
   if (!rule) return items.slice();
 
-  const perRef = Math.max(1, Number(rule.perRef || 1));
+  const strictThemeNoRepeat = Boolean(theme && STRICT_SECTION_NO_REPEAT_THEMES.has(theme.name));
+  const perRef = strictThemeNoRepeat
+    ? 1
+    : Math.max(1, Number(rule.perRef || 1));
   const counts = new Map();
   const trimmed = [];
 
@@ -11255,15 +11340,39 @@ function themeReferenceUsageCountsForDifficulty(difficultyId = state.difficulty,
   return counts;
 }
 
+function themeConceptUsageCounts(theme = null) {
+  const counts = new Map();
+  const plan = theme ? themeReferencePlan(theme) : [];
+
+  Object.values(state.stageActivities || {}).forEach((activity) => {
+    if (!activity || !QUESTION_ACTIVITY_TYPES.has(activity.type)) return;
+    if (theme && !itemMatchesTheme(activity, theme)) return;
+
+    const refKey = primaryReferenceKeyForItem(activity);
+    if (plan.length && refKey && !sourceRefMatchesPlan(refKey, plan)) return;
+
+    const key = conceptKeyForItem(activity);
+    if (!key) return;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+
+  return counts;
+}
+
 function selectionConstraintsForTheme(theme, difficulty, focus = null) {
   if (focus) return {};
   const difficultyId = difficulty && difficulty.id ? difficulty.id : difficulty;
   const rule = themeDifficultyReferenceRule(theme, difficultyId);
   if (!rule) return {};
+  const strictThemeNoRepeat = Boolean(theme && STRICT_SECTION_NO_REPEAT_THEMES.has(theme.name));
   return {
-    maxRefUses: Math.max(1, Number(rule.perRef || 1)),
+    maxRefUses: strictThemeNoRepeat ? 1 : Math.max(1, Number(rule.perRef || 1)),
     refUsageCounts: themeReferenceUsageCountsForDifficulty(difficultyId, theme),
-    referenceKeyForItem: (item) => referenceKeysForItem(item)[0] || ""
+    referenceKeyForItem: (item) => referenceKeysForItem(item)[0] || "",
+    maxConceptUses: strictThemeNoRepeat ? 1 : null,
+    conceptUsageCounts: strictThemeNoRepeat ? themeConceptUsageCounts(theme) : null,
+    conceptKeyForItem,
+    recentWindow: strictThemeNoRepeat ? 10 : 3
   };
 }
 
