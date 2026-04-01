@@ -705,7 +705,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 40;
+const ACTIVITY_SCHEMA_VERSION = 41;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -8514,7 +8514,7 @@ function speakBadgePraise(badge) {
   const line = `Good Job, for earning ${badgeName}.`;
   stopStoryRecap();
   const utterance = new SpeechSynthesisUtterance(line);
-  const voice = pickMaleNarrationVoice(state.language) || pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
+  const voice = preferredGreetingVoice(state.language);
 
   if (voice) {
     utterance.voice = voice;
@@ -8546,7 +8546,7 @@ function speakBadgePraise(badge) {
     const onVoices = () => {
       window.speechSynthesis.removeEventListener("voiceschanged", onVoices);
       if (badgePraiseUtterance !== utterance) return;
-      const lateVoice = pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
+      const lateVoice = preferredGreetingVoice(state.language);
       if (lateVoice) {
         utterance.voice = lateVoice;
         utterance.lang = lateVoice.lang || "en-US";
@@ -10239,6 +10239,32 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
   const scopedUsedSources = focus ? null : usedSources;
   const selectionOptions = selectionConstraintsForTheme(theme, difficulty, focus);
 
+  const forcedAbramGenesis138Quiz = !focus
+    && theme && theme.name === "Call of Abram"
+    && meta && meta.stage === 3
+    && meta.level === 22
+      ? quizPoolForDifficulty(difficulty).find((item) =>
+          itemMatchesTheme(item, theme)
+          && String(item.sourceRef || "").includes("Genesis 13:8")
+        )
+      : null;
+
+  if (forcedAbramGenesis138Quiz) {
+    return {
+      type: "quiz",
+      prompt: stagePrompt(meta, forcedAbramGenesis138Quiz.prompt, 0),
+      options: buildQuizOptions(
+        forcedAbramGenesis138Quiz,
+        theme.era,
+        difficulty.quizOptions,
+        quizPoolForDifficulty(difficulty).filter((item) => itemMatchesTheme(item, theme))
+      ),
+      answer: forcedAbramGenesis138Quiz.answer,
+      sourceRef: forcedAbramGenesis138Quiz.sourceRef,
+      historySourceRef: forcedAbramGenesis138Quiz.historySourceRef || historyKeyForItem(forcedAbramGenesis138Quiz, "quiz")
+    };
+  }
+
   if (kind === "speaker" || kind === "hebrew") {
     return buildSpecialQuizActivity(meta, theme, difficulty, usedSources, kind, focus);
   }
@@ -10349,30 +10375,6 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
   }
 
   if (kind === "fact") {
-    const forcedAbramFactLevel22 = !focus
-      && theme && theme.name === "Call of Abram"
-      && meta && meta.stage === 3
-      && meta.level === 22
-        ? {
-            era: theme.era,
-            parts: ["I", "am", "Yahweh", "who", "brought", "you", "out", "of", "Ur"],
-            sourceRef: "Genesis 15:7"
-          }
-        : null;
-
-    if (forcedAbramFactLevel22) {
-      const factMode = buildFactActivity(forcedAbramFactLevel22, theme.era, difficulty);
-      return {
-        type: "fact",
-        prompt: stagePrompt(meta, t("buildFactOrder"), 0),
-        answerParts: factMode.answerParts,
-        prefilled: factMode.prefilled,
-        parts: factMode.pool,
-        sourceRef: forcedAbramFactLevel22.sourceRef,
-        historySourceRef: historyKeyForItem(forcedAbramFactLevel22, "fact")
-      };
-    }
-
     const forcedAbramFactQuestion = !focus
       && difficulty.id === "medium"
       && theme && theme.name === "Call of Abram"
@@ -14177,8 +14179,11 @@ function pickMaleNarrationVoice(language = "en") {
   const wantsSpanish = String(language || "").toLowerCase().startsWith("es");
   const langPattern = wantsSpanish ? /^es[-_]/i : /^en[-_]/i;
   const malePreferred = wantsSpanish
-    ? /jorge|diego|carlos|jordi|premium|enhanced|neural|siri/i
-    : /reed|evan|john|daniel|alex|aaron|fred|nathan|tom|premium|enhanced|neural|siri/i;
+    ? /jorge|diego|carlos|jordi|reed|evan|premium|enhanced|neural|siri/i
+    : /reed|evan|john|daniel|alex|aaron|fred|nathan|tom|arthur|rocko|ralph|james|oliver|premium|enhanced|neural|siri/i;
+  const femalePenalty = wantsSpanish
+    ? /paulina|monica|soledad|isabela|helena|luciana|camila|maria|carmen|ana|samantha|victoria|ava|allison|emma|olivia|zoe|luna/i
+    : /ava|allison|victoria|serena|samantha|joanna|emma|olivia|aria|zoe|luna|karen|kathy|princess|female/i;
 
   const localVoices = voices.filter((voice) => langPattern.test(voice.lang));
   const pool = localVoices.length ? localVoices : voices;
@@ -14190,6 +14195,7 @@ function pickMaleNarrationVoice(language = "en") {
       if (!wantsSpanish && /^en[-_]US$/i.test(voice.lang)) score += 18;
       if (malePreferred.test(voice.name)) score += 80;
       if (/premium|enhanced|neural|siri/i.test(voice.name)) score += 20;
+      if (femalePenalty.test(voice.name)) score -= 120;
       if (voice.localService) score += 6;
       if (voice.default) score += 3;
       return { voice, score };
@@ -14197,6 +14203,10 @@ function pickMaleNarrationVoice(language = "en") {
     .sort((a, b) => b.score - a.score);
 
   return ranked.length ? ranked[0].voice : null;
+}
+
+function preferredGreetingVoice(language = state.language) {
+  return pickMaleNarrationVoice(language) || pickPremiumNarrationVoice(language) || pickNarrationVoice();
 }
 
 function pickNarrationVoice() {
@@ -14666,7 +14676,7 @@ function playVoiceTest() {
       "Prueba de voz de FAITHSHIELD. Bienvenido de nuevo. Tu voz de saludo esta lista."
     )
   );
-  const voice = pickMaleNarrationVoice(state.language) || pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
+  const voice = preferredGreetingVoice(state.language);
   if (voice) {
     utterance.voice = voice;
     utterance.lang = voice.lang || "en-US";
@@ -14733,7 +14743,7 @@ function speakStoryReturnRecap(options = {}) {
 
   stopStoryRecap();
   const utterance = new SpeechSynthesisUtterance(payload.text);
-  const voice = pickMaleNarrationVoice(state.language) || pickPremiumNarrationVoice(state.language) || pickNarrationVoice();
+  const voice = preferredGreetingVoice(state.language);
   if (voice) {
     utterance.voice = voice;
     utterance.lang = voice.lang || "en-US";
