@@ -14205,8 +14205,47 @@ function pickMaleNarrationVoice(language = "en") {
   return ranked.length ? ranked[0].voice : null;
 }
 
+function pickEnhancedMaleNarrationVoice(language = "en") {
+  if (!("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+
+  const wantsSpanish = String(language || "").toLowerCase().startsWith("es");
+  const langPattern = wantsSpanish ? /^es[-_]/i : /^en[-_]/i;
+  const enhancedMale = wantsSpanish
+    ? /jorge|diego|carlos|jordi|premium|enhanced|neural|siri/i
+    : /reed|evan|john|daniel|alex|aaron|fred|nathan|tom|arthur|rocko|ralph|james|oliver|premium|enhanced|neural|siri/i;
+  const femalePenalty = wantsSpanish
+    ? /paulina|monica|soledad|isabela|helena|luciana|camila|maria|carmen|ana|samantha|victoria|ava|allison|emma|olivia|zoe|luna/i
+    : /ava|allison|victoria|serena|samantha|joanna|emma|olivia|aria|zoe|luna|karen|kathy|princess|female/i;
+
+  const localVoices = voices.filter((voice) => langPattern.test(voice.lang));
+  const pool = localVoices.length ? localVoices : voices;
+  const ranked = pool
+    .map((voice) => {
+      let score = 0;
+      if (langPattern.test(voice.lang)) score += 40;
+      if (wantsSpanish && /^es[-_]ES$/i.test(voice.lang)) score += 18;
+      if (!wantsSpanish && /^en[-_]US$/i.test(voice.lang)) score += 18;
+      if (enhancedMale.test(voice.name)) score += 120;
+      if (/premium|enhanced|neural|siri/i.test(voice.name)) score += 40;
+      if (/reed|evan|john|daniel|alex|aaron|fred|nathan|tom|arthur|rocko|ralph|james|oliver|jorge|diego|carlos|jordi/i.test(voice.name)) score += 60;
+      if (femalePenalty.test(voice.name)) score -= 180;
+      if (voice.localService) score += 8;
+      if (voice.default) score += 3;
+      return { voice, score };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  return ranked.length ? ranked[0].voice : null;
+}
+
 function preferredGreetingVoice(language = state.language) {
-  return pickMaleNarrationVoice(language) || pickPremiumNarrationVoice(language) || pickNarrationVoice();
+  return pickEnhancedMaleNarrationVoice(language)
+    || pickMaleNarrationVoice(language)
+    || pickPremiumNarrationVoice(language)
+    || pickNarrationVoice();
 }
 
 function pickNarrationVoice() {
