@@ -705,7 +705,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 42;
+const ACTIVITY_SCHEMA_VERSION = 43;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -10343,6 +10343,46 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
   const scopeKey = focus ? reviewScopeKey(theme, kind, focus) : themeScopeKey(theme, kind);
   const scopedUsedSources = focus ? null : usedSources;
   const selectionOptions = selectionConstraintsForTheme(theme, difficulty, focus);
+
+  const forcedJacobLevel30Quiz = !focus
+    && theme && theme.name === "Jacob to Israel"
+    && meta && meta.stage === 3
+    && meta.level === 30
+      ? dedupeActivityPool(
+          quizPoolForDifficulty(difficulty)
+            .concat(quizBank)
+            .concat(mediumQuizBank)
+            .concat(advancedQuizBank),
+          "quiz"
+        ).find((item) =>
+          itemMatchesTheme(item, theme)
+          && String(item.sourceRef || "").includes("Genesis 32:28")
+          && normalizeQuizAnswerKey(item.answer) === "israel"
+        )
+      : null;
+
+  if (forcedJacobLevel30Quiz) {
+    return {
+      type: "quiz",
+      prompt: stagePrompt(meta, forcedJacobLevel30Quiz.prompt, 0),
+      options: buildQuizOptions(
+        forcedJacobLevel30Quiz,
+        theme.era,
+        difficulty.quizOptions,
+        dedupeActivityPool(
+          quizPoolForDifficulty(difficulty)
+            .concat(quizBank)
+            .concat(mediumQuizBank)
+            .concat(advancedQuizBank)
+            .filter((item) => itemMatchesTheme(item, theme)),
+          "quiz"
+        )
+      ),
+      answer: forcedJacobLevel30Quiz.answer,
+      sourceRef: forcedJacobLevel30Quiz.sourceRef,
+      historySourceRef: forcedJacobLevel30Quiz.historySourceRef || historyKeyForItem(forcedJacobLevel30Quiz, "quiz")
+    };
+  }
 
   const forcedAbramGenesis138Quiz = !focus
     && theme && theme.name === "Call of Abram"
