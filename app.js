@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-02-era-intros-stage5-cloud-v3";
+const CONTENT_VERSION = "2026-04-03-smoothness-audio-sync-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -748,7 +748,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 47;
+const ACTIVITY_SCHEMA_VERSION = 48;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -9581,7 +9581,6 @@ function dismissWelcome(event) {
 
 function closeActivity() {
   clearStageAutoCloseTimer();
-  hideStageCompleteToast();
   clearActiveChallenge();
   if (document.activeElement && typeof document.activeElement.blur === "function") {
     document.activeElement.blur();
@@ -9698,7 +9697,7 @@ function completeStage(meta, mode, options = {}) {
   if (result && !result.celebrationBadge) {
     showStageCompleteMoment(result, options);
   }
-  const delayMs = options.delayMs || (result && result.celebrationBadge ? 1120 : 1680);
+  const delayMs = options.delayMs || (result && result.celebrationBadge ? 980 : 760);
   queueStageAutoClose(meta.id, delayMs);
   return result;
 }
@@ -13915,6 +13914,18 @@ function primeAudioAuto() {
   ensureMusicHeartbeat();
 }
 
+function shouldRefreshAmbientAudio() {
+  if (state.activeStage) return false;
+  if (storyRecapUtterance || storyRecapAudio || storyNarrationUtterance || storyNarrationAudio || verseAudioUtterance || badgePraiseUtterance) return false;
+  if (welcomeOverlay && !welcomeOverlay.classList.contains("hidden")) return false;
+  if (activityOverlay && !activityOverlay.classList.contains("hidden")) return false;
+  if (shareOverlay && !shareOverlay.classList.contains("hidden")) return false;
+  if (badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden")) return false;
+  if (eraCardPreviewOverlay && !eraCardPreviewOverlay.classList.contains("hidden")) return false;
+  if (eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden")) return false;
+  return shouldKeepHubMusicAlive();
+}
+
 let firstInteractionRecapArmed = false;
 function armFirstInteractionRecap() {
   if (firstInteractionRecapArmed) return;
@@ -14865,6 +14876,25 @@ function stopStoryRecap() {
   }
 }
 
+function clearPendingStoryRecap() {
+  pendingStoryRecapReason = "";
+  disarmStoryRecapRetry();
+}
+
+function shouldAllowQueuedStoryRecap(reason = "return") {
+  const recapReason = String(reason || "return");
+  const manualReplay = ["manual-button", "speaker-button", "speaker-replay", "welcome-dismiss", "first-interaction"].includes(recapReason);
+  if (state.activeStage) return false;
+  if (activityOverlay && !activityOverlay.classList.contains("hidden")) return false;
+  if (shareOverlay && !shareOverlay.classList.contains("hidden")) return false;
+  if (badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden")) return false;
+  if (eraCardPreviewOverlay && !eraCardPreviewOverlay.classList.contains("hidden")) return false;
+  if (eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden")) return false;
+  if (isStoryTheaterOpen() || isFinalOpen() || isCreditsOpen()) return false;
+  if (welcomeOverlay && !welcomeOverlay.classList.contains("hidden")) return manualReplay;
+  return true;
+}
+
 function disarmStoryRecapRetry() {
   if (!storyRecapRetryArmed) return;
   AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
@@ -14874,7 +14904,9 @@ function disarmStoryRecapRetry() {
 }
 
 function queueStoryRecapRetry(reason = "return") {
-  pendingStoryRecapReason = String(reason || pendingStoryRecapReason || "return");
+  const recapReason = String(reason || pendingStoryRecapReason || "return");
+  if (!shouldAllowQueuedStoryRecap(recapReason)) return false;
+  pendingStoryRecapReason = recapReason;
   if (storyRecapRetryArmed) return true;
   AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
     document.addEventListener(eventName, handleStoryRecapRetry, true);
@@ -14888,6 +14920,7 @@ function handleStoryRecapRetry() {
     disarmStoryRecapRetry();
     return;
   }
+  if (!shouldAllowQueuedStoryRecap(pendingStoryRecapReason)) return;
   primeAudioAuto();
   window.setTimeout(() => {
     if (!pendingStoryRecapReason) return;
@@ -16177,6 +16210,7 @@ function openStage(stageId, options = {}) {
   if (!meta) return;
   const bypassChapterIntro = Boolean(options && options.bypassChapterIntro);
 
+  clearStageAutoCloseTimer();
   primeAudioAuto();
   captureHubScrollPosition(stageId);
   pendingStageFocusId = null;
@@ -16187,6 +16221,7 @@ function openStage(stageId, options = {}) {
 
   clearActiveChallenge();
   hideStageCompleteToast();
+  clearPendingStoryRecap();
   stopStoryRecap();
   stopStoryNarration();
   if (chapterIntroOverlay && !chapterIntroOverlay.classList.contains("hidden")) {
@@ -21474,7 +21509,8 @@ function updateAudioState() {
     } else {
       stopFinaleMusic();
       stopCreditsMusic();
-      startMusicLoop();
+      if (musicShouldBeAudible) startMusicLoop();
+      else stopMusicLoop();
     }
   } else {
     stopMusicLoop();
@@ -21737,17 +21773,17 @@ window.addEventListener("pageshow", () => {
   clearHiddenCleanupTimer();
   applyPerformanceMode();
   trimPreloadedMediaCaches();
-  primeAudioAuto();
+  if (shouldRefreshAmbientAudio()) primeAudioAuto();
   scheduleViewportNormalization();
 });
 window.addEventListener("load", () => {
   applyPerformanceMode();
-  primeAudioAuto();
+  if (shouldRefreshAmbientAudio()) primeAudioAuto();
   scheduleViewportNormalization();
 });
 window.addEventListener("focus", () => {
   window.setTimeout(() => {
-    if (shouldKeepHubMusicAlive()) primeAudioAuto();
+    if (shouldRefreshAmbientAudio()) primeAudioAuto();
   }, 40);
 });
 document.addEventListener("visibilitychange", () => {
@@ -21756,7 +21792,7 @@ document.addEventListener("visibilitychange", () => {
     applyPerformanceMode();
     trimPreloadedMediaCaches();
     if (!hubMediaWarmupScheduled) scheduleHubMediaWarmup();
-    primeAudioAuto();
+    if (shouldRefreshAmbientAudio()) primeAudioAuto();
     return;
   }
 
