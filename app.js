@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-03-20-stage5-dynamic-reliability-v1";
+const CONTENT_VERSION = "2026-04-02-recap-boss-toggle-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -3574,7 +3574,7 @@ function defaultStateSnapshot(name = "") {
     mastery: {},
     dailyDevotion: { day: "", challenge: false, action: false, reflection: false, reward: false, note: "" },
     weeklyChallenge: { weekKey: "", era: "genesis", target: WEEKLY_CHALLENGE_TARGET, progress: 0, shared: false },
-    controls: { hotkeys: true, controller: false, badgeCeremonyAutoOpen: true },
+    controls: { hotkeys: true, controller: false, badgeCeremonyAutoOpen: true, skipBossBattles: false },
     reviewFocus: null,
     prayerResponses: {},
     dailyCalendar: {}
@@ -3633,7 +3633,7 @@ function writeLegacySnapshotToStorage(snapshot) {
   localStorage.setItem("faithMastery", JSON.stringify(merged.mastery || {}));
   localStorage.setItem("faithDailyDevotion", JSON.stringify(merged.dailyDevotion || { day: "", challenge: false, action: false, reflection: false, reward: false, note: "" }));
   localStorage.setItem("faithWeeklyChallenge", JSON.stringify(merged.weeklyChallenge || { weekKey: "", era: "genesis", target: WEEKLY_CHALLENGE_TARGET, progress: 0, shared: false }));
-  localStorage.setItem("faithControls", JSON.stringify(merged.controls || { hotkeys: true, controller: false, badgeCeremonyAutoOpen: true }));
+  localStorage.setItem("faithControls", JSON.stringify(merged.controls || { hotkeys: true, controller: false, badgeCeremonyAutoOpen: true, skipBossBattles: false }));
   localStorage.setItem("faithPrayerResponses", JSON.stringify(merged.prayerResponses || {}));
   localStorage.setItem("faithDailyCalendar", JSON.stringify(merged.dailyCalendar || {}));
   if (merged.reviewFocus) localStorage.setItem("faithReviewFocus", JSON.stringify(merged.reviewFocus));
@@ -3745,7 +3745,7 @@ const state = {
   mastery: JSON.parse(localStorage.getItem("faithMastery") || "{}"),
   dailyDevotion: JSON.parse(localStorage.getItem("faithDailyDevotion") || '{"day":"","challenge":false,"action":false,"reflection":false,"reward":false,"note":""}'),
   weeklyChallenge: JSON.parse(localStorage.getItem("faithWeeklyChallenge") || '{"weekKey":"","era":"genesis","target":7,"progress":0,"shared":false}'),
-  controls: JSON.parse(localStorage.getItem("faithControls") || '{"hotkeys":true,"controller":false,"badgeCeremonyAutoOpen":true}'),
+  controls: JSON.parse(localStorage.getItem("faithControls") || '{"hotkeys":true,"controller":false,"badgeCeremonyAutoOpen":true,"skipBossBattles":false}'),
   reviewFocus: JSON.parse(localStorage.getItem("faithReviewFocus") || "null"),
   prayerResponses: JSON.parse(localStorage.getItem("faithPrayerResponses") || "{}"),
   dailyCalendar: JSON.parse(localStorage.getItem("faithDailyCalendar") || "{}")
@@ -3802,11 +3802,12 @@ state.weeklyChallenge.target = Math.max(3, Number(state.weeklyChallenge.target |
 state.weeklyChallenge.progress = Math.max(0, Number(state.weeklyChallenge.progress || 0));
 state.weeklyChallenge.shared = Boolean(state.weeklyChallenge.shared);
 if (!state.controls || typeof state.controls !== "object" || Array.isArray(state.controls)) {
-  state.controls = { hotkeys: true, controller: false, badgeCeremonyAutoOpen: true };
+  state.controls = { hotkeys: true, controller: false, badgeCeremonyAutoOpen: true, skipBossBattles: false };
 }
 state.controls.hotkeys = state.controls.hotkeys !== false;
 state.controls.controller = Boolean(state.controls.controller);
 state.controls.badgeCeremonyAutoOpen = state.controls.badgeCeremonyAutoOpen !== false;
+state.controls.skipBossBattles = Boolean(state.controls.skipBossBattles);
 if (!state.reviewFocus || typeof state.reviewFocus !== "object" || Array.isArray(state.reviewFocus)) {
   state.reviewFocus = null;
 }
@@ -4037,6 +4038,9 @@ let shareTextCopyBtn = null;
 let shareTextCloseBtn = null;
 let recapIndicator = null;
 let recapIndicatorLabel = null;
+let storyJourneySection = null;
+let storyJourneyStatus = null;
+let bossBattlesToggleBtn = null;
 let dailyCalendarSection = null;
 let dailyCalendarSummary = null;
 let dailyCalendarEvent = null;
@@ -5301,6 +5305,12 @@ function getStageMeta(stageId) {
   return stages.find((stage) => stage.id === stageId);
 }
 
+function activityCacheKey(stageRef, difficultyId = state.difficulty) {
+  const stageId = typeof stageRef === "string" ? stageRef : (stageRef && stageRef.id ? stageRef.id : "");
+  const bossModeKey = bossBattlesEnabled() ? "boss-on" : "boss-off";
+  return `${difficultyId}:${bossModeKey}:${stageId}`;
+}
+
 function captureStateSnapshot() {
   return deepClone({
     unlocked: state.unlocked,
@@ -6358,8 +6368,7 @@ function beginSmartReviewFromEntry(entry, mode = "smart") {
     day: localDayKey()
   };
 
-  const cacheKey = `${state.difficulty}:${targetStage.id}`;
-  delete state.stageActivities[cacheKey];
+  delete state.stageActivities[activityCacheKey(targetStage.id)];
   persist();
   render();
   jumpToEra(entry.era);
@@ -7917,6 +7926,96 @@ function ensureCorePracticePlacement() {
   }
 }
 
+function bossBattlesEnabled() {
+  return !(state.controls && state.controls.skipBossBattles);
+}
+
+function bossBattlesToggleLabel() {
+  return challengeCopy(
+    `Boss Battles: ${bossBattlesEnabled() ? "On" : "Off"}`,
+    `Batallas de jefes: ${bossBattlesEnabled() ? "Activadas" : "Desactivadas"}`
+  );
+}
+
+function bossBattlesStatusCopy() {
+  return bossBattlesEnabled()
+    ? challengeCopy(
+        "Era finale stages use the full boss battle experience with shield defense and enemy attacks.",
+        "Los finales de era usan la experiencia completa de batalla contra jefes con defensa de escudo y ataques enemigos."
+      )
+    : challengeCopy(
+        "Boss battles are replaced with a story challenge so players can continue the journey without fighting the era boss.",
+        "Las batallas contra jefes se cambian por un desafio de historia para continuar el viaje sin pelear contra el jefe de la era."
+      );
+}
+
+function toggleBossBattlesPreference() {
+  state.controls.skipBossBattles = !state.controls.skipBossBattles;
+  persist();
+  updateHud();
+  renderStoryJourneyOptions();
+  ensureHubSectionOrder();
+
+  const activeMeta = getStageMeta(state.activeStage || "");
+  if (activeMeta && isEraBossStage(activeMeta)) {
+    openStage(activeMeta.id);
+  }
+
+  showFeatureMoment(
+    challengeCopy(
+      bossBattlesEnabled() ? "Boss battles enabled" : "Boss battles turned off",
+      bossBattlesEnabled() ? "Batallas de jefes activadas" : "Batallas de jefes desactivadas"
+    ),
+    bossBattlesStatusCopy(),
+    { icon: bossBattlesEnabled() ? "⚔️" : "🕊️", durationMs: 2400 }
+  );
+}
+
+function renderStoryJourneyOptions() {
+  const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
+  if (!progressSection || !progressSection.parentNode) return;
+
+  if (!storyJourneySection || !storyJourneySection.isConnected) {
+    storyJourneySection = document.getElementById("storyJourneySection");
+    if (!storyJourneySection) {
+      storyJourneySection = document.createElement("section");
+      storyJourneySection.id = "storyJourneySection";
+      storyJourneySection.className = "feature-card story-journey-card";
+      storyJourneySection.innerHTML = [
+        '<div class="feature-head">',
+        `  <h2>${challengeCopy("Journey Options", "Opciones del viaje")}</h2>`,
+        `  <p class="meta">${challengeCopy("Choose how you want to experience the story path.", "Elige como quieres vivir el camino de la historia.")}</p>`,
+        '</div>',
+        '<p id="storyJourneyStatus" class="meta"></p>',
+        '<div class="feature-actions">',
+        `  <button id="bossBattlesToggleBtn" class="ghost-btn" type="button">${challengeCopy("Boss Battles: On", "Batallas de jefes: Activadas")}</button>`,
+        '</div>'
+      ].join("");
+      const parent = progressSection.parentNode;
+      const anchor = progressSection.nextSibling;
+      parent.insertBefore(storyJourneySection, anchor);
+    }
+
+    storyJourneyStatus = storyJourneySection.querySelector("#storyJourneyStatus");
+    bossBattlesToggleBtn = storyJourneySection.querySelector("#bossBattlesToggleBtn");
+
+    if (bossBattlesToggleBtn) {
+      bossBattlesToggleBtn.onclick = () => {
+        toggleBossBattlesPreference();
+      };
+    }
+  }
+
+  if (storyJourneyStatus) {
+    storyJourneyStatus.textContent = bossBattlesStatusCopy();
+  }
+  if (bossBattlesToggleBtn) {
+    bossBattlesToggleBtn.textContent = bossBattlesToggleLabel();
+    bossBattlesToggleBtn.setAttribute("aria-pressed", bossBattlesEnabled() ? "true" : "false");
+    bossBattlesToggleBtn.classList.toggle("active", bossBattlesEnabled());
+  }
+}
+
 function ensureHubQuickNav() {
   const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
   if (!progressSection || !progressSection.parentNode) return;
@@ -8003,6 +8102,7 @@ function ensureHubSectionOrder() {
   const badgeSection = document.querySelector(".badge-section");
   const preferredSections = [
     hubQuickNav,
+    storyJourneySection,
     dailyThoughtCard,
     todayPlanSection,
     streakSection,
@@ -8039,6 +8139,7 @@ function ensureHubSectionOrder() {
 function renderExperienceSections() {
   ensureCorePracticePlacement();
   ensureRecapIndicator();
+  renderStoryJourneyOptions();
   renderDailyChallengeCalendar();
   renderHallOfFaith();
   renderCampaignMap();
@@ -8079,6 +8180,15 @@ function updateHud() {
 
   if (languageSelect && languageSelect.value !== state.language) {
     languageSelect.value = state.language;
+  }
+
+  if (storyJourneyStatus) {
+    storyJourneyStatus.textContent = bossBattlesStatusCopy();
+  }
+  if (bossBattlesToggleBtn) {
+    bossBattlesToggleBtn.textContent = bossBattlesToggleLabel();
+    bossBattlesToggleBtn.setAttribute("aria-pressed", bossBattlesEnabled() ? "true" : "false");
+    bossBattlesToggleBtn.classList.toggle("active", bossBattlesEnabled());
   }
 
   difficultyButtons.forEach((btn) => {
@@ -9045,7 +9155,7 @@ function loseLife() {
 
   const activeStageId = state.activeStage || "";
   const activeMeta = getStageMeta(activeStageId);
-  const activeActivity = state.stageActivities[state.difficulty + ":" + activeStageId];
+  const activeActivity = state.stageActivities[activityCacheKey(activeStageId)];
   const activityType = activeActivity && activeActivity.type
     ? (activeActivity.type === "interactive" && activeActivity.mode && activeActivity.mode.engine
       ? activeActivity.mode.engine
@@ -9119,12 +9229,7 @@ function dismissWelcome(event) {
   primeAudioAuto();
   welcomeOverlay.classList.add("hidden");
   updateOverlayLock();
-  pendingStoryRecapReason = "";
-  disarmStoryRecapRetry();
-  playPreferredStoryRecap({ reason: "welcome-dismiss", force: true, ignoreUserActivation: true }).then((played) => {
-    if (played) return;
-    scheduleStoryReturnRecap("welcome-dismiss", 180);
-  });
+  if (!state.activeStage) playStoryRecapNow("welcome-dismiss");
 }
 
 function closeActivity() {
@@ -9314,7 +9419,7 @@ function markDone(stageId, mode) {
   const unlockedDifficultyBadge = markDifficultyPassForCurrentRun();
   const modeEngine = mode && mode.engine ? mode.engine : "question";
   const meta = getStageMeta(stageId);
-  const stageActivity = state.stageActivities[state.difficulty + ":" + stageId] || null;
+  const stageActivity = state.stageActivities[activityCacheKey(stageId)] || null;
   const nextMeta = meta ? nextStageMeta(meta) : null;
   const completedReviewFocus = state.reviewFocus && state.reviewFocus.stageId === stageId && stageActivity && stageActivity.reviewFocus
     ? { ...state.reviewFocus }
@@ -11830,7 +11935,7 @@ function renderSourceVerse(reference, options = {}) {
 }
 
 function activityFor(meta) {
-  const cacheKey = state.difficulty + ":" + meta.id;
+  const cacheKey = activityCacheKey(meta);
   const cached = state.stageActivities[cacheKey];
   if (cached && typeof cached === "object") {
     const cachedVersion = Number(cached.__v || 0);
@@ -13026,6 +13131,7 @@ function stageFiveSpotlightFromBase(base, themeName = "") {
   const hash = stageFiveHashSeed(base, themeName);
   const cue = stageFiveThemeCue(themeName);
   const cards = stageFiveChoiceCardsFromBase(base, 4, themeName);
+  const useHiddenMoriahShuffle = themeName === "Promise Family" && String(base.id || "").includes("promise-moriah-ascent");
   const roundsData = Array.from({ length: 4 }, (_, index) => {
     const targetCard = cards[(hash + index) % cards.length];
     return {
@@ -13039,16 +13145,21 @@ function stageFiveSpotlightFromBase(base, themeName = "") {
     engine: "spotlight",
     label: `${base.label || cue} Spotlight`,
     rounds: roundsData.length,
-    shuffles: 3 + (hash % 2),
-    peekMs: 880 + ((hash % 3) * 70),
+    shuffles: (useHiddenMoriahShuffle ? 4 : 3) + (hash % 2),
+    peekMs: (useHiddenMoriahShuffle ? 1180 : 880) + ((hash % 3) * 70),
     maxMisses: Math.max(2, Math.min(4, Number(base.maxMisses) || 3)),
     sourceRef: base.sourceRef,
     storyPrompt: base.storyPrompt || `Keep your eyes on the key truth in this ${cue} moment.`,
-    secondaryPrompt: "Watch the highlighted clue, let the board shuffle, then find it again.",
-    keyboardHint: "Keyboard: press 1-4 to pick the card after the shuffle.",
+    secondaryPrompt: useHiddenMoriahShuffle
+      ? "Watch the Moriah items, let them flip and shuffle, then choose the hidden clue."
+      : "Watch the highlighted clue, let the board shuffle, then find it again.",
+    keyboardHint: useHiddenMoriahShuffle
+      ? "Keyboard: press 1-4 after the cards flip over and finish shuffling."
+      : "Keyboard: press 1-4 to pick the card after the shuffle.",
     themeName,
     cards,
-    roundsData
+    roundsData,
+    faceDownAfterShuffle: useHiddenMoriahShuffle
   };
 }
 
@@ -13318,12 +13429,22 @@ function stageFiveBaseSelection(level) {
 }
 
 function modeForStage(meta, difficulty = currentDifficulty()) {
-  if (isEraBossStage(meta)) {
+  if (isEraBossStage(meta) && bossBattlesEnabled()) {
     const bossMode = bossModeForStage(meta, difficulty);
     if (bossMode) return bossMode;
   }
   const selection = stageFiveBaseSelection(meta.level);
-  return materializeInteractiveMode(selection.base, difficulty, `${meta.theme.era}-l${meta.level}-s${meta.stage}`, selection.cycle);
+  const mode = materializeInteractiveMode(selection.base, difficulty, `${meta.theme.era}-l${meta.level}-s${meta.stage}`, selection.cycle);
+  if (isEraBossStage(meta) && !bossBattlesEnabled()) {
+    mode.label = challengeCopy("Story Finale", "Final de historia");
+    mode.storyPrompt = challengeCopy(
+      "Boss battles are off for this profile. Clear this story challenge to finish the era without fighting the boss.",
+      "Las batallas contra jefes estan desactivadas para este perfil. Supera este desafio de historia para terminar la era sin pelear contra el jefe."
+    );
+    mode.sourceRef = mode.sourceRef || meta.theme.sourceRef;
+    mode.__bossBypassed = true;
+  }
+  return mode;
 }
 
 function modeForLevel(level, difficulty = currentDifficulty()) {
@@ -13389,8 +13510,13 @@ function armFirstInteractionRecap() {
     });
     primeAudioAuto();
     if (state.audio.music && shouldKeepHubMusicAlive()) startMusicLoop();
+    const welcomeOpen = welcomeOverlay && !welcomeOverlay.classList.contains("hidden");
+    if (welcomeOpen) {
+      pendingStoryRecapReason = pendingStoryRecapReason || "welcome-dismiss";
+      return;
+    }
     if (!state.activeStage) {
-      playStoryRecapNow();
+      playStoryRecapNow("first-interaction");
     }
   };
   AUDIO_UNLOCK_EVENTS.forEach((eventName) => {
@@ -14865,7 +14991,7 @@ function scheduleStoryReturnRecap(reason = "return", delayMs = 420) {
   }, Math.max(0, delayMs));
 }
 
-function playStoryRecapNow() {
+function playStoryRecapNow(reason = "manual-button") {
   primeAudioAuto();
   try {
     if ("speechSynthesis" in window) window.speechSynthesis.resume();
@@ -14877,10 +15003,11 @@ function playStoryRecapNow() {
     challengeCopy("Audio will begin if your device allows it.", "El audio comenzara si tu dispositivo lo permite."),
     { icon: "🔊", durationMs: 1600 }
   );
-  pendingStoryRecapReason = "";
-  disarmStoryRecapRetry();
-  playPreferredStoryRecap({ reason: "manual-button", force: true, ignoreUserActivation: true }).then((spoken) => {
+  const recapReason = String(reason || "manual-button");
+  playPreferredStoryRecap({ reason: recapReason, force: true, ignoreUserActivation: true }).then((spoken) => {
     if (spoken) {
+      pendingStoryRecapReason = "";
+      disarmStoryRecapRetry();
       showFeatureMoment(
         challengeCopy("Welcome recap playing", "Reproduciendo resumen de bienvenida"),
         challengeCopy("Your story progress is now being read aloud.", "Tu progreso de la historia se esta leyendo en voz alta."),
@@ -14888,10 +15015,11 @@ function playStoryRecapNow() {
       );
       return;
     }
+    queueStoryRecapRetry(recapReason);
     showFeatureMoment(
-      challengeCopy("Recap unavailable", "Resumen no disponible"),
-      challengeCopy("If you still hear nothing, check device volume and silent mode, then tap again.", "Si aun no escuchas nada, revisa el volumen y el modo silencio, y toca este boton otra vez."),
-      { icon: "⚠️", sfx: null, durationMs: 2600 }
+      challengeCopy("Recap queued", "Resumen en espera"),
+      challengeCopy("The app is still finishing audio unlock. The greeting will try again on the next trusted tap.", "La aplicacion todavia esta activando el audio. El saludo volvera a intentarlo en el siguiente toque confiable."),
+      { icon: "🔊", durationMs: 2200 }
     );
   });
   return true;
@@ -18287,6 +18415,7 @@ function renderSpotlight(meta, mode, feedback) {
     buttons.length = 0;
     order.forEach((cardId, index) => {
       const card = cardMap.get(cardId) || { icon: "✨", label: "Faith" };
+      const faceDown = Boolean(mode.faceDownAfterShuffle) && !revealTarget;
       const button = document.createElement("button");
       button.type = "button";
       button.className = "ghost-btn";
@@ -18297,7 +18426,13 @@ function renderSpotlight(meta, mode, feedback) {
       button.style.fontWeight = "800";
       button.style.textAlign = "center";
       button.style.padding = "0.85rem";
-      button.innerHTML = `<span style="font-size:1.55rem">${card.icon}</span><span>${index + 1}. ${card.label}</span>`;
+      button.innerHTML = faceDown
+        ? `<span style="font-size:1.55rem">🛡️</span><span>${index + 1}. ${challengeCopy("Hidden", "Oculta")}</span>`
+        : `<span style="font-size:1.55rem">${card.icon}</span><span>${index + 1}. ${card.label}</span>`;
+      if (faceDown) {
+        button.style.background = "linear-gradient(180deg, rgba(26,36,58,0.98), rgba(12,18,30,0.98))";
+        button.style.borderColor = "rgba(229,191,93,0.22)";
+      }
       if (revealTarget && cardId === activeTargetId) {
         button.style.boxShadow = "0 0 0 2px rgba(229,191,93,0.46), 0 18px 36px rgba(229,191,93,0.22)";
         button.style.transform = "translateY(-2px)";
