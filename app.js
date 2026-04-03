@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-02-stage5-hardening-v3";
+const CONTENT_VERSION = "2026-04-02-era-intros-stage5-cloud-v3";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -235,6 +235,7 @@ const THEME_KEYWORDS = {
     {
       id: "promise-moriah-ascent",
       engine: "route",
+      stageFiveNative: true,
       label: "Moriah Ascent",
       maxMisses: 4,
       sourceRef: "Genesis 22:2-13",
@@ -259,6 +260,7 @@ const THEME_KEYWORDS = {
     {
       id: "promise-household-discern",
       engine: "discern",
+      stageFiveNative: true,
       label: "Promise Household",
       maxMisses: 3,
       sourceRef: "Genesis 18:12-14; 21:2-3; 21:19; 22:13",
@@ -281,6 +283,7 @@ const THEME_KEYWORDS = {
     {
       id: "promise-tent-provision",
       engine: "collect",
+      stageFiveNative: true,
       label: "Tent Provision",
       target: 12,
       maxMisses: 5,
@@ -288,7 +291,15 @@ const THEME_KEYWORDS = {
       spawnMs: 430,
       sourceRef: "Genesis 18:6-8",
       storyPrompt: "Gather the meal Abraham prepared for his heavenly visitors.",
-      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the provisions."
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the provisions.",
+      collectiblePool: [
+        { icon: "🥖", label: "Bread", good: true },
+        { icon: "🧈", label: "Butter", good: true },
+        { icon: "🥛", label: "Milk", good: true },
+        { icon: "🥩", label: "Calf", good: true },
+        { icon: "💨", label: "Wind", good: false },
+        { icon: "🪨", label: "Stone", good: false }
+      ]
     }
   ],
   "Jacob to Israel": [
@@ -403,6 +414,7 @@ const THEME_KEYWORDS = {
     {
       id: "sinai-mountain-route",
       engine: "route",
+      stageFiveNative: true,
       label: "Mountain Ascent",
       maxMisses: 4,
       sourceRef: "Exodus 19:12-20",
@@ -419,6 +431,7 @@ const THEME_KEYWORDS = {
     {
       id: "sinai-commandment-discern",
       engine: "discern",
+      stageFiveNative: true,
       label: "Covenant Discern",
       maxMisses: 3,
       sourceRef: "Exodus 19:19; 20:1-17; 24:8",
@@ -439,21 +452,32 @@ const THEME_KEYWORDS = {
       ]
     },
     {
-      id: "sinai-covenant-stand",
-      engine: "balance",
-      label: "Covenant Stand",
-      target: 8,
+      id: "sinai-tabernacle-build",
+      engine: "memoryflip",
+      stageFiveNative: true,
+      label: "Tabernacle Build",
       maxMisses: 4,
-      drift: 0.028,
-      sourceRef: "Exodus 24:7-8",
-      storyPrompt: "Stand firm as the covenant is confirmed before the people of Israel.",
-      keyboardHint: "Keyboard: hold Left/A or Right/D to stay inside the covenant band."
+      sourceRef: "Exodus 25:3-9; 26:1-6; 31:1-5",
+      storyPrompt: "Match the tabernacle materials and furnishings as Israel prepares a dwelling place for worship.",
+      secondaryPrompt: "Reveal the pairs that belong together in the tabernacle build.",
+      keyboardHint: "Keyboard: use Tab to move, then Enter or Space to flip matching cards.",
+      cards: [
+        { icon: "🕯️", label: "Lampstand" },
+        { icon: "🕯️", label: "Lampstand" },
+        { icon: "📜", label: "Curtains" },
+        { icon: "📜", label: "Curtains" },
+        { icon: "🪵", label: "Acacia Wood" },
+        { icon: "🪵", label: "Acacia Wood" },
+        { icon: "✨", label: "Gold" },
+        { icon: "✨", label: "Gold" }
+      ]
     }
   ],
   "Wilderness Trust": [
     {
       id: "wilderness-cloud-route",
       engine: "route",
+      stageFiveNative: true,
       label: "Follow the Cloud",
       maxMisses: 4,
       sourceRef: "Exodus 13:21-22; Numbers 9:17-18",
@@ -470,6 +494,7 @@ const THEME_KEYWORDS = {
     {
       id: "wilderness-provision-discern",
       engine: "discern",
+      stageFiveNative: true,
       label: "Daily Provision",
       maxMisses: 3,
       sourceRef: "Exodus 16:15; Numbers 11:31; Numbers 20:11; Deuteronomy 8:3",
@@ -490,15 +515,25 @@ const THEME_KEYWORDS = {
       ]
     },
     {
-      id: "wilderness-tent-balance",
-      engine: "balance",
-      label: "Tent of Meeting",
-      target: 8,
+      id: "wilderness-manna-gather",
+      engine: "collect",
+      stageFiveNative: true,
+      label: "Manna Morning",
+      target: 14,
       maxMisses: 4,
-      drift: 0.027,
-      sourceRef: "Exodus 33:7-11",
-      storyPrompt: "Hold steady as Moses meets with Yahweh at the tent outside the camp.",
-      keyboardHint: "Keyboard: hold Left/A or Right/D to stay in the meeting band."
+      seconds: 20,
+      spawnMs: 360,
+      sourceRef: "Exodus 16:14-21",
+      storyPrompt: "Gather the manna quickly before the heat melts it in the wilderness morning.",
+      keyboardHint: "Keyboard: move with Left/Right or A/D to gather manna before it spoils.",
+      collectiblePool: [
+        { icon: "🍞", label: "Manna", good: true },
+        { icon: "🍞", label: "Manna", good: true },
+        { icon: "🐛", label: "Worms", good: false },
+        { icon: "🪨", label: "Stone", good: false },
+        { icon: "🌾", label: "Daily Portion", good: true },
+        { icon: "🔥", label: "Heat", good: false }
+      ]
     }
   ],
   "Jordan Crossing": ["Jordan", "stones", "ark"],
@@ -713,7 +748,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 44;
+const ACTIVITY_SCHEMA_VERSION = 47;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -1924,6 +1959,7 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     {
       id: "sea-faith-discern",
       engine: "discern",
+      stageFiveNative: true,
       label: "Sea of Deliverance",
       maxMisses: 3,
       sourceRef: "Exodus 14:13-31",
@@ -1946,6 +1982,7 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     {
       id: "sea-song-pattern",
       engine: "pattern",
+      stageFiveNative: true,
       label: "Song of the Sea",
       rounds: 4,
       maxMisses: 4,
@@ -1962,26 +1999,21 @@ const THEMED_INTERACTIVE_MODE_SETS = {
       sequences: [[0, 1, 3], [0, 1, 2, 3], [0, 2, 3, 1], [0, 1, 2, 3, 3]]
     },
     {
-      id: "sea-shore-route",
-      engine: "route",
-      label: "Far Shore",
-      maxMisses: 4,
-      sourceRef: "Exodus 14:30-31",
-      storyPrompt: "Follow the final steps to the far shore as Israel sees God's salvation.",
-      secondaryPrompt: "Trace the path to safety one move at a time.",
-      keyboardHint: "Keyboard: use arrow keys or WASD to follow the shoreward path.",
-      routeSteps: [
-        { dir: "right", icon: "👣", label: "Cross" },
-        { dir: "up", icon: "🏖️", label: "Shore" },
-        { dir: "left", icon: "🙌", label: "Fear the Lord" },
-        { dir: "down", icon: "✝️", label: "Trust" }
-      ]
+      id: "sea-red-sea-defense",
+      engine: "shieldwall",
+      stageFiveNative: true,
+      label: "Sea Wall Defense",
+      sourceRef: "Exodus 14:19-22",
+      storyPrompt: "Hold the dry-ground path together as the sea walls stand and Israel crosses through.",
+      secondaryPrompt: "Shift your shield where the pressure builds to keep the crossing lane open.",
+      keyboardHint: "Keyboard: use A/D or Left/Right to move the shield wall and hold back the surge."
     }
   ],
   "Jordan Crossing": [
     {
       id: "jordan-follow-ark-route",
       engine: "route",
+      stageFiveNative: true,
       label: "Follow the Ark",
       maxMisses: 4,
       sourceRef: "Joshua 3:3-4",
@@ -1998,6 +2030,7 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     {
       id: "jordan-riverbed-balance",
       engine: "balance",
+      stageFiveNative: true,
       label: "Riverbed Step",
       target: 8,
       maxMisses: 4,
@@ -2009,6 +2042,7 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     {
       id: "jordan-memorial-discern",
       engine: "discern",
+      stageFiveNative: true,
       label: "Memorial Stones",
       maxMisses: 3,
       sourceRef: "Joshua 4:5-7",
@@ -2031,6 +2065,7 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     {
       id: "jordan-jericho-pattern",
       engine: "pattern",
+      stageFiveNative: true,
       label: "Jericho March",
       rounds: 4,
       maxMisses: 4,
@@ -2047,26 +2082,17 @@ const THEMED_INTERACTIVE_MODE_SETS = {
       sequences: [[0, 2, 1], [0, 2, 1, 0], [0, 2, 1, 0, 2], [0, 2, 1, 0, 3]]
     },
     {
-      id: "jordan-jericho-discern",
-      engine: "discern",
-      label: "Jericho Obedience",
-      maxMisses: 3,
-      sourceRef: "Joshua 6:2-20",
-      storyPrompt: "Discern how Israel obeyed God's unusual plan at Jericho.",
-      secondaryPrompt: "Choose the answer that fits the Jericho account.",
-      keyboardHint: "Keyboard: press 1-4 to choose the right Jericho answer.",
-      cards: [
-        { icon: "🧱", label: "Walls" },
-        { icon: "📯", label: "Trumpets" },
-        { icon: "👣", label: "March" },
-        { icon: "📢", label: "Shout" }
-      ],
-      targets: [
-        { prompt: "What did the priests carry and blow during the march around Jericho?", correctIndex: 1 },
-        { prompt: "What did Israel do around Jericho for six days?", correctIndex: 2 },
-        { prompt: "What fell after the people shouted in faith?", correctIndex: 0 },
-        { prompt: "What did Joshua tell the people to do on the seventh day after the trumpets sounded?", correctIndex: 3 }
-      ]
+      id: "jordan-wall-break",
+      engine: "sealbreak",
+      stageFiveNative: true,
+      label: "Jericho Wall Break",
+      targetHits: 6,
+      maxMisses: 4,
+      seconds: 18,
+      sourceRef: "Joshua 6:4-5,20",
+      storyPrompt: "Strike at the cracked sections as the walls of Jericho begin to give way.",
+      secondaryPrompt: "Time your blows when the wall fractures open.",
+      keyboardHint: "Keyboard: press Space or Enter when the crack marker reaches the weak section."
     }
   ],
   "Land and Legacy": [
@@ -2164,6 +2190,7 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     {
       id: "david-stones-pattern",
       engine: "pattern",
+      stageFiveNative: true,
       label: "Brook Stones",
       rounds: 4,
       maxMisses: 4,
@@ -2182,6 +2209,7 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     {
       id: "david-provisions-route",
       engine: "route",
+      stageFiveNative: true,
       label: "Battle-Line Errand",
       maxMisses: 4,
       sourceRef: "1 Samuel 17:17-20",
@@ -2198,6 +2226,7 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     {
       id: "david-armor-discern",
       engine: "discern",
+      stageFiveNative: true,
       label: "Trust or Armor",
       maxMisses: 3,
       sourceRef: "1 Samuel 17:38-40,45-47",
@@ -2220,6 +2249,7 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     {
       id: "david-giant-duel",
       engine: "slingshot",
+      stageFiveNative: true,
       label: "Giant Duel",
       sourceRef: "1 Samuel 17:49-50",
       storyPrompt: "Pull back the sling and strike true against the champion of Gath.",
@@ -2227,15 +2257,17 @@ const THEMED_INTERACTIVE_MODE_SETS = {
       keyboardHint: "Keyboard: arrows adjust your pull, Space or Enter launches, and R resets the shot."
     },
     {
-      id: "david-courage-balance",
-      engine: "balance",
-      label: "Stand in Courage",
-      target: 8,
+      id: "david-shepherd-rescue",
+      engine: "spotlight",
+      stageFiveNative: true,
+      label: "Shepherd Rescue",
+      targetFinds: 5,
       maxMisses: 4,
-      drift: 0.028,
-      sourceRef: "1 Samuel 17:32-37",
-      storyPrompt: "Hold steady in courage as David remembers how God delivered him before.",
-      keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker inside the courage band."
+      seconds: 20,
+      sourceRef: "1 Samuel 17:34-37",
+      storyPrompt: "Search the dark hills quickly and rescue the sheep before the lion or bear carries them away.",
+      secondaryPrompt: "Spot the trapped sheep and bring them back to safety.",
+      keyboardHint: "Keyboard: move the spotlight with arrows or WASD and press Space to rescue a sheep."
     }
   ]
 };
@@ -3315,6 +3347,7 @@ let storyTheaterAutoCloseTimer = 0;
 let storyTheaterAutoCloseToken = 0;
 let storyNarrationUtterance = null;
 let storyNarrationAudio = null;
+let chapterIntroUtterance = null;
 let storyRecapUtterance = null;
 let storyRecapAudio = null;
 let storyRecapAudioToken = 0;
@@ -4049,6 +4082,13 @@ let recapIndicatorLabel = null;
 let storyJourneySection = null;
 let storyJourneyStatus = null;
 let bossBattlesToggleBtn = null;
+let cloudSaveSection = null;
+let cloudSaveSummary = null;
+let copySyncCodeBtnCloud = null;
+let importSyncCodeBtnCloud = null;
+let downloadSaveFileBtn = null;
+let importSaveFileBtn = null;
+let cloudSaveFileInput = null;
 let dailyCalendarSection = null;
 let dailyCalendarSummary = null;
 let dailyCalendarEvent = null;
@@ -4118,6 +4158,15 @@ let eraFinalePrayerStatus = null;
 let eraFinaleContinueBtn = null;
 let eraFinaleReviewBtn = null;
 let eraFinaleBadgeBtn = null;
+let chapterIntroOverlay = null;
+let chapterIntroKicker = null;
+let chapterIntroTitle = null;
+let chapterIntroBody = null;
+let chapterIntroVerse = null;
+let chapterIntroStatus = null;
+let chapterIntroContinueBtn = null;
+let chapterIntroReplayBtn = null;
+let chapterIntroImage = null;
 
 function clearAudioNodes() {
   if (audioEngine.musicHeartbeatTimer) {
@@ -5489,6 +5538,88 @@ function eraIntroCopy(era) {
   return map[era] || era;
 }
 
+function chapterIntroDetails(era) {
+  const map = {
+    genesis: {
+      kicker: "Chapter Intro",
+      title: "Genesis Begins",
+      body: "The story opens with creation, blessing, the fall, and the first great acts of judgment and mercy. This era lays the foundation for everything that follows.",
+      verse: "Genesis 1:1-3",
+      narration: "Welcome to Genesis. Creation, fall, flood, and Babel set the stage for God's unfolding plan."
+    },
+    patriarchs: {
+      kicker: "Chapter Intro",
+      title: "Promise Family",
+      body: "God calls Abram, confirms His covenant, and carries the promise through Isaac, Jacob, and Joseph. The family line matters because God's promise is moving forward.",
+      verse: "Genesis 12:1-3",
+      narration: "Welcome to the patriarchs. God begins forming a covenant family through Abraham, Isaac, Jacob, and Joseph."
+    },
+    exodus: {
+      kicker: "Chapter Intro",
+      title: "Exodus and Deliverance",
+      body: "Israel cries out in Egypt, God raises Moses, and deliverance comes through mighty acts, Passover, and the sea crossing.",
+      verse: "Exodus 3:7-8",
+      narration: "Welcome to Exodus. God hears His people, raises Moses, and leads Israel out with power and mercy."
+    },
+    sinai: {
+      kicker: "Chapter Intro",
+      title: "Sinai Covenant",
+      body: "At Sinai, God gives His words, sets apart His people, and teaches them how holiness and worship shape community life.",
+      verse: "Exodus 19:5-6",
+      narration: "Welcome to Sinai. The covenant is given, and God teaches His people how to walk in holiness."
+    },
+    wilderness: {
+      kicker: "Chapter Intro",
+      title: "Wilderness Trust",
+      body: "In the wilderness, Israel learns dependence day by day. Manna, guidance, and testing reveal both God's patience and His faithfulness.",
+      verse: "Deuteronomy 8:2-3",
+      narration: "Welcome to the wilderness. Here God trains His people to trust Him in hunger, wandering, and daily dependence."
+    },
+    conquest: {
+      kicker: "Chapter Intro",
+      title: "Crossing and Conquest",
+      body: "Joshua leads Israel across the Jordan into the land of promise. Obedience, courage, and remembrance mark the path forward.",
+      verse: "Joshua 1:8-9",
+      narration: "Welcome to the conquest. Joshua leads the people forward through courage, obedience, and God's promises."
+    },
+    judges: {
+      kicker: "Chapter Intro",
+      title: "Cycle of Judges",
+      body: "The judges era shows a repeated pattern of wandering, oppression, crying out, rescue, and mercy. God keeps meeting His people in their need.",
+      verse: "Judges 2:16-18",
+      narration: "Welcome to Judges. Again and again, God shows mercy as His people fall and cry out for deliverance."
+    },
+    samuel: {
+      kicker: "Chapter Intro",
+      title: "Samuel's Call",
+      body: "Samuel grows under God's word and becomes a faithful prophet in a time when revelation had grown rare.",
+      verse: "1 Samuel 3:9-10",
+      narration: "Welcome to Samuel. God calls a listening servant and begins leading His people through a faithful prophet."
+    },
+    saul: {
+      kicker: "Chapter Intro",
+      title: "Saul's Kingship",
+      body: "Saul's rise and decline show the weight of leadership, obedience, and the danger of outward strength without inward submission to God.",
+      verse: "1 Samuel 15:22",
+      narration: "Welcome to Saul. This era tests what kind of king Israel will have and whether obedience will truly matter."
+    },
+    david: {
+      kicker: "Chapter Intro",
+      title: "David's Courage",
+      body: "David enters the story with faith, courage, and trust in God. The shepherd becomes a warrior and king through dependence on the Lord.",
+      verse: "1 Samuel 17:45",
+      narration: "Welcome to David. Courage, worship, and trust in God define this part of the journey."
+    }
+  };
+  return map[era] || {
+    kicker: "Chapter Intro",
+    title: eraIntroCopy(era),
+    body: "A new chapter of the Bible story is opening. Follow the path and see how God continues His work.",
+    verse: "",
+    narration: `Welcome to ${eraIntroCopy(era)}. A new chapter of the Bible story is beginning.`
+  };
+}
+
 function eraFinaleCopy(era) {
   const map = {
     genesis: {
@@ -6505,6 +6636,15 @@ function ensurePremiumHubStyles() {
     ".hub-quick-nav{margin-top:16px;}",
     ".hub-quick-actions{display:flex;flex-wrap:wrap;gap:10px;}",
     ".hub-quick-actions .ghost-btn{min-width:160px;justify-content:center;}",
+    ".cloud-save-actions{display:flex;flex-wrap:wrap;gap:10px;}",
+    ".cloud-save-summary{margin:0 0 12px;}",
+    ".chapter-intro-overlay .welcome-card{max-width:min(94vw,860px);}",
+    ".chapter-intro-copy{display:grid;gap:12px;text-align:left;}",
+    ".chapter-intro-copy p{margin:0;}",
+    ".chapter-intro-media{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:18px;border:1px solid rgba(229,184,93,.26);box-shadow:0 18px 40px rgba(0,0,0,.22);margin:10px 0 6px;}",
+    ".chapter-intro-verse{font-weight:800;color:#f6ddb1;}",
+    ".chapter-intro-status{color:rgba(248,236,214,.74);font-size:.96rem;}",
+    ".chapter-intro-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}",
     ".shield-note{margin-top:0.16rem;font-size:.62rem;color:rgba(248,236,214,.72);font-weight:600;}",
     ".recap-indicator{position:fixed;top:14px;right:14px;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(12,18,30,.92);border:1px solid rgba(229,184,93,.35);color:#f8ecd6;font-weight:700;font-size:.78rem;letter-spacing:.02em;opacity:.65;transform:translateY(0);transition:opacity 220ms ease,transform 240ms ease;z-index:120;pointer-events:auto;cursor:pointer;}",
     ".recap-indicator.idle{opacity:.65;}",
@@ -6585,6 +6725,163 @@ function closeEraCardPreview() {
   if (!eraCardPreviewOverlay) return;
   eraCardPreviewOverlay.classList.add("hidden");
   updateOverlayLock();
+}
+
+function stopChapterIntroNarration() {
+  if (chapterIntroUtterance && window.speechSynthesis) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch (_) {}
+  }
+  chapterIntroUtterance = null;
+}
+
+function ensureChapterIntroOverlay() {
+  if (chapterIntroOverlay && chapterIntroOverlay.isConnected) return;
+  if (!appRoot) return;
+
+  chapterIntroOverlay = document.createElement("div");
+  chapterIntroOverlay.id = "chapterIntroOverlay";
+  chapterIntroOverlay.className = "welcome-overlay hidden chapter-intro-overlay";
+  chapterIntroOverlay.setAttribute("aria-live", "polite");
+  chapterIntroOverlay.setAttribute("role", "dialog");
+  chapterIntroOverlay.setAttribute("aria-modal", "true");
+  chapterIntroOverlay.innerHTML = [
+    '<div class="welcome-card share-card">',
+    '  <div class="chapter-intro-copy">',
+    '    <p id="chapterIntroKicker" class="eyebrow"></p>',
+    '    <h2 id="chapterIntroTitle"></h2>',
+    '    <img id="chapterIntroImage" class="chapter-intro-media" alt="Chapter intro scene">',
+    '    <p id="chapterIntroBody" class="meta"></p>',
+    '    <p id="chapterIntroVerse" class="chapter-intro-verse"></p>',
+    '    <p id="chapterIntroStatus" class="chapter-intro-status"></p>',
+    '  </div>',
+    '  <div class="chapter-intro-actions">',
+    `    <button id="chapterIntroContinueBtn" class="cta-btn" type="button">${challengeCopy("Begin Chapter", "Comenzar capitulo")}</button>`,
+    `    <button id="chapterIntroReplayBtn" class="ghost-btn" type="button">${challengeCopy("Replay Intro", "Repetir intro")}</button>`,
+    '  </div>',
+    '</div>'
+  ].join("");
+
+  appRoot.appendChild(chapterIntroOverlay);
+  chapterIntroKicker = chapterIntroOverlay.querySelector("#chapterIntroKicker");
+  chapterIntroTitle = chapterIntroOverlay.querySelector("#chapterIntroTitle");
+  chapterIntroBody = chapterIntroOverlay.querySelector("#chapterIntroBody");
+  chapterIntroVerse = chapterIntroOverlay.querySelector("#chapterIntroVerse");
+  chapterIntroStatus = chapterIntroOverlay.querySelector("#chapterIntroStatus");
+  chapterIntroContinueBtn = chapterIntroOverlay.querySelector("#chapterIntroContinueBtn");
+  chapterIntroReplayBtn = chapterIntroOverlay.querySelector("#chapterIntroReplayBtn");
+  chapterIntroImage = chapterIntroOverlay.querySelector("#chapterIntroImage");
+
+  if (chapterIntroContinueBtn) {
+    chapterIntroContinueBtn.onclick = () => closeChapterIntroOverlay({ proceed: true });
+  }
+  if (chapterIntroReplayBtn) {
+    chapterIntroReplayBtn.onclick = () => {
+      const era = chapterIntroOverlay ? chapterIntroOverlay.dataset.era : "";
+      if (era) playChapterIntroNarration(era);
+    };
+  }
+  chapterIntroOverlay.addEventListener("click", (event) => {
+    if (event.target === chapterIntroOverlay) closeChapterIntroOverlay();
+  });
+}
+
+function playChapterIntroNarration(era, onComplete = null) {
+  stopChapterIntroNarration();
+  const intro = chapterIntroDetails(era);
+  const synth = window.speechSynthesis;
+  if (!intro || !intro.narration || !synth) {
+    if (chapterIntroStatus) {
+      chapterIntroStatus.textContent = challengeCopy("Intro ready. Tap Begin Chapter when you are ready.", "La introduccion esta lista. Toca Comenzar capitulo cuando estes listo.");
+    }
+    if (typeof onComplete === "function") onComplete();
+    return false;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(intro.narration);
+  utterance.voice = preferredGreetingVoice(state.language);
+  utterance.lang = intro.lang || document.documentElement.lang || "en-US";
+  utterance.rate = 0.96;
+  utterance.pitch = 0.94;
+  utterance.volume = Math.max(0.35, Math.min(1, (state.audio && state.audio.musicEnabled ? state.audio.musicVolume : 0.65)));
+  utterance.onstart = () => {
+    if (chapterIntroStatus) {
+      chapterIntroStatus.textContent = challengeCopy("Narrating chapter intro...", "Narrando la introduccion del capitulo...");
+    }
+  };
+  utterance.onend = () => {
+    if (chapterIntroUtterance !== utterance) return;
+    chapterIntroUtterance = null;
+    if (chapterIntroStatus) {
+      chapterIntroStatus.textContent = challengeCopy("Intro complete. Begin when you are ready.", "Intro completa. Comienza cuando estes listo.");
+    }
+    if (typeof onComplete === "function") onComplete();
+  };
+  utterance.onerror = () => {
+    if (chapterIntroUtterance !== utterance) return;
+    chapterIntroUtterance = null;
+    if (chapterIntroStatus) {
+      chapterIntroStatus.textContent = challengeCopy("Intro text is ready below if audio does not play.", "El texto de la intro esta listo abajo si el audio no suena.");
+    }
+    if (typeof onComplete === "function") onComplete();
+  };
+
+  chapterIntroUtterance = utterance;
+  try {
+    synth.cancel();
+    synth.speak(utterance);
+    return true;
+  } catch (_) {
+    chapterIntroUtterance = null;
+    if (chapterIntroStatus) {
+      chapterIntroStatus.textContent = challengeCopy("Intro text is ready below if audio does not play.", "El texto de la intro esta listo abajo si el audio no suena.");
+    }
+    if (typeof onComplete === "function") onComplete();
+    return false;
+  }
+}
+
+function openChapterIntroOverlay(meta, stageId) {
+  ensureChapterIntroOverlay();
+  if (!chapterIntroOverlay || !meta || !meta.theme) return;
+  const era = meta.theme.era || "";
+  const intro = chapterIntroDetails(era);
+  chapterIntroOverlay.dataset.stageId = stageId;
+  chapterIntroOverlay.dataset.era = era;
+  if (chapterIntroKicker) chapterIntroKicker.textContent = intro.kicker;
+  if (chapterIntroTitle) chapterIntroTitle.textContent = intro.title;
+  if (chapterIntroBody) chapterIntroBody.textContent = intro.body;
+  if (chapterIntroVerse) {
+    chapterIntroVerse.textContent = intro.verse
+      ? `${challengeCopy("Find it in the Bible", "Encuentralo en la Biblia")}: ${intro.verse}`
+      : "";
+  }
+  if (chapterIntroStatus) {
+    chapterIntroStatus.textContent = challengeCopy("Preparing chapter intro...", "Preparando la introduccion del capitulo...");
+  }
+  if (chapterIntroImage) {
+    chapterIntroImage.src = cutscenePosterSource(era) || "";
+    chapterIntroImage.alt = `${intro.title} scene`;
+  }
+  chapterIntroOverlay.classList.remove("hidden");
+  updateOverlayLock();
+  playChapterIntroNarration(era);
+}
+
+function closeChapterIntroOverlay({ proceed = false } = {}) {
+  if (!chapterIntroOverlay) return;
+  const stageId = chapterIntroOverlay.dataset.stageId || "";
+  const era = chapterIntroOverlay.dataset.era || "";
+  stopChapterIntroNarration();
+  chapterIntroOverlay.classList.add("hidden");
+  updateOverlayLock();
+  if (!proceed || !stageId) return;
+  if (era) {
+    state.stats.chapterIntrosSeen[era] = true;
+    persist();
+  }
+  openStage(stageId, { bypassChapterIntro: true });
 }
 
 function ensureShareTextOverlay() {
@@ -6785,18 +7082,40 @@ function createFreshProfile() {
 }
 
 function exportCurrentProfileSyncCode() {
-  const payload = {
+  const payload = buildSaveFilePayload();
+  const json = JSON.stringify(payload);
+  const code = btoa(unescape(encodeURIComponent(json)));
+  copyTextToClipboardOrPrompt(code, () => {
+    window.alert(challengeCopy("Sync code copied. Paste it on another device to import this profile.", "Codigo de sincronizacion copiado. Pegalo en otro dispositivo para importar este perfil."));
+  });
+}
+
+function buildSaveFilePayload() {
+  return {
     app: "FAITHSHIELD",
     version: 1,
     exportedAt: new Date().toISOString(),
     profile: activeProfileMeta() || normalizeProfileMeta({ id: activeProfileId, name: state.playerName || "Faith Player" }),
     snapshot: captureStateSnapshot()
   };
-  const json = JSON.stringify(payload);
-  const code = btoa(unescape(encodeURIComponent(json)));
-  copyTextToClipboardOrPrompt(code, () => {
-    window.alert(challengeCopy("Sync code copied. Paste it on another device to import this profile.", "Codigo de sincronizacion copiado. Pegalo en otro dispositivo para importar este perfil."));
-  });
+}
+
+function importProfileFromPayload(payload, sourceLabel = "sync code") {
+  if (!payload || payload.app !== "FAITHSHIELD" || !payload.snapshot) {
+    window.alert(challengeCopy(`That ${sourceLabel} is not valid for FAITHSHIELD.`, `Ese ${sourceLabel} no es valido para FAITHSHIELD.`));
+    return false;
+  }
+  const incomingProfile = normalizeProfileMeta({
+    ...(payload.profile || {}),
+    id: uniqueProfileId((payload.profile && payload.profile.name) || "imported-profile"),
+    updatedAt: localDayKey()
+  }, profileIndex.length);
+  profileIndex.push(incomingProfile);
+  profileIndex = profileIndex.slice(0, PROFILE_LIMIT);
+  saveProfileIndex(profileIndex);
+  writeStoredProfileSnapshot(incomingProfile.id, payload.snapshot);
+  switchToProfile(incomingProfile.id);
+  return true;
 }
 
 function importProfileFromSyncCode() {
@@ -6809,20 +7128,36 @@ function importProfileFromSyncCode() {
     window.alert(challengeCopy("That sync code could not be read.", "No se pudo leer ese codigo de sincronizacion."));
     return;
   }
-  if (!payload || payload.app !== "FAITHSHIELD" || !payload.snapshot) {
-    window.alert(challengeCopy("That sync code is not valid for FAITHSHIELD.", "Ese codigo de sincronizacion no es valido para FAITHSHIELD."));
-    return;
-  }
-  const incomingProfile = normalizeProfileMeta({
-    ...(payload.profile || {}),
-    id: uniqueProfileId((payload.profile && payload.profile.name) || "imported-profile"),
-    updatedAt: localDayKey()
-  }, profileIndex.length);
-  profileIndex.push(incomingProfile);
-  profileIndex = profileIndex.slice(0, PROFILE_LIMIT);
-  saveProfileIndex(profileIndex);
-  writeStoredProfileSnapshot(incomingProfile.id, payload.snapshot);
-  switchToProfile(incomingProfile.id);
+  importProfileFromPayload(payload, challengeCopy("sync code", "codigo de sincronizacion"));
+}
+
+function downloadCurrentSaveFile() {
+  const payload = buildSaveFilePayload();
+  const fileName = `${normalizeFileSlug((payload.profile && payload.profile.name) || "faithshield-save", "faithshield-save")}-${localDayKey()}.json`;
+  downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }), fileName);
+}
+
+function openCloudSaveFilePicker() {
+  if (cloudSaveFileInput) cloudSaveFileInput.click();
+}
+
+function importProfileFromSaveFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let payload = null;
+    try {
+      payload = JSON.parse(String(reader.result || ""));
+    } catch (_) {
+      window.alert(challengeCopy("That save file could not be read.", "No se pudo leer ese archivo de guardado."));
+      return;
+    }
+    importProfileFromPayload(payload, challengeCopy("save file", "archivo de guardado"));
+  };
+  reader.onerror = () => {
+    window.alert(challengeCopy("That save file could not be read.", "No se pudo leer ese archivo de guardado."));
+  };
+  reader.readAsText(file);
 }
 
 function hallBossEntries() {
@@ -7961,6 +8296,68 @@ function renderStoryJourneyOptions() {
   }
 }
 
+function renderCloudSavePanel() {
+  const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
+  if (!progressSection || !progressSection.parentNode) return;
+
+  if (!cloudSaveSection || !cloudSaveSection.isConnected) {
+    cloudSaveSection = document.getElementById("cloudSaveSection");
+    if (!cloudSaveSection) {
+      cloudSaveSection = document.createElement("section");
+      cloudSaveSection.id = "cloudSaveSection";
+      cloudSaveSection.className = "feature-card";
+      cloudSaveSection.innerHTML = [
+        '<div class="feature-head">',
+        `  <h2>${challengeCopy("Cloud Save", "Guardado en la nube")}</h2>`,
+        `  <p class="meta">${challengeCopy("Move your FAITHSHIELD journey between desktop, iPhone, and iPad.", "Lleva tu progreso de FAITHSHIELD entre escritorio, iPhone y iPad.")}</p>`,
+        '</div>',
+        '<p id="cloudSaveSummary" class="meta cloud-save-summary"></p>',
+        '<div class="cloud-save-actions">',
+        `  <button id="copySyncCodeBtnCloud" class="ghost-btn" type="button">${challengeCopy("Copy Sync Code", "Copiar codigo")}</button>`,
+        `  <button id="importSyncCodeBtnCloud" class="ghost-btn" type="button">${challengeCopy("Import Sync Code", "Importar codigo")}</button>`,
+        `  <button id="downloadSaveFileBtn" class="ghost-btn" type="button">${challengeCopy("Download Save File", "Descargar guardado")}</button>`,
+        `  <button id="importSaveFileBtn" class="ghost-btn" type="button">${challengeCopy("Import Save File", "Importar guardado")}</button>`,
+        '</div>',
+        '<input id="cloudSaveFileInput" type="file" accept="application/json,.json" hidden>'
+      ].join("");
+      const parent = progressSection.parentNode;
+      const anchor = storyJourneySection && storyJourneySection.parentNode === parent
+        ? storyJourneySection.nextSibling
+        : progressSection.nextSibling;
+      parent.insertBefore(cloudSaveSection, anchor);
+    }
+
+    cloudSaveSummary = cloudSaveSection.querySelector("#cloudSaveSummary");
+    copySyncCodeBtnCloud = cloudSaveSection.querySelector("#copySyncCodeBtnCloud");
+    importSyncCodeBtnCloud = cloudSaveSection.querySelector("#importSyncCodeBtnCloud");
+    downloadSaveFileBtn = cloudSaveSection.querySelector("#downloadSaveFileBtn");
+    importSaveFileBtn = cloudSaveSection.querySelector("#importSaveFileBtn");
+    cloudSaveFileInput = cloudSaveSection.querySelector("#cloudSaveFileInput");
+
+    if (copySyncCodeBtnCloud) copySyncCodeBtnCloud.onclick = () => exportCurrentProfileSyncCode();
+    if (importSyncCodeBtnCloud) importSyncCodeBtnCloud.onclick = () => importProfileFromSyncCode();
+    if (downloadSaveFileBtn) downloadSaveFileBtn.onclick = () => downloadCurrentSaveFile();
+    if (importSaveFileBtn) importSaveFileBtn.onclick = () => openCloudSaveFilePicker();
+    if (cloudSaveFileInput) {
+      cloudSaveFileInput.onchange = (event) => {
+        const file = event.target && event.target.files ? event.target.files[0] : null;
+        importProfileFromSaveFile(file);
+        cloudSaveFileInput.value = "";
+      };
+    }
+  }
+
+  if (cloudSaveSummary) {
+    const player = state.playerName || challengeCopy("Faith Player", "Jugador de Fe");
+    const badges = Array.isArray(state.badges) ? state.badges.length : 0;
+    const stages = Array.isArray(state.completed) ? state.completed.length : 0;
+    cloudSaveSummary.textContent = challengeCopy(
+      `${player} has ${badges} badges, ${stages} completed stages, and a ready-to-share journey save.`,
+      `${player} tiene ${badges} insignias, ${stages} etapas completadas y un guardado listo para compartir.`
+    );
+  }
+}
+
 function ensureHubQuickNav() {
   const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
   if (!progressSection || !progressSection.parentNode) return;
@@ -8048,6 +8445,7 @@ function ensureHubSectionOrder() {
   const preferredSections = [
     hubQuickNav,
     storyJourneySection,
+    cloudSaveSection,
     dailyThoughtCard,
     todayPlanSection,
     streakSection,
@@ -8085,6 +8483,8 @@ function renderExperienceSections() {
   ensureCorePracticePlacement();
   ensureRecapIndicator();
   renderStoryJourneyOptions();
+  renderCloudSavePanel();
+  ensureChapterIntroOverlay();
   renderDailyChallengeCalendar();
   renderHallOfFaith();
   renderCampaignMap();
@@ -9136,6 +9536,7 @@ function clearActiveChallenge() {
   }
 
   stopVerseAudio();
+  stopChapterIntroNarration();
 
   if (typeof activeCutsceneCleanup === "function") {
     activeCutsceneCleanup();
@@ -9161,7 +9562,8 @@ function updateOverlayLock() {
   const finalOpen = finalOverlay && !finalOverlay.classList.contains("hidden");
   const creditsOpen = creditsOverlay && !creditsOverlay.classList.contains("hidden");
   const theaterOpen = storyTheaterOverlay && !storyTheaterOverlay.classList.contains("hidden");
-  document.body.classList.toggle("has-overlay", Boolean(activityOpen || welcomeOpen || shareOpen || shieldOpen || eraCardOpen || shareTextOpen || eraFinaleOpen || finalOpen || creditsOpen || theaterOpen));
+  const chapterIntroOpen = chapterIntroOverlay && !chapterIntroOverlay.classList.contains("hidden");
+  document.body.classList.toggle("has-overlay", Boolean(activityOpen || welcomeOpen || shareOpen || shieldOpen || eraCardOpen || shareTextOpen || eraFinaleOpen || finalOpen || creditsOpen || theaterOpen || chapterIntroOpen));
 
 }
 
@@ -13267,6 +13669,9 @@ function shouldUseStageFiveSlingshot(base, themeName = "") {
 
 function toNonDirectionalStageFiveMode(base, themeName = "") {
   if (!base || typeof base !== "object") return null;
+  if (base.stageFiveNative && NON_DIRECTIONAL_STAGE_FIVE_ENGINES.has(base.engine)) {
+    return { ...base, themeName: base.themeName || themeName };
+  }
   if (base.engine === "spotlight" || base.engine === "memoryflip" || base.engine === "sealbreak" || base.engine === "shieldwall") {
     return { ...base, themeName: base.themeName || themeName };
   }
@@ -13560,6 +13965,7 @@ function buildEraSections() {
 function createEraSectionNode(section, completedSet) {
   const shell = document.createElement("section");
   shell.className = "era-section";
+  shell.dataset.era = section.era;
 
   const head = document.createElement("div");
   head.className = "era-head";
@@ -15766,9 +16172,10 @@ media.append(video, art, mediaLabel, mediaScript);
   raf = window.requestAnimationFrame(tick);
 }
 
-function openStage(stageId) {
+function openStage(stageId, options = {}) {
   const meta = getStageMeta(stageId);
   if (!meta) return;
+  const bypassChapterIntro = Boolean(options && options.bypassChapterIntro);
 
   primeAudioAuto();
   captureHubScrollPosition(stageId);
@@ -15782,6 +16189,15 @@ function openStage(stageId) {
   hideStageCompleteToast();
   stopStoryRecap();
   stopStoryNarration();
+  if (chapterIntroOverlay && !chapterIntroOverlay.classList.contains("hidden")) {
+    chapterIntroOverlay.classList.add("hidden");
+    updateOverlayLock();
+  }
+  if (!bypassChapterIntro && meta.theme && meta.theme.era && !state.stats.chapterIntrosSeen[meta.theme.era]) {
+    if (activityOverlay) activityOverlay.classList.add("hidden");
+    openChapterIntroOverlay(meta, stageId);
+    return;
+  }
   state.activeStage = stageId;
   state.lastStage = stageId;
   persist();
@@ -16741,19 +17157,79 @@ function bossBattleBackdropStyle(era, frameIndex = 0) {
   };
 }
 
-function bossBattlePhaseLabel(roundIndex, totalRounds, bossRatio, playerRatio) {
+function bossBattleCopyBundle(era, enemyName) {
+  const name = enemyName || challengeCopy("the enemy", "el enemigo");
+  const map = {
+    genesis: {
+      story: `Face ${name} with truth and endurance. Deceit weakens when faith answers clearly.`,
+      weakpoint: challengeCopy("Weak point: expose deceit by blocking the true strike lane.", "Punto debil: expone el engaño bloqueando el carril verdadero."),
+      telegraph: `${name} coils and watches for fear. Read the tell and hold the right guard.`,
+      strike: `${name} lashes forward. Raise the shield in the true direction now.`,
+      success: "Faithful defense. The serpent's momentum breaks.",
+      fail: "The strike slipped through. Read the tell more carefully.",
+      victory: `Victory. ${name} is driven back and the promise path holds.`
+    },
+    exodus: {
+      story: `Stand against ${name} and guard the people through the clash.`,
+      weakpoint: challengeCopy("Weak point: survive the rush and answer with steady faith.", "Punto debil: resiste la carga y responde con fe firme."),
+      telegraph: `${name} gathers force for another charge. Watch the signal.`,
+      strike: `${name} surges forward. Raise the shield wall in time.`,
+      success: "Strong defense. The assault loses ground.",
+      fail: "The charge broke through your guard.",
+      victory: `Victory. ${name} falls back and the way of deliverance stands open.`
+    },
+    conquest: {
+      story: `Face ${name} with obedience and courage. Timing matters in this battle.`,
+      weakpoint: challengeCopy("Weak point: strike only when the attack line opens.", "Punto debil: golpea solo cuando se abre la linea de ataque."),
+      telegraph: `${name} is setting the line. Watch for the opening.`,
+      strike: `${name} commits to the attack. Meet it with disciplined defense.`,
+      success: "Well timed. The enemy line is cracking.",
+      fail: "The opening was missed and the enemy pressed through.",
+      victory: `Victory. ${name} gives way and the path into the land is secure.`
+    },
+    judges: {
+      story: `Face ${name} in a hard and chaotic fight. Mercy and courage must hold.`,
+      weakpoint: challengeCopy("Weak point: stay calm when the pressure spikes.", "Punto debil: manten la calma cuando sube la presion."),
+      telegraph: `${name} shifts in chaos. Read the tell before the burst.`,
+      strike: `${name} swings wildly. Shield the right side before impact.`,
+      success: "You held the line. The chaos is turning against the enemy.",
+      fail: "The blow landed. Reset and read the pattern again.",
+      victory: `Victory. ${name} has been broken and the people can breathe again.`
+    },
+    david: {
+      story: `Face ${name} with courage, precision, and trust in God.`,
+      weakpoint: challengeCopy("Weak point: watch the stance, then answer at the right moment.", "Punto debil: observa la postura y responde en el momento justo."),
+      telegraph: `${name} boasts and winds up for a heavy blow. Watch the posture.`,
+      strike: `${name} attacks. Raise the shield and wait for the true opening.`,
+      success: "Excellent read. The giant loses balance and stamina.",
+      fail: "The blow connected. Regain your footing and answer with courage.",
+      victory: `Victory. ${name} has fallen and courage has carried the field.`
+    }
+  };
+  return map[era] || {
+    story: `Face ${name} with a faithful defense and clear answers.`,
+    weakpoint: challengeCopy("Weak point: watch the tell and raise the shield to the true lane.", "Punto debil: observa la señal y levanta el escudo al carril verdadero."),
+    telegraph: `${name} is preparing the next strike.`,
+    strike: `${name} attacks. Raise the shield now.`,
+    success: "Strong defense. The enemy loses stamina.",
+    fail: "The enemy landed a hit.",
+    victory: `Victory. ${name} has been defeated.`
+  };
+}
+
+function bossBattlePhaseLabel(roundIndex, totalRounds, bossRatio, playerRatio, era = "generic") {
   if (bossRatio <= 0.25) return challengeCopy("Final Strike", "Golpe final");
+  if (era === "conquest" && roundIndex >= Math.max(1, totalRounds - 2)) return challengeCopy("Wall Break", "Ruptura del muro");
+  if (era === "david" && bossRatio <= 0.5) return challengeCopy("Giant Falters", "El gigante vacila");
   if (playerRatio <= 0.34) return challengeCopy("Hold Fast", "Mantente firme");
   if (roundIndex >= Math.max(1, totalRounds - 2)) return challengeCopy("Turning Point", "Punto decisivo");
   return challengeCopy("Opening Clash", "Choque inicial");
 }
 
-function bossBattleStatusText(mode, bossRatio, playerRatio) {
+function bossBattleStatusText(mode, bossRatio, playerRatio, era = "generic") {
+  const copy = bossBattleCopyBundle(era, mode.enemyName);
   if (bossRatio <= 0.25) {
-    return challengeCopy(
-      `${mode.enemyName} is losing stamina. One more faithful block could end the battle.`,
-      `${mode.enemyName} esta perdiendo resistencia. Un bloqueo fiel mas puede terminar la batalla.`
-    );
+    return copy.victory.replace(/^Victory\. /, "").replace(/^Victoria\. /, "");
   }
   if (playerRatio <= 0.34) {
     return challengeCopy(
@@ -16762,15 +17238,9 @@ function bossBattleStatusText(mode, bossRatio, playerRatio) {
     );
   }
   if (bossRatio <= 0.5) {
-    return challengeCopy(
-      "The boss is weakening. Keep blocking with the right truth and drain the enemy's stamina.",
-      "El jefe se esta debilitando. Sigue bloqueando con la verdad correcta y agota su resistencia."
-    );
+    return copy.weakpoint;
   }
-  return challengeCopy(
-    "The battle has begun. Read the clue and raise the shield from the right direction.",
-    "La batalla ha comenzado. Lee la pista y levanta el escudo desde la direccion correcta."
-  );
+  return copy.story;
 }
 
 function ensureBossBattleStyles() {
@@ -17845,6 +18315,7 @@ function renderBoss(meta, mode, feedback) {
     ...mode,
     enemyName: enemyDisplayName
   };
+  const copyBundle = bossBattleCopyBundle(era, enemyDisplayName);
   const bossBadgeIcon = {
     "serpent-lord": "🐍",
     captain: "🛡️",
@@ -17909,10 +18380,7 @@ function renderBoss(meta, mode, feedback) {
 
   const bossStory = document.createElement("p");
   bossStory.className = "meta faith-boss-story";
-  bossStory.textContent = profile.title || mode.storyPrompt || challengeCopy(
-    "Choose the faithful response to defeat the enemy.",
-    "Elige la respuesta fiel para derrotar al enemigo."
-  );
+  bossStory.textContent = profile.title || mode.storyPrompt || copyBundle.story;
 
   const battleLine = document.createElement("p");
   battleLine.className = "faith-boss-statusline";
@@ -17998,7 +18466,7 @@ function renderBoss(meta, mode, feedback) {
 
   const weaknessCopy = document.createElement("p");
   weaknessCopy.className = "faith-boss-weakness-copy";
-  weaknessCopy.textContent = profile.weaknessCopy;
+  weaknessCopy.textContent = profile.weaknessCopy || copyBundle.weakpoint;
 
   const attackPad = document.createElement("div");
   attackPad.className = "faith-boss-attack-pad";
@@ -18126,8 +18594,8 @@ function renderBoss(meta, mode, feedback) {
     bossHealth.fill.style.width = `${Math.max(0, Math.min(100, (bossHp / maxBoss) * 100))}%`;
     playerHealth.fill.style.width = `${Math.max(0, Math.min(100, (playerHp / maxPlayer) * 100))}%`;
     bossIcon.classList.toggle("is-danger", bossRatio <= 0.5 || playerRatio <= 0.34);
-    phaseChip.textContent = bossBattlePhaseLabel(roundIndex, rounds.length, bossRatio, playerRatio);
-    battleLine.textContent = bossBattleStatusText(bossMode, bossRatio, playerRatio);
+    phaseChip.textContent = bossBattlePhaseLabel(roundIndex, rounds.length, bossRatio, playerRatio, era);
+    battleLine.textContent = bossBattleStatusText(bossMode, bossRatio, playerRatio, era);
     spriteWrap.innerHTML = retroBossBattleSceneMarkup(
       profile,
       palette,
@@ -18210,10 +18678,7 @@ function renderBoss(meta, mode, feedback) {
       if (!running || locked || currentToken !== roundAttackToken) return;
       attackPhase = "telegraph";
       feedback.className = "feedback warn";
-      feedback.textContent = challengeCopy(
-        `${enemyDisplayName} coils to strike. Block the true lane now.`,
-        `${enemyDisplayName} se prepara para golpear. Bloquea el carril verdadero ahora.`
-      );
+      feedback.textContent = copyBundle.telegraph;
       syncIncomingAttack();
       playSfx("boss-attack");
     }, 320);
@@ -18222,10 +18687,7 @@ function renderBoss(meta, mode, feedback) {
       if (!running || locked || currentToken !== roundAttackToken) return;
       attackPhase = "strike";
       feedback.className = "feedback warn";
-      feedback.textContent = challengeCopy(
-        `${enemyDisplayName} lunges. Raise the shield before the hit lands.`,
-        `${enemyDisplayName} se lanza. Levanta el escudo antes de que golpee.`
-      );
+      feedback.textContent = copyBundle.strike;
       syncIncomingAttack();
       playSfx("boss-attack");
     }, 1380);
@@ -18240,10 +18702,7 @@ function renderBoss(meta, mode, feedback) {
     running = false;
     setLocked(true);
     feedback.className = "feedback ok";
-    feedback.textContent = challengeCopy(
-      `Victory. ${enemyDisplayName} has been defeated.`,
-      `Victoria. ${enemyDisplayName} ha sido derrotado.`
-    );
+    feedback.textContent = copyBundle.victory;
     completeStage(meta, mode, { delayMs: 2300, sfx: null });
   };
 
@@ -18279,10 +18738,7 @@ function renderBoss(meta, mode, feedback) {
     if (isCorrect) {
       bossHp = Math.max(0, bossHp - 1);
       feedback.className = "feedback ok";
-      feedback.textContent = round.successText || challengeCopy(
-        "Strong block. The enemy loses stamina.",
-        "Bloqueo firme. El enemigo pierde resistencia."
-      );
+      feedback.textContent = round.successText || copyBundle.success;
       pulseArena("is-hit");
       playSfx(bossHp <= 0 ? "boss-win" : "boss-hit");
     } else {
@@ -18293,10 +18749,7 @@ function renderBoss(meta, mode, feedback) {
             `${enemyDisplayName} struck first. Your shield was too late.`,
             `${enemyDisplayName} golpeo primero. Tu escudo llego demasiado tarde.`
           )
-        : round.failText || challengeCopy(
-            "Guard broken. The enemy lands a hit.",
-            "La guardia se rompio. El enemigo logra un golpe."
-          );
+        : round.failText || copyBundle.fail;
       pulseArena("is-hurt");
       playSfx(playerHp <= 0 ? "fail" : "boss-hurt");
     }
@@ -18358,10 +18811,7 @@ function renderBoss(meta, mode, feedback) {
   refreshBackdrop();
   renderRound();
   feedback.className = "feedback";
-  feedback.textContent = challengeCopy(
-    `The battle is live. ${enemyDisplayName} is pressing forward. Raise the shield, survive the assault, and drain the boss's stamina.`,
-    `La batalla esta en marcha. ${enemyDisplayName} esta avanzando. Levanta el escudo, sobrevive al asalto y agota la resistencia del jefe.`
-  );
+  feedback.textContent = copyBundle.story;
   duckMusicTemporarily(0.22, 2200);
   playSfx("boss-enter");
 
