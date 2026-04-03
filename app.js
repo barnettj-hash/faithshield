@@ -6965,7 +6965,6 @@ function renderProfilesSection() {
 
 function renderHallOfFaith() {
   ensureExperienceSections();
-  ensureEraCardPreviewOverlay();
   if (!hallOfFaithSection) return;
   const bosses = hallBossEntries();
   const defeatedCount = bosses.filter((entry) => entry.defeated).length;
@@ -7017,75 +7016,6 @@ function renderHallOfFaith() {
   }
   if (hallEraGrid) {
     hallEraGrid.innerHTML = "";
-    eraOrderList().forEach((era) => {
-      const card = document.createElement("article");
-      card.className = "hall-card";
-      const complete = isEraComplete(era);
-      card.innerHTML = [
-        `<p class="era-card-title">${formatEraLabel(era)}</p>`,
-        `<p class="meta era-card-status">${complete ? challengeCopy("All stages complete. Share this era card.", "Todas las etapas completas. Comparte esta tarjeta.") : challengeCopy("Still in progress. Finish the era to unlock the share card.", "Aun en progreso. Termina la era para desbloquear la tarjeta.")}</p>`,
-        '<div class="hall-actions"></div>'
-      ].join("");
-      const actions = card.querySelector(".hall-actions");
-      const copyBtn = document.createElement("button");
-      copyBtn.type = "button";
-      copyBtn.className = "ghost-btn";
-      copyBtn.disabled = false;
-      copyBtn.textContent = challengeCopy("Copy Share Text", "Copiar texto");
-      copyBtn.onclick = () => {
-        if (!complete) {
-          showFeatureMoment(
-            challengeCopy("Era not finished yet", "Era aun no completada"),
-            challengeCopy("Finish every stage in this era to unlock the share text.", "Completa cada etapa de esta era para desbloquear el texto."),
-            { icon: "🔒", sfx: null, durationMs: 2200 }
-          );
-          return;
-        }
-        copyTextToClipboardOrPrompt(eraCompletionShareText(era), () => {
-          showFeatureMoment(
-            challengeCopy("Share text ready", "Texto listo"),
-            challengeCopy("You can now paste it into email or social.", "Ahora puedes pegarlo en correo o redes."),
-            { icon: "✅", durationMs: 1600 }
-          );
-        });
-      };
-      actions.appendChild(copyBtn);
-      const cardBtn = document.createElement("button");
-      cardBtn.type = "button";
-      cardBtn.className = complete ? "cta-btn" : "ghost-btn";
-      cardBtn.disabled = false;
-      cardBtn.textContent = challengeCopy("Open Era Card", "Abrir tarjeta");
-      cardBtn.onclick = async () => {
-        if (!complete) {
-          showFeatureMoment(
-            challengeCopy("Era not finished yet", "Era aun no completada"),
-            challengeCopy("Finish every stage in this era to unlock the era card.", "Completa cada etapa de esta era para desbloquear la tarjeta."),
-            { icon: "🔒", sfx: null, durationMs: 2200 }
-          );
-          return;
-        }
-        const done = openEraCardPreview(era);
-        if (done) {
-          showFeatureMoment(
-            challengeCopy("Era card opened", "Tarjeta de era abierta"),
-            challengeCopy("Preview the card and save it from the overlay.", "Previsualiza la tarjeta y guardala desde la ventana."),
-            { icon: "🛡️", durationMs: 1800 }
-          );
-          return;
-        }
-        openShareTextOverlay(
-          challengeCopy("Era share text", "Texto de era"),
-          eraCompletionShareText(era)
-        );
-        showFeatureMoment(
-          challengeCopy("Era card unavailable", "Tarjeta de era no disponible"),
-          challengeCopy("The preview could not be opened. Try again, or check whether your browser is blocking canvas images.", "No se pudo abrir la vista previa. Intentalo otra vez o revisa si tu navegador esta bloqueando imagenes de canvas."),
-          { icon: "⚠️", sfx: null, durationMs: 2600 }
-        );
-      };
-      actions.appendChild(cardBtn);
-      hallEraGrid.appendChild(card);
-    });
   }
 }
 
@@ -7173,9 +7103,7 @@ function ensureExperienceSections() {
         '<div class="feature-head" style="margin-top:18px;"><h3>Badges Earned</h3></div>',
         '<div id="hallBadgeStrip" class="hall-badge-strip"></div>',
         '<div class="feature-head" style="margin-top:18px;"><h3>Verses Mastered</h3></div>',
-        '<div id="hallVerseGrid" class="hall-verse-grid"></div>',
-        '<div class="feature-head" style="margin-top:18px;"><h3>Era Completion Cards</h3></div>',
-        '<div id="hallEraGrid" class="hall-era-grid"></div>'
+        '<div id="hallVerseGrid" class="hall-verse-grid"></div>'
       ].join("");
       if (postStoryAnchor) {
         postStoryAnchor.parentNode.insertBefore(hallOfFaithSection, postStoryAnchor);
@@ -7189,7 +7117,16 @@ function ensureExperienceSections() {
     hallBossGrid = hallOfFaithSection.querySelector("#hallBossGrid");
     hallBadgeStrip = hallOfFaithSection.querySelector("#hallBadgeStrip");
     hallVerseGrid = hallOfFaithSection.querySelector("#hallVerseGrid");
-    hallEraGrid = hallOfFaithSection.querySelector("#hallEraGrid");
+    hallEraGrid = null;
+  }
+  if (hallOfFaithSection && hallOfFaithSection.isConnected) {
+    const legacyEraGrid = hallOfFaithSection.querySelector("#hallEraGrid");
+    if (legacyEraGrid) {
+      const legacyHeading = legacyEraGrid.previousElementSibling;
+      if (legacyHeading && legacyHeading.classList.contains("feature-head")) legacyHeading.remove();
+      legacyEraGrid.remove();
+    }
+    hallEraGrid = null;
   }
 
   if (!dailyCalendarSection || !dailyCalendarSection.isConnected) {
