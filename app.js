@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-02-promise-audio-sync-v2";
+const CONTENT_VERSION = "2026-04-02-stage5-hardening-v3";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -246,6 +246,14 @@ const THEME_KEYWORDS = {
         { dir: "right", icon: "🔥", label: "Fire" },
         { dir: "up", icon: "⛰️", label: "Climb" },
         { dir: "right", icon: "🐏", label: "Ram" }
+      ],
+      choiceCards: [
+        { icon: "🪵", label: "Wood" },
+        { icon: "🔥", label: "Fire" },
+        { icon: "🔪", label: "Knife" },
+        { icon: "🐏", label: "Ram" },
+        { icon: "👦", label: "Isaac" },
+        { icon: "🪨", label: "Altar" }
       ]
     },
     {
@@ -705,7 +713,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 43;
+const ACTIVITY_SCHEMA_VERSION = 44;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -12940,11 +12948,13 @@ function stageFiveThemeSupportCards(themeName = "", excludeBaseId = "") {
 }
 
 function stageFiveChoiceCardsFromBase(base, limit = 4, themeName = "") {
-  const pool = Array.isArray(base?.cards) && base.cards.length
+  const pool = Array.isArray(base?.choiceCards) && base.choiceCards.length
+    ? base.choiceCards
+    : (Array.isArray(base?.cards) && base.cards.length
     ? base.cards
     : (Array.isArray(base?.pads) && base.pads.length
       ? base.pads
-      : (Array.isArray(base?.routeSteps) ? base.routeSteps : []));
+      : (Array.isArray(base?.routeSteps) ? base.routeSteps : [])));
   const cards = [];
   const seen = new Set();
 
@@ -13107,9 +13117,10 @@ function stageFiveSlingshotFromDirectional(base, themeName = "") {
 function stageFiveSpotlightFromBase(base, themeName = "") {
   const hash = stageFiveHashSeed(base, themeName);
   const cue = stageFiveThemeCue(themeName);
-  const cards = stageFiveChoiceCardsFromBase(base, 4, themeName);
   const useHiddenMoriahShuffle = themeName === "Promise Family" && String(base.id || "").includes("promise-moriah-ascent");
-  const roundsData = Array.from({ length: 4 }, (_, index) => {
+  const cards = stageFiveChoiceCardsFromBase(base, useHiddenMoriahShuffle ? 6 : 4, themeName);
+  const roundsCount = useHiddenMoriahShuffle ? 5 : 4;
+  const roundsData = Array.from({ length: roundsCount }, (_, index) => {
     const targetCard = cards[(hash + index) % cards.length];
     return {
       targetId: targetCard.id,
@@ -13122,21 +13133,28 @@ function stageFiveSpotlightFromBase(base, themeName = "") {
     engine: "spotlight",
     label: `${base.label || cue} Spotlight`,
     rounds: roundsData.length,
-    shuffles: (useHiddenMoriahShuffle ? 4 : 3) + (hash % 2),
-    peekMs: (useHiddenMoriahShuffle ? 1180 : 880) + ((hash % 3) * 70),
-    maxMisses: Math.max(2, Math.min(4, Number(base.maxMisses) || 3)),
+    shuffles: (useHiddenMoriahShuffle ? 5 : 3) + (hash % 2),
+    peekMs: (useHiddenMoriahShuffle ? 980 : 880) + ((hash % 3) * 60),
+    maxMisses: Math.max(useHiddenMoriahShuffle ? 1 : 2, Math.min(4, Number(base.maxMisses) || 3)),
     sourceRef: base.sourceRef,
     storyPrompt: base.storyPrompt || `Keep your eyes on the key truth in this ${cue} moment.`,
     secondaryPrompt: useHiddenMoriahShuffle
-      ? "Watch the Moriah items, let them flip and shuffle, then choose the hidden clue."
+      ? "Watch the Moriah items, let them flip, hide, reshuffle, then choose the right hidden clue."
       : "Watch the highlighted clue, let the board shuffle, then find it again.",
     keyboardHint: useHiddenMoriahShuffle
-      ? "Keyboard: press 1-4 after the cards flip over and finish shuffling."
+      ? "Keyboard: press 1-6 after the cards hide and finish both shuffle passes."
       : "Keyboard: press 1-4 to pick the card after the shuffle.",
     themeName,
     cards,
     roundsData,
-    faceDownAfterShuffle: useHiddenMoriahShuffle
+    boardColumns: useHiddenMoriahShuffle ? 3 : 2,
+    shufflePasses: useHiddenMoriahShuffle ? 2 : 1,
+    revealBetweenPasses: useHiddenMoriahShuffle,
+    betweenPassRevealMs: useHiddenMoriahShuffle ? 440 : 0,
+    betweenPassHideMs: useHiddenMoriahShuffle ? 240 : 0,
+    shuffleDelayMs: useHiddenMoriahShuffle ? 120 : 150,
+    faceDownAfterShuffle: useHiddenMoriahShuffle,
+    faceDownLabel: useHiddenMoriahShuffle ? "Covered" : "Hidden"
   };
 }
 
@@ -13369,6 +13387,11 @@ function stageFiveBaseSelection(level) {
   const startIndex = (ordinal + (level - 1)) % pool.length;
   const candidates = Array.from({ length: pool.length }, (_, offset) => pool[(startIndex + offset) % pool.length]);
   const previous = level > 1 ? stageFiveBaseSelection(level - 1).base : null;
+  const recentGlobalEngines = [];
+  for (let index = Math.max(1, level - 4); index < level; index += 1) {
+    const priorSelection = stageFiveBaseSelection(index);
+    if (priorSelection && priorSelection.base) recentGlobalEngines.push(priorSelection.base.engine);
+  }
 
   let base = candidates[0];
   if (useThemedModes) {
@@ -13383,16 +13406,21 @@ function stageFiveBaseSelection(level) {
     const usedIds = new Set(priorSameTheme.map((entry) => entry.id));
     const recentEngines = priorSameTheme.slice(-3).map((entry) => entry.engine);
 
-    base = candidates.find((candidate) => !usedIds.has(candidate.id) && candidate.id !== previous?.id && !recentEngines.includes(candidate.engine))
+    base = candidates.find((candidate) => !usedIds.has(candidate.id) && candidate.id !== previous?.id && !recentEngines.includes(candidate.engine) && !recentGlobalEngines.includes(candidate.engine))
+      || candidates.find((candidate) => !usedIds.has(candidate.id) && candidate.id !== previous?.id && !recentEngines.includes(candidate.engine))
       || candidates.find((candidate) => !usedIds.has(candidate.id) && candidate.id !== previous?.id)
       || candidates.find((candidate) => !usedIds.has(candidate.id))
+      || candidates.find((candidate) => candidate.id !== previous?.id && candidate.engine !== previous?.engine && !recentGlobalEngines.includes(candidate.engine))
       || candidates.find((candidate) => candidate.id !== previous?.id && candidate.engine !== previous?.engine)
       || candidates.find((candidate) => candidate.id !== previous?.id)
+      || candidates.find((candidate) => candidate.engine !== previous?.engine && !recentGlobalEngines.includes(candidate.engine))
       || candidates.find((candidate) => candidate.engine !== previous?.engine)
       || base;
   } else if (previous) {
-    base = candidates.find((candidate) => candidate.id !== previous.id && candidate.engine !== previous.engine)
+    base = candidates.find((candidate) => candidate.id !== previous.id && candidate.engine !== previous.engine && !recentGlobalEngines.includes(candidate.engine))
+      || candidates.find((candidate) => candidate.id !== previous.id && candidate.engine !== previous.engine)
       || candidates.find((candidate) => candidate.id !== previous.id)
+      || candidates.find((candidate) => candidate.engine !== previous.engine && !recentGlobalEngines.includes(candidate.engine))
       || candidates.find((candidate) => candidate.engine !== previous.engine)
       || base;
   }
@@ -13411,7 +13439,14 @@ function modeForStage(meta, difficulty = currentDifficulty()) {
     if (bossMode) return bossMode;
   }
   const selection = stageFiveBaseSelection(meta.level);
-  const mode = materializeInteractiveMode(selection.base, difficulty, `${meta.theme.era}-l${meta.level}-s${meta.stage}`, selection.cycle);
+  let baseMode = selection.base;
+  if (meta.stage === 5 && meta.theme && meta.theme.name === "Promise Family" && meta.level === 24) {
+    const moriahBase = (STAGE_FIVE_THEMED_POOLS["Promise Family"] || []).find((entry) => entry && entry.id === "promise-moriah-ascent");
+    if (moriahBase) {
+      baseMode = stageFiveSpotlightFromBase(moriahBase, meta.theme.name);
+    }
+  }
+  const mode = materializeInteractiveMode(baseMode, difficulty, `${meta.theme.era}-l${meta.level}-s${meta.stage}`, selection.cycle);
   if (isEraBossStage(meta) && !bossBattlesEnabled()) {
     mode.label = challengeCopy("Story Finale", "Final de historia");
     mode.storyPrompt = challengeCopy(
@@ -18338,6 +18373,7 @@ function renderBoss(meta, mode, feedback) {
 }
 
 function renderSpotlight(meta, mode, feedback) {
+  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice(0, 6) : stageFiveChoiceCardsFromBase(mode, 4, mode.themeName || "");
   const prompt = document.createElement("p");
   prompt.textContent = mode.secondaryPrompt || "Watch the highlighted clue, then pick it after the shuffle.";
   const hint = createChallengeHint(mode.keyboardHint || "Keyboard: press 1-4 to pick the clue after the shuffle.");
@@ -18346,12 +18382,12 @@ function renderSpotlight(meta, mode, feedback) {
 
   const board = document.createElement("div");
   board.style.display = "grid";
-  board.style.gridTemplateColumns = "repeat(2, minmax(150px, 1fr))";
+  const boardColumns = Math.max(2, Math.min(3, Number(mode.boardColumns) || (cards.length > 4 ? 3 : 2)));
+  board.style.gridTemplateColumns = `repeat(${boardColumns}, minmax(140px, 1fr))`;
   board.style.gap = "0.85rem";
   board.style.marginTop = "0.8rem";
   activityPanel.append(board);
 
-  const cards = Array.isArray(mode.cards) && mode.cards.length ? mode.cards.slice(0, 4) : stageFiveChoiceCardsFromBase(mode, 4, mode.themeName || "");
   const roundsData = Array.isArray(mode.roundsData) && mode.roundsData.length
     ? mode.roundsData
     : cards.map((card, index) => ({ targetId: card.id, targetLabel: card.label, shuffleSeed: index + 1 }));
@@ -18359,6 +18395,12 @@ function renderSpotlight(meta, mode, feedback) {
   const maxMisses = Math.max(1, Number(mode.maxMisses) || 3);
   const peekMs = Math.max(480, Number(mode.peekMs) || 900);
   const shuffleCount = Math.max(2, Number(mode.shuffles) || 3);
+  const shufflePasses = Math.max(1, Number(mode.shufflePasses) || 1);
+  const revealBetweenPasses = Boolean(mode.revealBetweenPasses);
+  const betweenPassRevealMs = Math.max(180, Number(mode.betweenPassRevealMs) || 420);
+  const betweenPassHideMs = Math.max(120, Number(mode.betweenPassHideMs) || 220);
+  const shuffleDelayMs = Math.max(90, Number(mode.shuffleDelayMs) || 150);
+  const faceDownLabel = String(mode.faceDownLabel || challengeCopy("Hidden", "Oculta"));
   const cardMap = new Map(cards.map((card) => [card.id, card]));
   const timers = new Set();
   const buttons = [];
@@ -18387,12 +18429,18 @@ function renderSpotlight(meta, mode, feedback) {
     status.textContent = `${lead}${challengeCopy("Round", "Ronda")} ${Math.min(roundIndex + 1, totalRounds)}/${totalRounds} | ${t("missesLabel")}: ${misses}/${maxMisses}`;
   };
 
-  const renderBoard = (order, revealTarget = false) => {
+  const renderBoard = (order, options = {}) => {
+    const highlightTarget = Boolean(options.highlightTarget);
+    const explicitFaceDown = options.faceDown;
     board.innerHTML = "";
     buttons.length = 0;
     order.forEach((cardId, index) => {
       const card = cardMap.get(cardId) || { icon: "✨", label: "Faith" };
-      const faceDown = Boolean(mode.faceDownAfterShuffle) && !revealTarget;
+      const faceDown = explicitFaceDown === false
+        ? false
+        : (explicitFaceDown === true
+          ? true
+          : (Boolean(mode.faceDownAfterShuffle) && !highlightTarget));
       const button = document.createElement("button");
       button.type = "button";
       button.className = "ghost-btn";
@@ -18404,13 +18452,13 @@ function renderSpotlight(meta, mode, feedback) {
       button.style.textAlign = "center";
       button.style.padding = "0.85rem";
       button.innerHTML = faceDown
-        ? `<span style="font-size:1.55rem">🛡️</span><span>${index + 1}. ${challengeCopy("Hidden", "Oculta")}</span>`
+        ? `<span style="font-size:1.55rem">🛡️</span><span>${index + 1}. ${faceDownLabel}</span>`
         : `<span style="font-size:1.55rem">${card.icon}</span><span>${index + 1}. ${card.label}</span>`;
       if (faceDown) {
         button.style.background = "linear-gradient(180deg, rgba(26,36,58,0.98), rgba(12,18,30,0.98))";
         button.style.borderColor = "rgba(229,191,93,0.22)";
       }
-      if (revealTarget && cardId === activeTargetId) {
+      if (highlightTarget && cardId === activeTargetId) {
         button.style.boxShadow = "0 0 0 2px rgba(229,191,93,0.46), 0 18px 36px rgba(229,191,93,0.22)";
         button.style.transform = "translateY(-2px)";
       }
@@ -18429,18 +18477,43 @@ function renderSpotlight(meta, mode, feedback) {
     queueStageAutoClose(meta.id);
   };
 
-  const beginShuffle = (seed, stepsLeft) => {
+  const beginShuffle = (seed, stepsLeft, onDone = () => {}) => {
     if (!running) return;
     if (stepsLeft <= 0) {
-      locked = false;
       currentOrder = rotateKinds(currentOrder, (seed % currentOrder.length) + 1);
-      renderBoard(currentOrder, false);
-      updateStatus(`Find ${roundsData[roundIndex % roundsData.length].targetLabel}.`);
+      renderBoard(currentOrder, { faceDown: Boolean(mode.faceDownAfterShuffle) });
+      onDone();
       return;
     }
     currentOrder = rotateKinds(currentOrder, ((seed + stepsLeft) % (currentOrder.length - 1 || 1)) + 1);
-    renderBoard(currentOrder, false);
-    queue(() => beginShuffle(seed + 1, stepsLeft - 1), 150);
+    renderBoard(currentOrder, { faceDown: Boolean(mode.faceDownAfterShuffle) });
+    queue(() => beginShuffle(seed + 1, stepsLeft - 1, onDone), shuffleDelayMs);
+  };
+
+  const finishShufflePasses = (seed, passIndex = 0) => {
+    if (!running) return;
+    beginShuffle(seed, shuffleCount + passIndex, () => {
+      if (!running) return;
+      if (passIndex + 1 >= shufflePasses) {
+        locked = false;
+        renderBoard(currentOrder, { faceDown: Boolean(mode.faceDownAfterShuffle) });
+        updateStatus(`Find ${roundsData[roundIndex % roundsData.length].targetLabel}.`);
+        return;
+      }
+
+      if (!revealBetweenPasses) {
+        finishShufflePasses(seed + 7 + passIndex, passIndex + 1);
+        return;
+      }
+
+      renderBoard(currentOrder, { faceDown: false });
+      updateStatus(`They moved. Keep tracking ${roundsData[roundIndex % roundsData.length].targetLabel}.`);
+      queue(() => {
+        if (!running) return;
+        renderBoard(currentOrder, { faceDown: true });
+        queue(() => finishShufflePasses(seed + 7 + passIndex, passIndex + 1), betweenPassHideMs);
+      }, betweenPassRevealMs);
+    });
   };
 
   const startRound = () => {
@@ -18450,11 +18523,11 @@ function renderSpotlight(meta, mode, feedback) {
     activeTargetId = round.targetId;
     currentOrder = cards.map((card) => card.id);
     locked = true;
-    renderBoard(currentOrder, true);
+    renderBoard(currentOrder, { highlightTarget: true, faceDown: false });
     feedback.className = "feedback";
     feedback.textContent = "";
     updateStatus(`Watch ${round.targetLabel}.`);
-    queue(() => beginShuffle(round.shuffleSeed || roundIndex + 1, shuffleCount), peekMs);
+    queue(() => finishShufflePasses(round.shuffleSeed || roundIndex + 1, 0), peekMs);
   };
 
   function handlePick(cardId) {
