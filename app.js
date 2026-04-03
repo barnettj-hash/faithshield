@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-02-recap-boss-toggle-v1";
+const CONTENT_VERSION = "2026-04-02-promise-audio-sync-v2";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -705,7 +705,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 41;
+const ACTIVITY_SCHEMA_VERSION = 42;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -11308,9 +11308,9 @@ const THEME_DIFFICULTY_REFERENCE_CAPS = {
     advanced: { perRef: 2 }
   },
   "Promise Family": {
-    easy: { perRef: 3 },
-    medium: { perRef: 3 },
-    advanced: { perRef: 2 }
+    easy: { perRef: 1 },
+    medium: { perRef: 1 },
+    advanced: { perRef: 1 }
   },
   "Jacob to Israel": {
     easy: { perRef: 3 },
@@ -21239,19 +21239,16 @@ window.addEventListener("pageshow", () => {
   trimPreloadedMediaCaches();
   primeAudioAuto();
   scheduleViewportNormalization();
-  scheduleStoryReturnRecap("pageshow", 520);
 });
 window.addEventListener("load", () => {
   applyPerformanceMode();
   primeAudioAuto();
   scheduleViewportNormalization();
-  scheduleStoryReturnRecap("load", 680);
 });
 window.addEventListener("focus", () => {
   window.setTimeout(() => {
     if (shouldKeepHubMusicAlive()) primeAudioAuto();
   }, 40);
-  scheduleStoryReturnRecap("focus", 520);
 });
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
@@ -21260,7 +21257,6 @@ document.addEventListener("visibilitychange", () => {
     trimPreloadedMediaCaches();
     if (!hubMediaWarmupScheduled) scheduleHubMediaWarmup();
     primeAudioAuto();
-    scheduleStoryReturnRecap("visible", 460);
     return;
   }
 
@@ -21282,6 +21278,5 @@ window.requestAnimationFrame(() => {
   if (!hasResumedSession) {
     resumeLastSession();
     hasResumedSession = true;
-    scheduleStoryReturnRecap("resume", 540);
   }
 });
