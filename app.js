@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-03-smoothness-audio-sync-v1";
+const CONTENT_VERSION = "2026-04-04-app-era-stage-fixes-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -748,7 +748,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 48;
+const ACTIVITY_SCHEMA_VERSION = 49;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -6682,48 +6682,20 @@ function ensurePremiumHubStyles() {
 }
 
 function ensureEraCardPreviewOverlay() {
-  if (eraCardPreviewOverlay && eraCardPreviewOverlay.isConnected) return;
-  if (!appRoot) return;
-
-  eraCardPreviewOverlay = document.createElement("div");
-  eraCardPreviewOverlay.id = "eraCardPreviewOverlay";
-  eraCardPreviewOverlay.className = "welcome-overlay hidden";
-  eraCardPreviewOverlay.setAttribute("aria-live", "polite");
-  eraCardPreviewOverlay.setAttribute("role", "dialog");
-  eraCardPreviewOverlay.setAttribute("aria-modal", "true");
-  eraCardPreviewOverlay.innerHTML = [
-    '<div class="welcome-card share-card era-preview-card">',
-    `  <p class="eyebrow">${challengeCopy("Era Completion Card", "Tarjeta de finalizacion de era")}</p>`,
-    '  <h2 id="eraCardPreviewTitle">FAITHSHIELD Era Card</h2>',
-    `  <p id="eraCardPreviewText" class="meta">${challengeCopy("Preview your completion card, then save it from here.", "Previsualiza tu tarjeta de finalizacion y luego guardala desde aqui.")}</p>`,
-    `  <img id="eraCardPreviewImage" alt="${challengeCopy("Era completion card preview", "Vista previa de la tarjeta de finalizacion de era")}">`,
-    '  <div class="share-actions">',
-    `    <a id="eraCardPreviewSaveBtn" class="cta-btn" href="#" download="faithshield-era-card.png">${challengeCopy("Save Era Card", "Guardar tarjeta")}</a>`,
-    `    <button id="eraCardPreviewCopyBtn" class="ghost-btn" type="button">${challengeCopy("Copy Share Text", "Copiar texto")}</button>`,
-    '  </div>',
-    `  <button id="closeEraCardPreviewBtn" class="ghost-btn" type="button">${challengeCopy("Close", "Cerrar")}</button>`,
-    '</div>'
-  ].join("");
-
-  appRoot.appendChild(eraCardPreviewOverlay);
-  eraCardPreviewTitle = eraCardPreviewOverlay.querySelector("#eraCardPreviewTitle");
-  eraCardPreviewText = eraCardPreviewOverlay.querySelector("#eraCardPreviewText");
-  eraCardPreviewImage = eraCardPreviewOverlay.querySelector("#eraCardPreviewImage");
-  eraCardPreviewSaveBtn = eraCardPreviewOverlay.querySelector("#eraCardPreviewSaveBtn");
-  eraCardPreviewCopyBtn = eraCardPreviewOverlay.querySelector("#eraCardPreviewCopyBtn");
-  closeEraCardPreviewBtn = eraCardPreviewOverlay.querySelector("#closeEraCardPreviewBtn");
-
-  if (closeEraCardPreviewBtn) {
-    closeEraCardPreviewBtn.onclick = () => closeEraCardPreview();
+  if (eraCardPreviewOverlay && eraCardPreviewOverlay.isConnected) {
+    eraCardPreviewOverlay.remove();
   }
-  eraCardPreviewOverlay.addEventListener("click", (event) => {
-    if (event.target === eraCardPreviewOverlay) closeEraCardPreview();
-  });
+  eraCardPreviewOverlay = null;
+  eraCardPreviewTitle = null;
+  eraCardPreviewText = null;
+  eraCardPreviewImage = null;
+  eraCardPreviewSaveBtn = null;
+  eraCardPreviewCopyBtn = null;
+  closeEraCardPreviewBtn = null;
 }
 
 function closeEraCardPreview() {
-  if (!eraCardPreviewOverlay) return;
-  eraCardPreviewOverlay.classList.add("hidden");
+  ensureEraCardPreviewOverlay();
   updateOverlayLock();
 }
 
@@ -7001,38 +6973,7 @@ function openShareTextOverlay(title, text) {
 
 function openEraCardPreview(era) {
   ensureEraCardPreviewOverlay();
-  if (!eraCardPreviewOverlay || !eraCardPreviewImage || !eraCardPreviewSaveBtn) return false;
-  const canvas = createEraCompletionShareCardCanvas(era);
-  if (!canvas) return false;
-  let dataUrl = "";
-  try {
-    dataUrl = canvas.toDataURL("image/png");
-  } catch (_) {
-    return false;
-  }
-  if (!dataUrl) return false;
-  const label = formatEraLabel(era);
-  const fileName = `faithshield-${normalizeFileSlug(era, "era")}-completion-card.png`;
-  if (eraCardPreviewTitle) {
-    eraCardPreviewTitle.textContent = `${label} ${challengeCopy("Completion Card", "tarjeta de finalizacion")}`;
-  }
-  if (eraCardPreviewText) {
-    eraCardPreviewText.textContent = challengeCopy(
-      "Your era card is ready. Save it here or copy the share text below.",
-      "Tu tarjeta de era esta lista. Guardala aqui o copia el texto para compartir abajo."
-    );
-  }
-  eraCardPreviewImage.src = dataUrl;
-  eraCardPreviewImage.alt = `${label} ${challengeCopy("completion card", "tarjeta de finalizacion")}`;
-  eraCardPreviewSaveBtn.href = dataUrl;
-  eraCardPreviewSaveBtn.download = fileName;
-  if (eraCardPreviewCopyBtn) {
-    eraCardPreviewCopyBtn.onclick = () => copyTextToClipboardOrPrompt(eraCompletionShareText(era));
-  }
-  eraCardPreviewOverlay.classList.remove("hidden");
-  if (eraCardPreviewOverlay.scrollTo) eraCardPreviewOverlay.scrollTo({ top: 0, behavior: "auto" });
-  updateOverlayLock();
-  return true;
+  return false;
 }
 
 function profileDisplayInitials(profile) {
@@ -7190,108 +7131,15 @@ function masteredVerseEntries(limit = 9) {
 }
 
 function eraCompletionShareText(era) {
-  const label = formatEraLabel(era);
-  const stagesDone = stages.filter((meta) => meta.theme.era === era && state.completed.includes(meta.id)).length;
-  const total = stages.filter((meta) => meta.theme.era === era).length;
-  const bossEntry = hallBossEntries().find((entry) => entry.era === era);
-  const bossLine = bossEntry && bossEntry.defeated
-    ? `${bossEntry.profile.displayName} was defeated in the final battle.`
-    : "The final boss still stands.";
-  return `FAITHSHIELD - ${label} complete. I cleared ${stagesDone}/${total} stages, mastered key verses, and ${bossLine}`;
+  return "";
 }
 
 function createEraCompletionShareCardCanvas(era) {
-  const width = 1280;
-  const height = 720;
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-
-  const bg = ctx.createLinearGradient(0, 0, width, height);
-  bg.addColorStop(0, "#17233f");
-  bg.addColorStop(0.55, "#101a2f");
-  bg.addColorStop(1, "#081220");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, width, height);
-
-  ctx.fillStyle = "rgba(229, 184, 93, 0.12)";
-  ctx.fillRect(72, 72, width - 144, height - 144);
-  ctx.strokeStyle = "rgba(229, 184, 93, 0.45)";
-  ctx.lineWidth = 4;
-  ctx.strokeRect(72, 72, width - 144, height - 144);
-
-  const label = formatEraLabel(era);
-  const bossEntry = hallBossEntries().find((entry) => entry.era === era);
-  const masteryCount = masteredVerseEntries(30).filter((entry) => entry.era === era).length;
-
-  ctx.fillStyle = "#f8ecd6";
-  ctx.font = "700 26px Georgia";
-  ctx.fillText("FAITHSHIELD ERA COMPLETE", 120, 150);
-  ctx.font = "700 62px Georgia";
-  ctx.fillText(label, 120, 240);
-  ctx.font = "400 30px Georgia";
-  ctx.fillStyle = "#ead6b0";
-  ctx.fillText(`Player: ${displayPlayerName()}`, 120, 302);
-  ctx.fillText(`Stages Cleared: ${stages.filter((meta) => meta.theme.era === era && state.completed.includes(meta.id)).length}/${stages.filter((meta) => meta.theme.era === era).length}`, 120, 350);
-  ctx.fillText(`Boss Defeated: ${bossEntry ? bossEntry.profile.displayName : "Era Guardian"}`, 120, 398);
-  ctx.fillText(`Verses Mastered In Era: ${masteryCount}`, 120, 446);
-  ctx.fillText(new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }), 120, 530);
-
-  ctx.fillStyle = "#e5b85d";
-  ctx.font = "700 118px Georgia";
-  ctx.fillText("✦", width - 240, 220);
-  ctx.font = "700 40px Georgia";
-  ctx.fillText(isEraComplete(era) ? "Shield Secured" : "Journey In Progress", width - 370, 310);
-
-  ctx.fillStyle = "#f8ecd6";
-  ctx.font = "400 28px Georgia";
-  wrapCanvasText(ctx, eraCompletionShareText(era), 120, 600, width - 240, 40);
-
-  return canvas;
+  return null;
 }
 
 async function exportEraCompletionCard(era) {
-  const canvas = createEraCompletionShareCardCanvas(era);
-  if (!canvas) return false;
-  const fileName = `faithshield-${normalizeFileSlug(era, "era")}-completion-card.png`;
-  if (downloadCanvasPng(canvas, fileName)) {
-    return true;
-  }
-  if (openCanvasPngInNewTab(canvas, fileName, `${formatEraLabel(era)} • FAITHSHIELD`)) {
-    return true;
-  }
-  const blob = await canvasToPngBlob(canvas);
-  if (blob) {
-    const file = typeof File !== "undefined"
-      ? new File([blob], fileName, { type: "image/png" })
-      : null;
-
-    if (file && navigator.share && typeof navigator.canShare === "function") {
-      try {
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: `${formatEraLabel(era)} • FAITHSHIELD`,
-            text: eraCompletionShareText(era),
-            files: [file]
-          });
-          return true;
-        }
-      } catch (_) {
-        // Fall through to direct download.
-      }
-    }
-
-    try {
-      downloadBlob(blob, fileName);
-      return true;
-    } catch (_) {
-      // Fall through to data URL download below.
-    }
-  }
-
-  return downloadCanvasPng(canvas, fileName);
+  return false;
 }
 
 function renderProfilesSection() {
@@ -9556,7 +9404,7 @@ function updateOverlayLock() {
   const welcomeOpen = welcomeOverlay && !welcomeOverlay.classList.contains("hidden");
   const shareOpen = shareOverlay && !shareOverlay.classList.contains("hidden");
   const shieldOpen = badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden");
-  const eraCardOpen = eraCardPreviewOverlay && !eraCardPreviewOverlay.classList.contains("hidden");
+  const eraCardOpen = false;
   const shareTextOpen = shareTextOverlay && !shareTextOverlay.classList.contains("hidden");
   const eraFinaleOpen = eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden");
   const finalOpen = finalOverlay && !finalOverlay.classList.contains("hidden");
@@ -10694,17 +10542,14 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
     && theme && theme.name === "Jacob to Israel"
     && meta && meta.stage === 3
     && meta.level === 30
-      ? dedupeActivityPool(
-          quizPoolForDifficulty(difficulty)
-            .concat(quizBank)
-            .concat(mediumQuizBank)
-            .concat(advancedQuizBank),
-          "quiz"
-        ).find((item) =>
-          itemMatchesTheme(item, theme)
-          && String(item.sourceRef || "").includes("Genesis 32:28")
-          && normalizeQuizAnswerKey(item.answer) === "israel"
-        )
+      ? {
+          era: "patriarchs",
+          prompt: "According to Genesis 32:28, Jacob's name would no longer be Jacob, but what?",
+          options: ["Israel", "Edom", "Jeshurun", "Joseph"],
+          answer: "Israel",
+          sourceRef: "Genesis 32:28",
+          historySourceRef: "forced::Jacob to Israel::stage3::level30::Genesis 32:28"
+        }
       : null;
 
   if (forcedJacobLevel30Quiz) {
@@ -13921,7 +13766,6 @@ function shouldRefreshAmbientAudio() {
   if (activityOverlay && !activityOverlay.classList.contains("hidden")) return false;
   if (shareOverlay && !shareOverlay.classList.contains("hidden")) return false;
   if (badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden")) return false;
-  if (eraCardPreviewOverlay && !eraCardPreviewOverlay.classList.contains("hidden")) return false;
   if (eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden")) return false;
   return shouldKeepHubMusicAlive();
 }
