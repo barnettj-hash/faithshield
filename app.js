@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-04-app-era-stage-fixes-v1";
+const CONTENT_VERSION = "2026-04-05-jacob-mcq-repeat-hardening-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -748,7 +748,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 49;
+const ACTIVITY_SCHEMA_VERSION = 50;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -2382,6 +2382,8 @@ const quizBank = [
   { era: "patriarchs", prompt: "Who said, \"God will provide himself the lamb for a burnt offering, my son\"?", options: ["Abraham", "Isaac", "Jacob", "Joseph"], answer: "Abraham", sourceRef: "Genesis 22:8" },
   { era: "patriarchs", prompt: "Which son of Jacob was sold into Egypt?", options: ["Joseph", "Benjamin", "Levi", "Judah"], answer: "Joseph", sourceRef: "Genesis 37:28" },
   { era: "patriarchs", prompt: "Jacob was also called what?", options: ["Israel", "Ishmael", "Edom", "Judah"], answer: "Israel", sourceRef: "Genesis 32:28" },
+  { era: "patriarchs", prompt: "What did Jacob pour on the stone pillar after his dream at Bethel?", options: ["Oil", "Water", "Blood", "Wine"], answer: "Oil", sourceRef: "Genesis 28:18" },
+  { era: "patriarchs", prompt: "Who ran to meet Jacob, embraced him, and kissed him when he returned?", options: ["Esau", "Laban", "Isaac", "Joseph"], answer: "Esau", sourceRef: "Genesis 33:4" },
   { era: "patriarchs", prompt: "What name did Abraham call the place where God provided the ram?", options: ["Yahweh Yireh", "El Roi", "Yahweh Nissi", "Yahweh Shalom"], answer: "Yahweh Yireh", sourceRef: "Genesis 22:14" },
   { era: "patriarchs", prompt: "Which title for God did Melchizedek use when he blessed Abram?", options: ["God Most High", "God Almighty", "Yahweh of Armies", "Yahweh is peace"], answer: "God Most High", sourceRef: "Genesis 14:18-20" },
   { era: "patriarchs", prompt: "Which name did God use for Himself when He appeared to Abram at ninety-nine years old?", options: ["El Shaddai", "El Elyon", "El Roi", "Yahweh Nissi"], answer: "El Shaddai", sourceRef: "Genesis 17:1" },
@@ -2449,6 +2451,10 @@ const mediumQuizBank = [
   { era: "genesis", prompt: "What was the beginning of Nimrod's kingdom?", options: ["Babel", "Bethel", "Beersheba", "Hebron"], answer: "Babel", sourceRef: "Genesis 10:10" },
   { era: "patriarchs", prompt: "How many trained men born in Abram's house did he lead to rescue Lot?", options: ["318", "153", "70", "12"], answer: "318", sourceRef: "Genesis 14:14" },
   { era: "patriarchs", prompt: "What did Jacob see in his dream reaching toward heaven?", options: ["A ladder", "A chariot", "A throne", "A rainbow"], answer: "A ladder", sourceRef: "Genesis 28:12" },
+  { era: "patriarchs", prompt: "What did Jacob vow God would give him along with bread to eat on his journey?", options: ["Clothing to put on", "A royal crown", "A bronze altar", "A flock of camels"], answer: "Clothing to put on", sourceRef: "Genesis 28:20" },
+  { era: "patriarchs", prompt: "How many years did Jacob serve Laban for Rachel?", options: ["7 years", "14 years", "20 years", "40 years"], answer: "7 years", sourceRef: "Genesis 29:18-20" },
+  { era: "patriarchs", prompt: "What river did Jacob cross before wrestling through the night?", options: ["Jabbok", "Jordan", "Euphrates", "Nile"], answer: "Jabbok", sourceRef: "Genesis 32:22-23" },
+  { era: "patriarchs", prompt: "What name did Jacob give the place after saying, \"I have seen God face to face\"?", options: ["Peniel", "Bethel", "Beersheba", "Shechem"], answer: "Peniel", sourceRef: "Genesis 32:30" },
   { era: "patriarchs", prompt: "What did Joseph store during the years of plenty in Egypt?", options: ["Grain", "Gold", "Oil", "Livestock"], answer: "Grain", sourceRef: "Genesis 41:48-49" },
   { era: "patriarchs", prompt: "Who said, \"You intended to harm me, but God intended it for good\"?", options: ["Joseph", "Jacob", "Judah", "Pharaoh"], answer: "Joseph", sourceRef: "Genesis 50:20" },
   { era: "patriarchs", prompt: "What does Yahweh Yireh mean?", options: ["Yahweh will provide", "Yahweh is peace", "Yahweh our Banner", "God Almighty"], answer: "Yahweh will provide", sourceRef: "Genesis 22:14" },
@@ -2543,6 +2549,10 @@ const advancedQuizBank = [
   { era: "patriarchs", prompt: "Which Hebrew name for God is linked to Hagar's words, \"You are a God who sees\"?", options: ["El Roi", "El Shaddai", "Yahweh Yireh", "Yahweh Nissi"], answer: "El Roi", sourceRef: "Genesis 16:13" },
   { era: "patriarchs", prompt: "Which Hebrew name did Abraham use in Genesis 22:14 after God provided the ram?", options: ["Yahweh Yireh", "Yahweh Shalom", "El Roi", "Yahweh of Armies"], answer: "Yahweh Yireh", sourceRef: "Genesis 22:14" },
   { era: "patriarchs", prompt: "After wrestling with the man, what new name did Jacob receive?", options: ["Israel", "Jeshurun", "Edom", "Zion"], answer: "Israel", sourceRef: "Genesis 32:28" },
+  { era: "patriarchs", prompt: "Which promise did God give Jacob in the Bethel dream from Genesis 28:15?", options: ["I am with you and will keep you wherever you go", "I will make you king in Egypt", "I will send you back to Haran forever", "I will spare Sodom for your sake"], answer: "I am with you and will keep you wherever you go", sourceRef: "Genesis 28:15" },
+  { era: "patriarchs", prompt: "In Genesis 31:13, how did God identify Himself to Jacob in the dream?", options: ["The God of Bethel", "The God of Sinai", "The God of Egypt", "The God of Jericho"], answer: "The God of Bethel", sourceRef: "Genesis 31:13" },
+  { era: "patriarchs", prompt: "What did Jacob build at Shechem and call El Elohe Israel?", options: ["An altar", "A tower", "A vineyard", "A city wall"], answer: "An altar", sourceRef: "Genesis 33:20" },
+  { era: "patriarchs", prompt: "Before going up to Bethel in Genesis 35:2, what did Jacob tell his household to put away?", options: ["Foreign gods", "Their tents", "Their flocks", "The covenant sign"], answer: "Foreign gods", sourceRef: "Genesis 35:2" },
   { era: "patriarchs", prompt: "What statement shows Joseph's theology about his suffering in Egypt?", options: ["You intended to harm me, but God intended it for good", "I escaped by my own strength", "My brothers were right to fear", "Egypt saved us without God"], answer: "You intended to harm me, but God intended it for good", sourceRef: "Genesis 50:20" },
   { era: "patriarchs", prompt: "Who said, \"Behold, the fire and the wood, but where is the lamb for a burnt offering?\"?", options: ["Isaac", "Abraham", "Jacob", "Joseph"], answer: "Isaac", sourceRef: "Genesis 22:7" },
   { era: "exodus", prompt: "What was the first plague sent on Egypt?", options: ["Water turned to blood", "Frogs", "Gnats", "Hail"], answer: "Water turned to blood", sourceRef: "Exodus 7:20" },
@@ -10552,12 +10562,28 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
         }
       : null;
 
-  if (forcedJacobLevel30Quiz) {
+  const forcedJacobLevel32Quiz = !focus
+    && theme && theme.name === "Jacob to Israel"
+    && meta && meta.stage === 3
+    && meta.level === 32
+      ? {
+          era: "patriarchs",
+          prompt: "In Genesis 32:28, what idea is attached to the name Israel?",
+          options: ["One who has striven with God", "Peaceful shepherd", "Prince of Egypt", "Servant of Laban"],
+          answer: "One who has striven with God",
+          sourceRef: "Genesis 32:28",
+          historySourceRef: "forced::Jacob to Israel::stage3::level32::Genesis 32:28"
+        }
+      : null;
+
+  const forcedJacobQuiz = forcedJacobLevel30Quiz || forcedJacobLevel32Quiz;
+
+  if (forcedJacobQuiz) {
     return {
       type: "quiz",
-      prompt: stagePrompt(meta, forcedJacobLevel30Quiz.prompt, 0),
+      prompt: stagePrompt(meta, forcedJacobQuiz.prompt, 0),
       options: buildQuizOptions(
-        forcedJacobLevel30Quiz,
+        forcedJacobQuiz,
         theme.era,
         difficulty.quizOptions,
         dedupeActivityPool(
@@ -10569,9 +10595,9 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
           "quiz"
         )
       ),
-      answer: forcedJacobLevel30Quiz.answer,
-      sourceRef: forcedJacobLevel30Quiz.sourceRef,
-      historySourceRef: forcedJacobLevel30Quiz.historySourceRef || historyKeyForItem(forcedJacobLevel30Quiz, "quiz")
+      answer: forcedJacobQuiz.answer,
+      sourceRef: forcedJacobQuiz.sourceRef,
+      historySourceRef: forcedJacobQuiz.historySourceRef || historyKeyForItem(forcedJacobQuiz, "quiz")
     };
   }
 
@@ -11544,9 +11570,9 @@ const THEME_DIFFICULTY_REFERENCE_CAPS = {
     advanced: { perRef: 1 }
   },
   "Jacob to Israel": {
-    easy: { perRef: 3 },
-    medium: { perRef: 3 },
-    advanced: { perRef: 2 }
+    easy: { perRef: 1 },
+    medium: { perRef: 1 },
+    advanced: { perRef: 1 }
   },
   "Joseph in Egypt": {
     easy: { perRef: 3 },
