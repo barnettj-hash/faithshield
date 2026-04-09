@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-05-jacob-mcq-repeat-hardening-v1";
+const CONTENT_VERSION = "2026-04-08-post-moses-no-repeat-expansion-v2";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -748,7 +748,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 50;
+const ACTIVITY_SCHEMA_VERSION = 54;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -2381,6 +2381,14 @@ const quizBank = [
   { era: "patriarchs", prompt: "What new name did God give Abram?", options: ["Abraham", "Absalom", "Aaron", "Amos"], answer: "Abraham", sourceRef: "Genesis 17:5" },
   { era: "patriarchs", prompt: "Who said, \"God will provide himself the lamb for a burnt offering, my son\"?", options: ["Abraham", "Isaac", "Jacob", "Joseph"], answer: "Abraham", sourceRef: "Genesis 22:8" },
   { era: "patriarchs", prompt: "Which son of Jacob was sold into Egypt?", options: ["Joseph", "Benjamin", "Levi", "Judah"], answer: "Joseph", sourceRef: "Genesis 37:28" },
+  { era: "patriarchs", prompt: "What did Joseph's brothers do with his special robe?", options: ["Dipped it in blood", "Burned it", "Buried it", "Tore it in half"], answer: "Dipped it in blood", sourceRef: "Genesis 37:31-32" },
+  { era: "patriarchs", prompt: "What did Pharaoh place on Joseph's hand after appointing him?", options: ["A signet ring", "A sword", "A scroll", "A crown"], answer: "A signet ring", sourceRef: "Genesis 41:42" },
+  { era: "patriarchs", prompt: "What did Pharaoh name Joseph in Genesis 41:45?", options: ["Zaphenath-Paneah", "Abimelech", "Melchizedek", "Ephron"], answer: "Zaphenath-Paneah", sourceRef: "Genesis 41:45" },
+  { era: "patriarchs", prompt: "Where did Joseph store grain during the years of plenty?", options: ["In the cities", "In the desert", "In the riverbanks", "In the temple courts"], answer: "In the cities", sourceRef: "Genesis 41:48-49" },
+  { era: "patriarchs", prompt: "What did Joseph say to his brothers, \"You meant evil against me, but God meant it for ___\"?", options: ["good", "judgment", "fear", "silence"], answer: "good", sourceRef: "Genesis 50:20" },
+  { era: "patriarchs", prompt: "Who was the first of Joseph's brothers to speak up about not killing him?", options: ["Reuben", "Judah", "Simeon", "Levi"], answer: "Reuben", sourceRef: "Genesis 37:21-22" },
+  { era: "patriarchs", prompt: "How many years of famine did Joseph say would follow the years of plenty?", options: ["7 years", "3 years", "5 years", "10 years"], answer: "7 years", sourceRef: "Genesis 41:29-30" },
+  { era: "patriarchs", prompt: "What did Joseph weep over when he revealed himself to his brothers?", options: ["Their repentance", "His lost staff", "Pharaoh's command", "The harvest"], answer: "Their repentance", sourceRef: "Genesis 45:1-2" },
   { era: "patriarchs", prompt: "Jacob was also called what?", options: ["Israel", "Ishmael", "Edom", "Judah"], answer: "Israel", sourceRef: "Genesis 32:28" },
   { era: "patriarchs", prompt: "What did Jacob pour on the stone pillar after his dream at Bethel?", options: ["Oil", "Water", "Blood", "Wine"], answer: "Oil", sourceRef: "Genesis 28:18" },
   { era: "patriarchs", prompt: "Who ran to meet Jacob, embraced him, and kissed him when he returned?", options: ["Esau", "Laban", "Isaac", "Joseph"], answer: "Esau", sourceRef: "Genesis 33:4" },
@@ -2389,7 +2397,13 @@ const quizBank = [
   { era: "patriarchs", prompt: "Which name did God use for Himself when He appeared to Abram at ninety-nine years old?", options: ["El Shaddai", "El Elyon", "El Roi", "Yahweh Nissi"], answer: "El Shaddai", sourceRef: "Genesis 17:1" },
   { era: "patriarchs", prompt: "Who went with Abram when he departed out of Haran?", options: ["Lot", "Ishmael", "Isaac", "Esau"], answer: "Lot", sourceRef: "Genesis 12:4" },
   { era: "exodus", prompt: "Who confronted Pharaoh and led Israel out of Egypt?", options: ["Joshua", "Moses", "Aaron", "Samuel"], answer: "Moses", sourceRef: "Exodus 5:1; 12:31" },
+  { era: "exodus", prompt: "What was Moses' name said to mean in Exodus 2:10?", options: ["Drawn out", "Peaceful", "Anointed", "Beloved"], answer: "Drawn out", sourceRef: "Exodus 2:10" },
+  { era: "exodus", prompt: "Where did Moses meet God in the burning bush account?", options: ["Horeb", "Sinai", "Carmel", "Zion"], answer: "Horeb", sourceRef: "Exodus 3:1-2" },
+  { era: "exodus", prompt: "What sign did God give Moses with his staff in Exodus 4:2-3?", options: ["It became a serpent", "It turned to gold", "It split the rock", "It bloomed"], answer: "It became a serpent", sourceRef: "Exodus 4:2-3" },
+  { era: "exodus", prompt: "What did Moses put on his face after speaking with Yahweh on Sinai?", options: ["A veil", "An anointing oil", "A crown", "A helmet"], answer: "A veil", sourceRef: "Exodus 34:33-35" },
   { era: "exodus", prompt: "What event protected Israelite homes in Egypt?", options: ["Passover", "Pentecost", "Exile", "Day of Atonement"], answer: "Passover", sourceRef: "Exodus 12:13-14" },
+  { era: "exodus", prompt: "What did Moses stretch out over the Red Sea?", options: ["His hand", "A trumpet", "A torch", "A ram's horn"], answer: "His hand", sourceRef: "Exodus 14:21" },
+  { era: "exodus", prompt: "Who led the women with tambourines after the sea crossing?", options: ["Miriam", "Zipporah", "Deborah", "Hannah"], answer: "Miriam", sourceRef: "Exodus 15:20-21" },
   { era: "exodus", prompt: "What sea did Israel cross on dry ground?", options: ["Red Sea", "Dead Sea", "Galilee", "Mediterranean Sea"], answer: "Red Sea", sourceRef: "Exodus 14:21-22" },
   { era: "exodus", prompt: "Who said, \"Who am I, that I should go to Pharaoh?\"", options: ["Moses", "Aaron", "Pharaoh", "Joshua"], answer: "Moses", sourceRef: "Exodus 3:11" },
   { era: "exodus", prompt: "Who said, \"Don't be afraid. Stand still, and see the salvation of Yahweh\"?", options: ["Moses", "Aaron", "Joshua", "Pharaoh"], answer: "Moses", sourceRef: "Exodus 14:13" },
@@ -2423,6 +2437,38 @@ const quizBank = [
   { era: "david", prompt: "What weapon did David use against Goliath?", options: ["Sling", "Spear", "Sword", "Bow"], answer: "Sling", sourceRef: "1 Samuel 17:49-50" },
   { era: "david", prompt: "Who said, \"The battle is Yahweh's\"?", options: ["David", "Saul", "Goliath", "Jonathan"], answer: "David", sourceRef: "1 Samuel 17:47" },
   { era: "david", prompt: "Who said, \"Come to me, and I will give your flesh to the birds of the sky\"?", options: ["Goliath", "David", "Saul", "Abner"], answer: "Goliath", sourceRef: "1 Samuel 17:44" },
+  { era: "sinai", prompt: "What did Moses take as a sign of the covenant at Sinai?", options: ["The blood of the covenant", "The bronze serpent", "The golden calf", "The tablets only"], answer: "The blood of the covenant", sourceRef: "Exodus 24:8" },
+  { era: "sinai", prompt: "What did Yahweh ask Israel to build so He could dwell among them?", options: ["A sanctuary", "A palace", "A city wall", "A tower"], answer: "A sanctuary", sourceRef: "Exodus 25:8" },
+  { era: "sinai", prompt: "What day did Yahweh command Israel to remember and keep holy?", options: ["The Sabbath day", "The Day of Trumpets", "The Day of Atonement", "The Feast of Weeks"], answer: "The Sabbath day", sourceRef: "Exodus 20:8" },
+  { era: "sinai", prompt: "What did Israel ask Aaron to make while Moses was on the mountain?", options: ["A golden calf", "A bronze serpent", "A stone altar", "A sword"], answer: "A golden calf", sourceRef: "Exodus 32:4" },
+  { era: "wilderness", prompt: "What did Israel call the bread from heaven?", options: ["Manna", "Barley", "Honey", "Quail"], answer: "Manna", sourceRef: "Exodus 16:14-15" },
+  { era: "wilderness", prompt: "What sign did Moses lift up so the bitten would live?", options: ["A bronze serpent", "A wooden staff", "A golden calf", "A stone tablet"], answer: "A bronze serpent", sourceRef: "Numbers 21:8-9" },
+  { era: "wilderness", prompt: "How many years did Israel wander in the wilderness?", options: ["40 years", "12 years", "70 years", "20 years"], answer: "40 years", sourceRef: "Numbers 14:33-34" },
+  { era: "wilderness", prompt: "Which two men were promised entry into the land from that generation?", options: ["Joshua and Caleb", "Moses and Aaron", "Nadab and Abihu", "Korah and Dathan"], answer: "Joshua and Caleb", sourceRef: "Numbers 14:30" },
+  { era: "wilderness", prompt: "What did Moses tell Israel to do with all their heart in Deuteronomy 6:5?", options: ["Love Yahweh", "Build a temple", "Choose a king", "Offer incense"], answer: "Love Yahweh", sourceRef: "Deuteronomy 6:5" },
+  { era: "conquest", prompt: "From where were the spies sent to Jericho?", options: ["Shittim", "Gilgal", "Bethel", "Shechem"], answer: "Shittim", sourceRef: "Joshua 2:1" },
+  { era: "conquest", prompt: "What happened to the manna when Israel ate the produce of Canaan?", options: ["It ceased", "It doubled", "It became honey", "It turned to quail"], answer: "It ceased", sourceRef: "Joshua 5:12" },
+  { era: "conquest", prompt: "What did Joshua say Israel should do before crossing the Jordan?", options: ["Sanctify yourselves", "Build a tower", "Offer a calf", "Hide the ark"], answer: "Sanctify yourselves", sourceRef: "Joshua 3:5" },
+  { era: "conquest", prompt: "What happened to Achan for taking the devoted things?", options: ["He was stoned", "He became king", "He was forgiven immediately", "He fled to Egypt"], answer: "He was stoned", sourceRef: "Joshua 7:25" },
+  { era: "conquest", prompt: "What did the sun do when Joshua prayed in battle?", options: ["Stood still", "Turned red", "Set early", "Split in two"], answer: "Stood still", sourceRef: "Joshua 10:12-13" },
+  { era: "judges", prompt: "What sign did Gideon ask for with the fleece?", options: ["Dew on the fleece only", "Fire from the sky", "A rainbow", "The sea to split"], answer: "Dew on the fleece only", sourceRef: "Judges 6:36-40" },
+  { era: "judges", prompt: "Who struck Sisera with a tent peg?", options: ["Jael", "Deborah", "Ruth", "Hannah"], answer: "Jael", sourceRef: "Judges 4:21" },
+  { era: "judges", prompt: "What special calling was announced over Samson's life?", options: ["Nazirite", "Priest", "King", "Scribe"], answer: "Nazirite", sourceRef: "Judges 13:5" },
+  { era: "judges", prompt: "What name did the women give the child born to Ruth and Boaz?", options: ["Obed", "Jesse", "David", "Samuel"], answer: "Obed", sourceRef: "Ruth 4:17" },
+  { era: "judges", prompt: "What did Ruth ask Boaz to spread over her?", options: ["Your skirt", "Your tent", "Your shield", "Your staff"], answer: "Your skirt", sourceRef: "Ruth 3:9" },
+  { era: "judges", prompt: "Why did Ruth bow before Boaz?", options: ["Because he showed kindness", "Because she was a prophet", "Because she was a judge", "Because she was a queen"], answer: "Because he showed kindness", sourceRef: "Ruth 2:10" },
+  { era: "samuel", prompt: "What did Hannah vow if Yahweh gave her a son?", options: ["She would give him to Yahweh", "She would move to Egypt", "She would build a city", "She would hide the ark"], answer: "She would give him to Yahweh", sourceRef: "1 Samuel 1:11" },
+  { era: "samuel", prompt: "What memorial stone did Samuel set up after victory?", options: ["Ebenezer", "Bethel", "Gilgal", "Shiloh"], answer: "Ebenezer", sourceRef: "1 Samuel 7:12" },
+  { era: "samuel", prompt: "Where was the ark of God kept when Samuel was young?", options: ["Shiloh", "Jericho", "Hebron", "Gibeah"], answer: "Shiloh", sourceRef: "1 Samuel 4:4" },
+  { era: "samuel", prompt: "What did Hannah say about God in her prayer?", options: ["There is no rock like our God", "God is a distant light", "God sleeps", "God is unknown"], answer: "There is no rock like our God", sourceRef: "1 Samuel 2:2" },
+  { era: "saul", prompt: "What happened to Saul when he heard the news from Jabesh Gilead?", options: ["The Spirit of God came upon him", "He fled to the wilderness", "He built an altar", "He tore his robe"], answer: "The Spirit of God came upon him", sourceRef: "1 Samuel 11:6" },
+  { era: "saul", prompt: "What did Samuel say about Saul's kingdom after the unlawful offering?", options: ["It would not continue", "It would last forever", "It would grow stronger", "It would be divided"], answer: "It would not continue", sourceRef: "1 Samuel 13:13-14" },
+  { era: "saul", prompt: "Who rescued Jonathan from death after Saul's oath?", options: ["The people", "Samuel", "David", "Abner"], answer: "The people", sourceRef: "1 Samuel 14:45" },
+  { era: "saul", prompt: "What did Saul and the people spare from the Amalekites?", options: ["The best sheep and oxen", "The ark", "The manna", "The tabernacle"], answer: "The best sheep and oxen", sourceRef: "1 Samuel 15:9" },
+  { era: "david", prompt: "What did Yahweh say He looks at when Samuel went to anoint a king?", options: ["The heart", "The height", "The strength", "The armor"], answer: "The heart", sourceRef: "1 Samuel 16:7" },
+  { era: "david", prompt: "What did Samuel pour on David when he anointed him?", options: ["Oil", "Water", "Wine", "Incense"], answer: "Oil", sourceRef: "1 Samuel 16:13" },
+  { era: "david", prompt: "What did David do between visiting his brothers and Saul?", options: ["Fed his father's sheep", "Lived in the palace", "Built an altar", "Joined the priests"], answer: "Fed his father's sheep", sourceRef: "1 Samuel 17:15" },
+  { era: "david", prompt: "In whose name did David come against Goliath?", options: ["Yahweh of Armies", "Pharaoh", "Baal", "Dagon"], answer: "Yahweh of Armies", sourceRef: "1 Samuel 17:45" }
 ];
 
 
@@ -10576,7 +10622,21 @@ function buildAuthoredActivityByKind(meta, theme, difficulty, usedSources, kind,
         }
       : null;
 
-  const forcedJacobQuiz = forcedJacobLevel30Quiz || forcedJacobLevel32Quiz;
+  const forcedJacobStage4Level32Quiz = !focus
+    && theme && theme.name === "Jacob to Israel"
+    && meta && meta.stage === 4
+    && meta.level === 32
+      ? {
+          era: "patriarchs",
+          prompt: "According to Genesis 35:10, what name did God say Jacob should no longer be called?",
+          options: ["Israel", "Esau", "Joseph", "Benjamin"],
+          answer: "Israel",
+          sourceRef: "Genesis 35:10",
+          historySourceRef: "forced::Jacob to Israel::stage4::level32::Genesis 35:10"
+        }
+      : null;
+
+  const forcedJacobQuiz = forcedJacobLevel30Quiz || forcedJacobLevel32Quiz || forcedJacobStage4Level32Quiz;
 
   if (forcedJacobQuiz) {
     return {
@@ -11515,43 +11575,92 @@ const THEME_DERIVED_POOL_RULES = {
     fact: { perRef: 1, maxItems: 14 }
   },
   "Joseph in Egypt": {
-    quiz: { perRef: 1, maxItems: 10 },
-    spelling: { perRef: 1, maxItems: 10 },
+    quiz: { perRef: 1, maxItems: 16 },
+    spelling: { perRef: 1, maxItems: 12 },
     orderBase: { perRef: 1, maxItems: 8 },
     order: { perRef: 1, maxItems: 12 },
     fact: { perRef: 1, maxItems: 14 }
   },
   "Burning Bush": {
-    quiz: { perRef: 1, maxItems: 10 },
-    spelling: { perRef: 1, maxItems: 10 },
+    quiz: { perRef: 1, maxItems: 14 },
+    spelling: { perRef: 1, maxItems: 12 },
     orderBase: { perRef: 1, maxItems: 8 },
     order: { perRef: 1, maxItems: 12 },
     fact: { perRef: 1, maxItems: 14 }
   },
   "Plagues and Passover": {
-    quiz: { perRef: 1, maxItems: 10 },
-    spelling: { perRef: 1, maxItems: 10 },
+    quiz: { perRef: 1, maxItems: 14 },
+    spelling: { perRef: 1, maxItems: 12 },
     orderBase: { perRef: 1, maxItems: 8 },
     order: { perRef: 1, maxItems: 12 },
     fact: { perRef: 1, maxItems: 14 }
   },
   "Sea Crossing": {
-    quiz: { perRef: 1, maxItems: 10 },
-    spelling: { perRef: 1, maxItems: 10 },
+    quiz: { perRef: 1, maxItems: 14 },
+    spelling: { perRef: 1, maxItems: 12 },
     orderBase: { perRef: 1, maxItems: 8 },
     order: { perRef: 1, maxItems: 12 },
     fact: { perRef: 1, maxItems: 14 }
   },
   "Sinai Covenant": {
-    quiz: { perRef: 1, maxItems: 10 },
-    spelling: { perRef: 1, maxItems: 10 },
+    quiz: { perRef: 1, maxItems: 14 },
+    spelling: { perRef: 1, maxItems: 12 },
     orderBase: { perRef: 1, maxItems: 8 },
     order: { perRef: 1, maxItems: 12 },
     fact: { perRef: 1, maxItems: 14 }
   },
   "Wilderness Trust": {
-    quiz: { perRef: 1, maxItems: 10 },
+    quiz: { perRef: 1, maxItems: 14 },
+    spelling: { perRef: 1, maxItems: 12 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "Jordan Crossing": {
+    quiz: { perRef: 1, maxItems: 16 },
+    spelling: { perRef: 1, maxItems: 12 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "Land and Legacy": {
+    quiz: { perRef: 1, maxItems: 16 },
+    spelling: { perRef: 1, maxItems: 12 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "Cycle of Judges": {
+    quiz: { perRef: 1, maxItems: 16 },
+    spelling: { perRef: 1, maxItems: 12 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "Ruth's Faithfulness": {
+    quiz: { perRef: 1, maxItems: 14 },
     spelling: { perRef: 1, maxItems: 10 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "Samuel's Calling": {
+    quiz: { perRef: 1, maxItems: 16 },
+    spelling: { perRef: 1, maxItems: 12 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "Saul's Kingship": {
+    quiz: { perRef: 1, maxItems: 16 },
+    spelling: { perRef: 1, maxItems: 12 },
+    orderBase: { perRef: 1, maxItems: 8 },
+    order: { perRef: 1, maxItems: 12 },
+    fact: { perRef: 1, maxItems: 14 }
+  },
+  "David and Courage": {
+    quiz: { perRef: 1, maxItems: 16 },
+    spelling: { perRef: 1, maxItems: 12 },
     orderBase: { perRef: 1, maxItems: 8 },
     order: { perRef: 1, maxItems: 12 },
     fact: { perRef: 1, maxItems: 14 }
@@ -11595,14 +11704,49 @@ const THEME_DIFFICULTY_REFERENCE_CAPS = {
     advanced: { perRef: 2 }
   },
   "Sinai Covenant": {
-    easy: { perRef: 3 },
-    medium: { perRef: 3 },
-    advanced: { perRef: 2 }
+    easy: { perRef: 1 },
+    medium: { perRef: 1 },
+    advanced: { perRef: 1 }
   },
   "Wilderness Trust": {
-    easy: { perRef: 3 },
-    medium: { perRef: 3 },
-    advanced: { perRef: 2 }
+    easy: { perRef: 1 },
+    medium: { perRef: 1 },
+    advanced: { perRef: 1 }
+  },
+  "Jordan Crossing": {
+    easy: { perRef: 1 },
+    medium: { perRef: 1 },
+    advanced: { perRef: 1 }
+  },
+  "Land and Legacy": {
+    easy: { perRef: 1 },
+    medium: { perRef: 1 },
+    advanced: { perRef: 1 }
+  },
+  "Cycle of Judges": {
+    easy: { perRef: 1 },
+    medium: { perRef: 1 },
+    advanced: { perRef: 1 }
+  },
+  "Ruth's Faithfulness": {
+    easy: { perRef: 1 },
+    medium: { perRef: 1 },
+    advanced: { perRef: 1 }
+  },
+  "Samuel's Calling": {
+    easy: { perRef: 1 },
+    medium: { perRef: 1 },
+    advanced: { perRef: 1 }
+  },
+  "Saul's Kingship": {
+    easy: { perRef: 1 },
+    medium: { perRef: 1 },
+    advanced: { perRef: 1 }
+  },
+  "David and Courage": {
+    easy: { perRef: 1 },
+    medium: { perRef: 1 },
+    advanced: { perRef: 1 }
   }
 };
 
