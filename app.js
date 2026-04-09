@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-08-post-moses-no-repeat-expansion-v2";
+const CONTENT_VERSION = "2026-04-08-post-moses-stage5-music-v3";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -545,18 +545,20 @@ const THEME_KEYWORDS = {
   "Cycle of Judges": [
     {
       id: "judges-gideon-route",
-      engine: "route",
+      engine: "spotlight",
       label: "Gideon's Night Route",
+      targetFinds: 5,
       maxMisses: 4,
+      seconds: 20,
       sourceRef: "Judges 7:16-21",
-      storyPrompt: "Follow Gideon's night attack as the three companies move into place.",
-      secondaryPrompt: "Trace the night route one move at a time.",
-      keyboardHint: "Keyboard: use arrow keys or WASD to follow Gideon's route.",
-      routeSteps: [
-        { dir: "left", icon: "🏺", label: "Jar" },
-        { dir: "up", icon: "🔥", label: "Torch" },
-        { dir: "right", icon: "📯", label: "Trumpet" },
-        { dir: "up", icon: "⚔️", label: "Advance" }
+      storyPrompt: "Spot the signal markers as Gideon's companies move into position.",
+      secondaryPrompt: "Find the torch and trumpet cues before the attack begins.",
+      keyboardHint: "Keyboard/Mouse: move the spotlight and click or press Space to select.",
+      cards: [
+        { icon: "🏺", label: "Jar" },
+        { icon: "🔥", label: "Torch" },
+        { icon: "📯", label: "Trumpet" },
+        { icon: "⚔️", label: "Advance" }
       ]
     },
     {
@@ -583,31 +585,34 @@ const THEME_KEYWORDS = {
     },
     {
       id: "judges-pillars-balance",
-      engine: "balance",
+      engine: "timing",
       label: "Pillars of Strength",
       target: 8,
       maxMisses: 4,
-      drift: 0.029,
+      speed: 740,
       sourceRef: "Judges 16:29-30",
-      storyPrompt: "Hold the pressure point as Samson braces himself between the pillars.",
-      keyboardHint: "Keyboard: hold Left/A or Right/D to stay centered in the strength band."
+      storyPrompt: "Hold the moment as Samson braces himself between the pillars.",
+      secondaryPrompt: "Press Strike when the marker lands in the gold zone.",
+      keyboardHint: "Keyboard: press Space or Enter to strike in the gold zone."
     }
   ],
   "Ruth's Faithfulness": [
     {
       id: "ruth-return-route",
-      engine: "route",
+      engine: "spotlight",
       label: "Return to Bethlehem",
+      targetFinds: 5,
       maxMisses: 4,
+      seconds: 20,
       sourceRef: "Ruth 1:16-22",
-      storyPrompt: "Follow Ruth and Naomi's path back to Bethlehem in faithful love.",
-      secondaryPrompt: "Trace the return path one step at a time.",
-      keyboardHint: "Keyboard: use arrow keys or WASD to follow the Bethlehem route.",
-      routeSteps: [
-        { dir: "left", icon: "👣", label: "Go" },
-        { dir: "up", icon: "🧕", label: "Naomi" },
-        { dir: "right", icon: "🌾", label: "Fields" },
-        { dir: "up", icon: "🏠", label: "Bethlehem" }
+      storyPrompt: "Spot the faithful steps as Ruth returns with Naomi.",
+      secondaryPrompt: "Find the Bethlehem markers before the journey ends.",
+      keyboardHint: "Keyboard/Mouse: move the spotlight and click or press Space to select.",
+      cards: [
+        { icon: "👣", label: "Go" },
+        { icon: "🧕", label: "Naomi" },
+        { icon: "🌾", label: "Fields" },
+        { icon: "🏠", label: "Bethlehem" }
       ]
     },
     {
@@ -634,15 +639,20 @@ const THEME_KEYWORDS = {
     },
     {
       id: "ruth-gleaning-grace",
-      engine: "collect",
+      engine: "memoryflip",
       label: "Gleaning Grace",
-      target: 12,
       maxMisses: 5,
-      seconds: 24,
-      spawnMs: 425,
+      peekMs: 1160,
       sourceRef: "Ruth 2:2-3,17",
-      storyPrompt: "Gather the barley as Ruth gleans faithfully in Boaz's field.",
-      keyboardHint: "Keyboard: move with Left/Right or A/D to gather the grain."
+      storyPrompt: "Match the gleaning clues as Ruth gathers in Boaz's field.",
+      secondaryPrompt: "Memorize the cards, then flip and match every pair.",
+      keyboardHint: "Keyboard: press 1-8 to flip cards, or click/tap the board.",
+      cards: [
+        { icon: "🌾", label: "Grain" },
+        { icon: "🧺", label: "Bundle" },
+        { icon: "💧", label: "Water" },
+        { icon: "🤝", label: "Kindness" }
+      ]
     }
   ],
   "Samuel's Calling": [
@@ -666,47 +676,52 @@ const THEME_KEYWORDS = {
     },
     {
       id: "samuel-run-route",
-      engine: "route",
+      engine: "spotlight",
       label: "Run to Eli",
+      targetFinds: 5,
       maxMisses: 4,
+      seconds: 20,
       sourceRef: "1 Samuel 3:4-8",
-      storyPrompt: "Follow Samuel's path as he runs again and again to Eli in the night.",
-      secondaryPrompt: "Trace the path between Samuel and Eli one step at a time.",
-      keyboardHint: "Keyboard: use arrow keys or WASD to follow Samuel's route.",
-      routeSteps: [
-        { dir: "right", icon: "🛏️", label: "Bed" },
-        { dir: "up", icon: "🏃", label: "Run" },
-        { dir: "right", icon: "👴", label: "Eli" },
-        { dir: "left", icon: "↩️", label: "Return" }
+      storyPrompt: "Spot the footsteps as Samuel runs to Eli in the night.",
+      secondaryPrompt: "Find the right markers before Samuel returns.",
+      keyboardHint: "Keyboard/Mouse: move the spotlight and click or press Space to select.",
+      cards: [
+        { icon: "🛏️", label: "Bed" },
+        { icon: "🏃", label: "Run" },
+        { icon: "👴", label: "Eli" },
+        { icon: "↩️", label: "Return" }
       ]
     },
     {
       id: "samuel-lamp-balance",
-      engine: "balance",
+      engine: "timing",
       label: "Lamp Before Yahweh",
       target: 8,
       maxMisses: 4,
-      drift: 0.027,
+      speed: 740,
       sourceRef: "1 Samuel 3:3",
-      storyPrompt: "Keep the lamp steady before Yahweh as the word of God comes to Samuel.",
-      keyboardHint: "Keyboard: hold Left/A or Right/D to stay in the lamp band."
+      storyPrompt: "Keep the lamp steady as the word of God comes to Samuel.",
+      secondaryPrompt: "Press Strike when the marker lands in the gold zone.",
+      keyboardHint: "Keyboard: press Space or Enter to strike in the gold zone."
     }
   ],
   "Saul's Kingship": [
     {
       id: "saul-donkey-route",
-      engine: "route",
+      engine: "spotlight",
       label: "Donkey Search",
+      targetFinds: 5,
       maxMisses: 4,
+      seconds: 20,
       sourceRef: "1 Samuel 9:3-6",
-      storyPrompt: "Follow Saul's search as he looks for the lost donkeys before meeting Samuel.",
-      secondaryPrompt: "Trace the search route in the right order.",
-      keyboardHint: "Keyboard: use arrow keys or WASD to follow the search route.",
-      routeSteps: [
-        { dir: "right", icon: "🐴", label: "Search" },
-        { dir: "up", icon: "⛰️", label: "Hill" },
-        { dir: "right", icon: "🏙️", label: "City" },
-        { dir: "up", icon: "👴", label: "Samuel" }
+      storyPrompt: "Spot the right search clues before Saul meets the seer.",
+      secondaryPrompt: "Find the donkey trail markers before time runs out.",
+      keyboardHint: "Keyboard/Mouse: move the spotlight and click or press Space to select.",
+      cards: [
+        { icon: "🐴", label: "Search" },
+        { icon: "⛰️", label: "Hill" },
+        { icon: "🏙️", label: "City" },
+        { icon: "👴", label: "Samuel" }
       ]
     },
     {
@@ -733,14 +748,15 @@ const THEME_KEYWORDS = {
     },
     {
       id: "saul-gilgal-balance",
-      engine: "balance",
+      engine: "timing",
       label: "Wait at Gilgal",
       target: 8,
       maxMisses: 4,
-      drift: 0.029,
+      speed: 740,
       sourceRef: "1 Samuel 13:8-14",
-      storyPrompt: "Hold steady and wait as Saul faces the test of obedience at Gilgal.",
-      keyboardHint: "Keyboard: hold Left/A or Right/D to stay inside the waiting band."
+      storyPrompt: "Wait with obedience as Saul faces the test at Gilgal.",
+      secondaryPrompt: "Press Strike when the marker lands in the gold zone.",
+      keyboardHint: "Keyboard: press Space or Enter to strike in the gold zone."
     }
   ],
   "David and Courage": ["David", "Goliath", "sling"]
@@ -748,7 +764,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 54;
+const ACTIVITY_SCHEMA_VERSION = 55;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -2006,38 +2022,153 @@ const THEMED_INTERACTIVE_MODE_SETS = {
       sourceRef: "Exodus 14:19-22",
       storyPrompt: "Hold the dry-ground path together as the sea walls stand and Israel crosses through.",
       secondaryPrompt: "Shift your shield where the pressure builds to keep the crossing lane open.",
-      keyboardHint: "Keyboard: use A/D or Left/Right to move the shield wall and hold back the surge."
+      keyboardHint: "Keyboard: press 1-4 to guard the right gate, or tap the shield buttons."
+    }
+  ],
+  "Sinai Covenant": [
+    {
+      id: "sinai-covenant-pattern",
+      engine: "pattern",
+      stageFiveNative: true,
+      label: "Covenant Words",
+      rounds: 4,
+      maxMisses: 4,
+      playbackMs: 505,
+      sourceRef: "Exodus 20:1-17",
+      storyPrompt: "Remember the covenant words as the Lord speaks from Sinai.",
+      keyboardHint: "Keyboard: press 1-4 to repeat the covenant pattern.",
+      pads: [
+        { icon: "🪨", label: "Words" },
+        { icon: "🕊️", label: "Worship" },
+        { icon: "🤝", label: "Honor" },
+        { icon: "🛡️", label: "Guard" }
+      ],
+      sequences: [[0, 1, 2], [0, 1, 2, 3], [0, 2, 1, 3], [0, 1, 3, 2]]
+    },
+    {
+      id: "sinai-tabernacle-spotlight",
+      engine: "spotlight",
+      stageFiveNative: true,
+      label: "Tabernacle Build",
+      targetFinds: 5,
+      maxMisses: 4,
+      seconds: 22,
+      sourceRef: "Exodus 25:8-9; 26:1",
+      storyPrompt: "Gather the tabernacle pieces so God can dwell among His people.",
+      secondaryPrompt: "Spot the right materials and bring them to the pattern.",
+      keyboardHint: "Keyboard/Mouse: move the spotlight and click or press Space to select.",
+      cards: [
+        { icon: "🪙", label: "Gold" },
+        { icon: "🧵", label: "Linen" },
+        { icon: "📜", label: "Ark" },
+        { icon: "🕯️", label: "Lampstand" }
+      ]
+    },
+    {
+      id: "sinai-thunder-timing",
+      engine: "timing",
+      stageFiveNative: true,
+      label: "Mountain Thunder",
+      target: 8,
+      maxMisses: 4,
+      speed: 740,
+      sourceRef: "Exodus 19:18-20",
+      storyPrompt: "Hold steady as thunder rolls and the mountain shakes with God's presence.",
+      secondaryPrompt: "Press Strike when the marker lands in the gold zone.",
+      keyboardHint: "Keyboard: press Space or Enter to strike in the gold zone."
+    }
+  ],
+  "Wilderness Trust": [
+    {
+      id: "wilderness-manna-pattern",
+      engine: "pattern",
+      stageFiveNative: true,
+      label: "Manna Morning",
+      rounds: 4,
+      maxMisses: 4,
+      playbackMs: 500,
+      sourceRef: "Exodus 16:14-18",
+      storyPrompt: "Repeat the daily rhythm of God's provision in the wilderness.",
+      keyboardHint: "Keyboard: press 1-4 to repeat the manna pattern.",
+      pads: [
+        { icon: "🍞", label: "Manna" },
+        { icon: "⛺", label: "Camp" },
+        { icon: "🌅", label: "Morning" },
+        { icon: "🙏", label: "Trust" }
+      ],
+      sequences: [[2, 0, 1], [2, 0, 1, 3], [2, 0, 3, 1], [0, 2, 1, 3]]
+    },
+    {
+      id: "wilderness-provision-memory",
+      engine: "memoryflip",
+      stageFiveNative: true,
+      label: "Provision Match",
+      maxMisses: 4,
+      peekMs: 1180,
+      sourceRef: "Exodus 16:13-15; Numbers 20:11",
+      storyPrompt: "Remember the ways God provided in the wilderness and match them.",
+      secondaryPrompt: "Memorize the cards, then flip and match every pair.",
+      keyboardHint: "Keyboard: press 1-8 to flip cards, or click/tap the board.",
+      cards: [
+        { icon: "🍞", label: "Manna" },
+        { icon: "🐦", label: "Quail" },
+        { icon: "💧", label: "Water" },
+        { icon: "🪨", label: "Rock" }
+      ]
+    },
+    {
+      id: "wilderness-serpent-sealbreak",
+      engine: "sealbreak",
+      stageFiveNative: true,
+      label: "Healing Sign",
+      rounds: 4,
+      maxMisses: 4,
+      sourceRef: "Numbers 21:8-9",
+      storyPrompt: "Break only the seals that point to God's healing sign.",
+      secondaryPrompt: "Read the clue and break only the correct seals.",
+      keyboardHint: "Keyboard: press 1-9 to break the matching seals.",
+      cards: [
+        { icon: "🐍", label: "Serpent" },
+        { icon: "🪨", label: "Staff" },
+        { icon: "✝️", label: "Lifted" },
+        { icon: "💛", label: "Heal" },
+        { icon: "🔥", label: "Fire" },
+        { icon: "🌵", label: "Desert" }
+      ]
     }
   ],
   "Jordan Crossing": [
     {
       id: "jordan-follow-ark-route",
-      engine: "route",
+      engine: "spotlight",
       stageFiveNative: true,
       label: "Follow the Ark",
+      targetFinds: 5,
       maxMisses: 4,
+      seconds: 20,
       sourceRef: "Joshua 3:3-4",
-      storyPrompt: "Trace the route as Israel follows the ark into a new land.",
-      secondaryPrompt: "Follow the ark route one move at a time.",
-      keyboardHint: "Keyboard: use arrow keys or WASD to follow the ark route.",
-      routeSteps: [
-        { dir: "up", icon: "📦", label: "Ark" },
-        { dir: "right", icon: "🌊", label: "Jordan" },
-        { dir: "up", icon: "👣", label: "Cross" },
-        { dir: "left", icon: "🏕️", label: "Camp" }
+      storyPrompt: "Keep your eyes on the ark as Israel steps forward in faith.",
+      secondaryPrompt: "Spot the ark markers before the crossing begins.",
+      keyboardHint: "Keyboard/Mouse: move the spotlight and click or press Space to select.",
+      cards: [
+        { icon: "📦", label: "Ark" },
+        { icon: "🌊", label: "Jordan" },
+        { icon: "👣", label: "Cross" },
+        { icon: "🏕️", label: "Camp" }
       ]
     },
     {
       id: "jordan-riverbed-balance",
-      engine: "balance",
+      engine: "timing",
       stageFiveNative: true,
       label: "Riverbed Step",
       target: 8,
       maxMisses: 4,
-      drift: 0.028,
+      speed: 740,
       sourceRef: "Joshua 3:17",
-      storyPrompt: "Hold steady while the priests stand firm in the Jordan and Israel crosses.",
-      keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker inside the crossing band."
+      storyPrompt: "Hold the moment as the priests stand firm in the Jordan and Israel crosses.",
+      secondaryPrompt: "Press Strike when the marker lands in the gold zone.",
+      keyboardHint: "Keyboard: press Space or Enter to strike in the gold zone."
     },
     {
       id: "jordan-memorial-discern",
@@ -2098,14 +2229,15 @@ const THEMED_INTERACTIVE_MODE_SETS = {
   "Land and Legacy": [
     {
       id: "legacy-covenant-balance",
-      engine: "balance",
+      engine: "timing",
       label: "Covenant Stand",
       target: 8,
       maxMisses: 4,
-      drift: 0.027,
+      speed: 730,
       sourceRef: "Joshua 24:14-15",
       storyPrompt: "Stand firm as Joshua calls Israel to serve the Lord alone.",
-      keyboardHint: "Keyboard: hold Left/A or Right/D to keep the marker inside the covenant band."
+      secondaryPrompt: "Press Strike when the marker lands in the gold zone.",
+      keyboardHint: "Keyboard: press Space or Enter to strike in the gold zone."
     },
     {
       id: "legacy-achan-discern",
@@ -2131,18 +2263,20 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     },
     {
       id: "legacy-ai-route",
-      engine: "route",
+      engine: "spotlight",
       label: "Ai Ambush",
+      targetFinds: 5,
       maxMisses: 4,
+      seconds: 20,
       sourceRef: "Joshua 8:4-7",
-      storyPrompt: "Trace Joshua's ambush route as Israel turns back to strike Ai.",
-      secondaryPrompt: "Follow the battle route one move at a time.",
-      keyboardHint: "Keyboard: use arrow keys or WASD to follow the ambush route.",
-      routeSteps: [
-        { dir: "left", icon: "🌃", label: "Night" },
-        { dir: "up", icon: "🫥", label: "Hide" },
-        { dir: "right", icon: "🏃", label: "Retreat" },
-        { dir: "down", icon: "⚔️", label: "Turn" }
+      storyPrompt: "Spot the ambush signals as Israel turns back to strike Ai.",
+      secondaryPrompt: "Find the signal markers before the ambush begins.",
+      keyboardHint: "Keyboard/Mouse: move the spotlight and click or press Space to select.",
+      cards: [
+        { icon: "🌃", label: "Night" },
+        { icon: "🫥", label: "Hide" },
+        { icon: "🏃", label: "Retreat" },
+        { icon: "⚔️", label: "Turn" }
       ]
     },
     {
@@ -2208,19 +2342,21 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     },
     {
       id: "david-provisions-route",
-      engine: "route",
+      engine: "spotlight",
       stageFiveNative: true,
       label: "Battle-Line Errand",
+      targetFinds: 5,
       maxMisses: 4,
+      seconds: 20,
       sourceRef: "1 Samuel 17:17-20",
-      storyPrompt: "Trace David's path as he carries bread and grain to the battle line.",
-      secondaryPrompt: "Follow the errand route one move at a time.",
-      keyboardHint: "Keyboard: use arrow keys or WASD to follow David's errand route.",
-      routeSteps: [
-        { dir: "up", icon: "🍞", label: "Bread" },
-        { dir: "right", icon: "🧀", label: "Cheese" },
-        { dir: "up", icon: "🏕️", label: "Camp" },
-        { dir: "left", icon: "👬", label: "Brothers" }
+      storyPrompt: "Spot the supplies David carried to the battle line.",
+      secondaryPrompt: "Find the right provision markers before time runs out.",
+      keyboardHint: "Keyboard: move with arrows or WASD and press Space to select.",
+      cards: [
+        { icon: "🍞", label: "Bread" },
+        { icon: "🧀", label: "Cheese" },
+        { icon: "🏕️", label: "Camp" },
+        { icon: "👬", label: "Brothers" }
       ]
     },
     {
@@ -2248,13 +2384,16 @@ const THEMED_INTERACTIVE_MODE_SETS = {
     },
     {
       id: "david-giant-duel",
-      engine: "slingshot",
+      engine: "timing",
       stageFiveNative: true,
       label: "Giant Duel",
+      target: 7,
+      maxMisses: 3,
+      speed: 720,
       sourceRef: "1 Samuel 17:49-50",
-      storyPrompt: "Pull back the sling and strike true against the champion of Gath.",
-      secondaryPrompt: "Aim for the giant's forehead and let the stone fly in faith.",
-      keyboardHint: "Keyboard: arrows adjust your pull, Space or Enter launches, and R resets the shot."
+      storyPrompt: "Time the moment of faith and strike as Goliath steps forward.",
+      secondaryPrompt: "Press Strike when the marker lands in the gold zone.",
+      keyboardHint: "Keyboard: press Space or Enter to strike in the gold zone."
     },
     {
       id: "david-shepherd-rescue",
@@ -21507,6 +21646,7 @@ function updateAudioState() {
   const theaterOpen = isStoryTheaterOpen();
   const creditsOpen = isCreditsOpen();
   const musicShouldBeAudible = state.audio.music && !theaterOpen && (!state.activeStage || isFinalOpen() || creditsOpen);
+  const allowLoopSilently = state.audio.music && !creditsOpen && !isFinalOpen() && (theaterOpen || state.activeStage);
   const duckMultiplier = Date.now() < (audioEngine.duckUntil || 0)
     ? Math.max(0.14, Math.min(1, Number(audioEngine.duckLevel) || 0.42))
     : 1;
@@ -21523,7 +21663,7 @@ function updateAudioState() {
     } else {
       stopFinaleMusic();
       stopCreditsMusic();
-      if (musicShouldBeAudible) startMusicLoop();
+      if (musicShouldBeAudible || allowLoopSilently) startMusicLoop();
       else stopMusicLoop();
     }
   } else {
