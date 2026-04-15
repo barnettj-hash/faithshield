@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-14-question-pool-scroll-music-v1";
+const CONTENT_VERSION = "2026-04-15-iphone69-music-max-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -44,9 +44,9 @@ const WEEKEND_EVENT_ROTATION = [
 ];
 const PROFILE_COLOR_SWATCHES = ["#e5b85d", "#8bd3dd", "#f49f85", "#9fdc8a", "#b3a0ff", "#f4d35e", "#94c8ff", "#f08ca0"];
 const MUSIC_LEVELS = {
-  low: 0.38,
-  medium: 0.54,
-  high: 0.68
+  low: 0.44,
+  medium: 0.64,
+  high: 0.84
 };
 const MUSIC_STYLES = {
   cinematic: true,
@@ -4054,11 +4054,16 @@ if (!state.dailyCalendar || typeof state.dailyCalendar !== "object" || Array.isA
   state.dailyCalendar = {};
 }
 
-if ((localStorage.getItem("faithContentVersion") || "") !== CONTENT_VERSION) {
+const storedContentVersion = localStorage.getItem("faithContentVersion") || "";
+if (storedContentVersion !== CONTENT_VERSION) {
   state.questionHistory = {};
   state.stageActivities = {};
+  state.audio.music = true;
+  state.audio.musicLevel = "high";
+  state.audio.musicStyle = "energetic";
   localStorage.setItem("faithQuestionHistory", "{}");
   localStorage.setItem("faithStageActivities", "{}");
+  localStorage.setItem("faithAudio", JSON.stringify(state.audio));
   localStorage.setItem("faithContentVersion", CONTENT_VERSION);
 }
 state.stats = {
@@ -4517,19 +4522,19 @@ function ensureAudio() {
   const musicFilter = ctx.createBiquadFilter();
   const musicCompressor = ctx.createDynamicsCompressor();
 
-  master.gain.value = 0.9;
+  master.gain.value = 0.96;
   musicGain.gain.value = 0;
-  sfxGain.gain.value = state.audio.sfx ? 0.30 : 0;
+  sfxGain.gain.value = state.audio.sfx ? 0.36 : 0;
 
   musicFilter.type = "lowpass";
-  musicFilter.frequency.value = 4200;
-  musicFilter.Q.value = 0.28;
+  musicFilter.frequency.value = 5200;
+  musicFilter.Q.value = 0.24;
 
-  musicCompressor.threshold.value = -24;
-  musicCompressor.knee.value = 18;
-  musicCompressor.ratio.value = 2.1;
+  musicCompressor.threshold.value = -21;
+  musicCompressor.knee.value = 22;
+  musicCompressor.ratio.value = 2.4;
   musicCompressor.attack.value = 0.01;
-  musicCompressor.release.value = 0.3;
+  musicCompressor.release.value = 0.38;
 
   musicGain.connect(musicFilter);
   musicFilter.connect(musicCompressor);
@@ -21664,7 +21669,7 @@ function updateAudioState() {
   const musicTarget = musicShouldBeAudible ? musicGainForCurrentLevel() * duckMultiplier : 0;
   const musicFadeSeconds = musicShouldBeAudible ? 0.92 : (theaterOpen || state.activeStage ? 0.24 : 0.46);
   setMusicGainSmooth(musicTarget, musicFadeSeconds);
-  if (audioEngine.sfxGain) audioEngine.sfxGain.gain.value = state.audio.sfx ? 0.3 : 0;
+  if (audioEngine.sfxGain) audioEngine.sfxGain.gain.value = state.audio.sfx ? 0.36 : 0;
 
   if (state.audio.music) {
     if (creditsOpen) {
