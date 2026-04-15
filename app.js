@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-08-post-moses-stage5-music-v3";
+const CONTENT_VERSION = "2026-04-14-question-pool-scroll-music-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -764,7 +764,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 55;
+const ACTIVITY_SCHEMA_VERSION = 56;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -5230,7 +5230,7 @@ function applyMusicFilterProfile(ctx, profile) {
 function startMusicLoop() {
   ensureAudio();
   if (!audioEngine.ctx) return;
-  if (!state.audio.music || state.activeStage || audioEngine.finaleTimer || audioEngine.creditsTimer || isFinalOpen() || isCreditsOpen()) return;
+  if (!state.audio.music || audioEngine.finaleTimer || audioEngine.creditsTimer || isFinalOpen() || isCreditsOpen()) return;
   if (audioEngine.ctx.state === "suspended") audioEngine.ctx.resume().catch(() => {});
 
   const ctx = audioEngine.ctx;
@@ -5383,7 +5383,7 @@ function startMusicLoop() {
   applyMusicFilterProfile(ctx, profile);
 
   const scheduler = () => {
-    if (!state.audio.music || state.activeStage || audioEngine.finaleTimer || audioEngine.creditsTimer || isFinalOpen() || isCreditsOpen()) {
+    if (!state.audio.music || audioEngine.finaleTimer || audioEngine.creditsTimer || isFinalOpen() || isCreditsOpen()) {
       stopMusicLoop();
       return;
     }
@@ -9706,7 +9706,7 @@ function restoreHubScrollPosition() {
   window.setTimeout(restore, 180);
   window.setTimeout(restore, 360);
   window.setTimeout(restore, 520);
-  if (hasStageAnchor) {
+  if (!hasScrollTarget && hasStageAnchor) {
     window.requestAnimationFrame(restoreStageAnchor);
     window.setTimeout(restoreStageAnchor, 180);
     window.setTimeout(restoreStageAnchor, 420);
@@ -9734,7 +9734,9 @@ function flushQueuedHubReturn() {
 
 function completeStage(meta, mode, options = {}) {
   // Keep player at current scroll position unless an explicit return target is requested.
-  captureHubScrollPosition(state.activeStage || meta.id);
+  if (!Number.isFinite(pendingHubReturnScrollY)) {
+    captureHubScrollPosition(state.activeStage || meta.id);
+  }
   if (options.returnTarget) queueHubReturn(options.returnTarget);
   const result = markDone(meta.id, mode);
   if (result && !result.celebrationBadge) {
@@ -10439,9 +10441,13 @@ function buildTrueFalseActivity(meta, theme, difficulty, usedSources, focus = nu
   const scopeKey = focus ? reviewScopeKey(theme, "truefalse", focus) : themeScopeKey(theme, "truefalse");
   const scopedUsedSources = focus ? null : usedSources;
   const selectionOptions = selectionConstraintsForTheme(theme, difficulty, focus);
-  const quizPool = shouldIsolateThemeByDifficulty(theme)
+  const authoredQuizPool = shouldIsolateThemeByDifficulty(theme)
     ? quizPoolForDifficulty(difficulty)
     : ALL_QUIZ_BANKS;
+  const quizPool = dedupeActivityPool(
+    authoredQuizPool.concat(derivedQuizPoolForTheme(theme, difficulty)),
+    "quiz"
+  );
   const pick = pickWithoutRepeat(quizPool, theme.era, "truefalse", {
     usedSources: scopedUsedSources,
     allowReuse: Boolean(focus),
@@ -10478,9 +10484,13 @@ function buildMatchingActivity(meta, theme, difficulty, usedSources, focus = nul
   const matchingReferenceKeyForItem = typeof selectionOptions.referenceKeyForItem === "function"
     ? selectionOptions.referenceKeyForItem
     : ((item) => primaryReferenceKeyForItem(item));
-  const quizPool = shouldIsolateThemeByDifficulty(theme)
+  const authoredQuizPool = shouldIsolateThemeByDifficulty(theme)
     ? quizPoolForDifficulty(difficulty)
     : ALL_QUIZ_BANKS;
+  const quizPool = dedupeActivityPool(
+    authoredQuizPool.concat(derivedQuizPoolForTheme(theme, difficulty)),
+    "quiz"
+  );
   const scopedPool = quizPool.filter(themeFilter);
   const desiredCount = scopedPool.length >= 3 ? 3 : 2;
   const pick = pickManyWithoutRepeat(quizPool, theme.era, "matching", desiredCount, {
@@ -11939,7 +11949,7 @@ function trimDerivedItemsForTheme(theme, bucket, items = []) {
 
   const strictThemeNoRepeat = Boolean(theme && STRICT_SECTION_NO_REPEAT_THEMES.has(theme.name));
   const perRef = strictThemeNoRepeat
-    ? 1
+    ? Math.max(4, Number(rule.perRef || 1))
     : Math.max(1, Number(rule.perRef || 1));
   const counts = new Map();
   const trimmed = [];
@@ -12012,9 +12022,10 @@ function selectionConstraintsForTheme(theme, difficulty, focus = null) {
   const rule = themeDifficultyReferenceRule(theme, difficultyId);
   if (!rule) return {};
   const strictThemeNoRepeat = Boolean(theme && STRICT_SECTION_NO_REPEAT_THEMES.has(theme.name));
+  const refUsageCounts = themeReferenceUsageCountsForDifficulty(difficultyId, theme);
   return {
-    maxRefUses: strictThemeNoRepeat ? 1 : Math.max(1, Number(rule.perRef || 1)),
-    refUsageCounts: themeReferenceUsageCountsForDifficulty(difficultyId, theme),
+    maxRefUses: strictThemeNoRepeat ? null : Math.max(1, Number(rule.perRef || 1)),
+    refUsageCounts,
     referenceKeyForItem: (item) => referenceKeysForItem(item)[0] || "",
     maxConceptUses: strictThemeNoRepeat ? 1 : null,
     conceptUsageCounts: strictThemeNoRepeat ? themeConceptUsageCounts(theme) : null,
