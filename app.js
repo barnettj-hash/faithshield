@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-15-iphone69-music-max-v1";
+const CONTENT_VERSION = "2026-04-16-easy-medium-multiple-choice-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -764,7 +764,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 56;
+const ACTIVITY_SCHEMA_VERSION = 57;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -11024,7 +11024,15 @@ function stageKindPlan(meta, difficulty) {
 
   const difficultyShift = difficulty.id === "advanced" ? 2 : difficulty.id === "medium" ? 1 : 0;
   const rotation = (meta.level - 1 + difficultyShift + (meta.stage - 1)) % baseKinds.length;
-  return rotateKinds(baseKinds, rotation);
+  const plannedKinds = rotateKinds(baseKinds, rotation);
+  if (difficulty.id === "advanced") return plannedKinds;
+
+  const convertedKinds = [];
+  plannedKinds.forEach((kind) => {
+    const effectiveKind = activityKindForDifficulty(kind, difficulty);
+    if (!convertedKinds.includes(effectiveKind)) convertedKinds.push(effectiveKind);
+  });
+  return convertedKinds;
 }
 
 function buildQuestionPoolExhaustedActivity(meta, activityKind = "question") {
@@ -12288,6 +12296,14 @@ function currentDifficulty() {
   return difficultyProfiles[state.difficulty] || difficultyProfiles.medium;
 }
 
+function shouldUseMultipleChoiceInsteadOfBuild(kind, difficulty) {
+  return (kind === "order" || kind === "fact") && (!difficulty || difficulty.id !== "advanced");
+}
+
+function activityKindForDifficulty(kind, difficulty) {
+  return shouldUseMultipleChoiceInsteadOfBuild(kind, difficulty) ? "quiz" : kind;
+}
+
 function shouldShowQuestionSource() {
   return currentDifficulty().id !== "advanced";
 }
@@ -12525,35 +12541,36 @@ function activityFor(meta) {
   }
 
   const difficulty = currentDifficulty();
-  const sourceBucketForKind = (kind) => kind;
+  const sourceBucketForKind = (kind) => activityKindForDifficulty(kind, difficulty);
   const reviewFocus = activeReviewFocusForMeta(meta);
   const buildByKind = (kind, focus = null) => {
+    const effectiveKind = activityKindForDifficulty(kind, difficulty);
     const usedSources = focus
       ? null
-      : usedQuestionSourcesForDifficulty(state.difficulty, sourceBucketForKind(kind), meta.theme);
+      : usedQuestionSourcesForDifficulty(state.difficulty, sourceBucketForKind(effectiveKind), meta.theme);
 
-    if (kind === "speaker" || kind === "hebrew") {
-      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind, focus);
+    if (effectiveKind === "speaker" || effectiveKind === "hebrew") {
+      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, effectiveKind, focus);
     }
-    if (kind === "truefalse") {
+    if (effectiveKind === "truefalse") {
       return buildTrueFalseActivity(meta, meta.theme, difficulty, usedSources, focus);
     }
-    if (kind === "matching") {
+    if (effectiveKind === "matching") {
       return buildMatchingActivity(meta, meta.theme, difficulty, usedSources, focus);
     }
-    if (kind === "quiz") {
-      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind, focus)
+    if (effectiveKind === "quiz") {
+      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, effectiveKind, focus)
         || buildFallbackQuizActivity(meta, meta.theme, difficulty, usedSources, focus);
     }
-    if (kind === "order") {
-      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind, focus)
+    if (effectiveKind === "order") {
+      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, effectiveKind, focus)
         || buildFallbackOrderActivity(meta, meta.theme, difficulty, usedSources, focus);
     }
-    if (kind === "spelling") {
-      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind, focus)
+    if (effectiveKind === "spelling") {
+      return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, effectiveKind, focus)
         || buildFallbackSpellingActivity(meta, meta.theme, difficulty, usedSources, focus);
     }
-    return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, kind, focus)
+    return buildAuthoredActivityByKind(meta, meta.theme, difficulty, usedSources, effectiveKind, focus)
       || buildFallbackFactActivity(meta, meta.theme, difficulty, usedSources, focus);
   };
 
