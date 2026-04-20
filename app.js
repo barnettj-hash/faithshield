@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-16-easy-medium-multiple-choice-v1";
+const CONTENT_VERSION = "2026-04-19-stage-focus-button-boss-polish-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -9681,6 +9681,13 @@ function captureHubScrollPosition(stageId = null) {
   pendingHubReturnStageId = stageId || state.activeStage || state.lastStage || null;
 }
 
+function preferStageHubReturn(stageId) {
+  if (!stageId) return;
+  pendingHubReturnScrollY = null;
+  pendingHubReturnStageId = stageId;
+  scheduleStageCardFocus(stageId, { behavior: "auto" });
+}
+
 function restoreHubScrollPosition() {
   const hasScrollTarget = Number.isFinite(pendingHubReturnScrollY);
   const hasStageAnchor = Boolean(pendingHubReturnStageId);
@@ -9705,16 +9712,19 @@ function restoreHubScrollPosition() {
     card.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
   };
 
-  restore();
-  window.requestAnimationFrame(restore);
-  window.setTimeout(restore, 80);
-  window.setTimeout(restore, 180);
-  window.setTimeout(restore, 360);
-  window.setTimeout(restore, 520);
-  if (!hasScrollTarget && hasStageAnchor) {
+  if (hasScrollTarget) {
+    restore();
+    window.requestAnimationFrame(restore);
+    window.setTimeout(restore, 80);
+    window.setTimeout(restore, 180);
+    window.setTimeout(restore, 360);
+    window.setTimeout(restore, 520);
+  }
+  if (hasStageAnchor) {
     window.requestAnimationFrame(restoreStageAnchor);
     window.setTimeout(restoreStageAnchor, 180);
     window.setTimeout(restoreStageAnchor, 420);
+    window.setTimeout(restoreStageAnchor, 760);
   }
 }
 
@@ -9738,12 +9748,18 @@ function flushQueuedHubReturn() {
 }
 
 function completeStage(meta, mode, options = {}) {
+  const nextMetaForReturn = meta ? nextStageMeta(meta) : null;
+  const returnStageId = options.returnStageId || (nextMetaForReturn && nextMetaForReturn.id) || (meta && meta.id) || state.activeStage || null;
+
   // Keep player at current scroll position unless an explicit return target is requested.
   if (!Number.isFinite(pendingHubReturnScrollY)) {
     captureHubScrollPosition(state.activeStage || meta.id);
   }
   if (options.returnTarget) queueHubReturn(options.returnTarget);
   const result = markDone(meta.id, mode);
+  if (!options.returnTarget && returnStageId) {
+    preferStageHubReturn(returnStageId);
+  }
   if (result && !result.celebrationBadge) {
     showStageCompleteMoment(result, options);
   }
@@ -14066,6 +14082,24 @@ function focusStageCard(stageId) {
   card.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
 }
 
+function scheduleStageCardFocus(stageId, options = {}) {
+  if (!stageId) return;
+  pendingStageFocusId = stageId;
+  const behavior = options.behavior || "smooth";
+  const restore = () => {
+    const card = stageGrid.querySelector(`[data-stage-id="${stageId}"]`);
+    if (!card) return;
+    pendingStageFocusId = null;
+    card.scrollIntoView({ block: "center", inline: "nearest", behavior });
+  };
+  if (typeof window.requestAnimationFrame === "function") {
+    window.requestAnimationFrame(restore);
+  }
+  window.setTimeout(restore, 90);
+  window.setTimeout(restore, 260);
+  window.setTimeout(restore, 520);
+}
+
 function flushPendingStageFocus() {
   if (!pendingStageFocusId) return;
   const card = stageGrid.querySelector(`[data-stage-id="${pendingStageFocusId}"]`);
@@ -17484,6 +17518,31 @@ function ensureBossBattleStyles() {
       box-shadow: 0 28px 60px rgba(0, 0, 0, 0.28);
       background: linear-gradient(180deg, rgba(15, 22, 33, 0.98), rgba(10, 15, 23, 0.98));
     }
+    .faith-boss-arena::before,
+    .faith-boss-arena::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .faith-boss-arena::before {
+      opacity: 0.16;
+      mix-blend-mode: screen;
+      background:
+        linear-gradient(90deg, transparent, rgba(255,255,255,0.09), transparent),
+        repeating-linear-gradient(180deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 5px);
+      animation: faithBossScanline 5.2s linear infinite;
+    }
+    .faith-boss-arena::after {
+      opacity: 0;
+      background: radial-gradient(circle at 50% 45%, rgba(255, 222, 139, 0.22), transparent 42%);
+      transition: opacity 180ms ease;
+    }
+    .faith-boss-arena.is-hit::after {
+      opacity: 1;
+      animation: faithBossArenaBurst 0.42s ease-out both;
+    }
     .faith-boss-backdrop,
     .faith-boss-veil,
     .faith-boss-atmosphere {
@@ -17792,9 +17851,11 @@ function ensureBossBattleStyles() {
       overflow: hidden;
       border-radius: 18px;
       background:
+        radial-gradient(circle at 50% 82%, rgba(0,0,0,0.36), transparent 28%),
         linear-gradient(180deg, rgba(255,255,255,0.05), transparent 18%),
         radial-gradient(circle at 50% 18%, var(--boss-accent-soft), transparent 34%),
         linear-gradient(180deg, rgba(17, 24, 36, 0.8), rgba(8, 12, 18, 0.98));
+      box-shadow: inset 0 0 38px rgba(0,0,0,0.34);
     }
     .faith-boss-sprite svg {
       width: 100%;
@@ -17812,10 +17873,34 @@ function ensureBossBattleStyles() {
       gap: 0.4rem;
       padding: 0.4rem 0.2rem 0;
     }
+    .faith-boss-duel::before {
+      content: "";
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      bottom: 1.5%;
+      height: 18%;
+      border-radius: 999px;
+      background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.46), transparent 70%);
+      filter: blur(2px);
+      opacity: 0.86;
+    }
+    .faith-boss-duel::after {
+      content: "";
+      position: absolute;
+      inset: 6% 9% 14%;
+      border-radius: 999px;
+      background: radial-gradient(circle at 58% 24%, rgba(255, 230, 160, 0.18), transparent 18%);
+      opacity: 0.52;
+      animation: faithBossLightSweep 3.8s ease-in-out infinite;
+    }
     .faith-boss-duel-foe,
     .faith-boss-duel-hero {
+      position: relative;
+      z-index: 1;
       align-self: end;
       transition: transform 180ms ease, filter 180ms ease;
+      will-change: transform, filter;
     }
     .faith-boss-duel-foe svg,
     .faith-boss-duel-hero svg {
@@ -17852,11 +17937,19 @@ function ensureBossBattleStyles() {
       filter: drop-shadow(0 0 20px rgba(218, 78, 78, 0.28)) drop-shadow(0 22px 32px rgba(0, 0, 0, 0.36));
     }
     .faith-boss-duel-foe {
-      transform: translateY(6px);
+      transform: translateY(6px) scale(1.08);
+      transform-origin: center bottom;
+      animation: faithBossBossIdle 2.35s ease-in-out infinite;
+      filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.32));
     }
     .faith-boss-duel-hero {
       transform: translateY(10px);
+      transform-origin: center bottom;
+      animation: faithBossHeroReady 2.8s ease-in-out infinite;
       filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.24));
+    }
+    .faith-boss-duel-foe svg {
+      filter: drop-shadow(0 0 18px var(--boss-glow));
     }
     .faith-boss-duel.is-telegraph .faith-boss-duel-foe {
       animation: faithBossThreat 0.42s ease-in-out infinite;
@@ -17880,6 +17973,12 @@ function ensureBossBattleStyles() {
     }
     .faith-boss-duel.is-strike .faith-boss-duel-hero {
       filter: drop-shadow(0 16px 26px rgba(0, 0, 0, 0.26)) brightness(0.96);
+    }
+    .faith-boss-duel.is-strike .faith-boss-duel-foe svg {
+      animation: faithBossStrikeFlash 0.42s ease-out both;
+    }
+    .faith-boss-duel.is-strike .faith-boss-duel-hero svg {
+      animation: faithBossBlockBrace 0.42s ease-out both;
     }
     .faith-boss-weapon-chip {
       margin-top: 0.55rem;
@@ -17982,9 +18081,28 @@ function ensureBossBattleStyles() {
       100% { transform: translateX(0); }
     }
     @keyframes faithBossThreat {
-      0% { transform: translateY(6px) scale(1); }
-      50% { transform: translateY(0) scale(1.02); }
-      100% { transform: translateY(6px) scale(1); }
+      0% { transform: translateY(6px) scale(1.08) rotate(0deg); }
+      30% { transform: translateY(0) scale(1.13) rotate(-1deg); }
+      60% { transform: translateY(2px) scale(1.12) rotate(1deg); }
+      100% { transform: translateY(6px) scale(1.08) rotate(0deg); }
+    }
+    @keyframes faithBossBossIdle {
+      0%, 100% { transform: translateY(6px) scale(1.08) rotate(0deg); }
+      50% { transform: translateY(-3px) scale(1.1) rotate(-0.7deg); }
+    }
+    @keyframes faithBossHeroReady {
+      0%, 100% { transform: translateY(10px) scale(1); }
+      50% { transform: translateY(6px) scale(1.015); }
+    }
+    @keyframes faithBossStrikeFlash {
+      0% { filter: brightness(1) drop-shadow(0 0 18px var(--boss-glow)); }
+      45% { filter: brightness(1.36) saturate(1.2) drop-shadow(0 0 30px rgba(232, 118, 82, 0.72)); }
+      100% { filter: brightness(1.02) drop-shadow(0 0 18px var(--boss-glow)); }
+    }
+    @keyframes faithBossBlockBrace {
+      0% { transform: translateX(0) scale(1); filter: brightness(1); }
+      45% { transform: translateX(-4px) scale(1.04); filter: brightness(1.22); }
+      100% { transform: translateX(0) scale(1); filter: brightness(1); }
     }
     @keyframes faithBossIncomingPulse {
       0%, 100% {
@@ -17995,6 +18113,19 @@ function ensureBossBattleStyles() {
         transform: translateY(-2px);
         filter: brightness(1.08);
       }
+    }
+    @keyframes faithBossScanline {
+      0% { transform: translateY(-8%); }
+      100% { transform: translateY(8%); }
+    }
+    @keyframes faithBossArenaBurst {
+      0% { opacity: 0; transform: scale(0.92); }
+      35% { opacity: 1; transform: scale(1.02); }
+      100% { opacity: 0; transform: scale(1.16); }
+    }
+    @keyframes faithBossLightSweep {
+      0%, 100% { transform: translateX(-8%) translateY(0); opacity: 0.36; }
+      50% { transform: translateX(8%) translateY(-2%); opacity: 0.72; }
     }
     @media (max-width: 700px) {
       .faith-boss-content {
@@ -19031,6 +19162,7 @@ function renderBoss(meta, mode, feedback) {
   window.addEventListener("keydown", onKey);
   refreshBackdrop();
   renderRound();
+  startSpriteLoop();
   feedback.className = "feedback";
   feedback.textContent = copyBundle.story;
   duckMusicTemporarily(0.22, 2200);
@@ -21740,7 +21872,7 @@ function requestActivityClose(event) {
     event.preventDefault();
     event.stopPropagation();
   }
-  if (!state.activeStage || !activityOverlay || activityOverlay.classList.contains("hidden")) return;
+  if (!activityOverlay || activityOverlay.classList.contains("hidden")) return;
   closeActivity();
 }
 
@@ -21756,7 +21888,7 @@ if (activityOverlay) {
 
 window.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
-  if (!state.activeStage || !activityOverlay || activityOverlay.classList.contains("hidden")) return;
+  if (!activityOverlay || activityOverlay.classList.contains("hidden")) return;
   requestActivityClose(event);
 });
 
