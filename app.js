@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-19-stage-focus-button-boss-polish-v1";
+const CONTENT_VERSION = "2026-04-21-premium-experience-systems-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -14,6 +14,7 @@ const SUPPORTED_LANGUAGES = ["en", "es"];
 const MASTERY_TARGET_PERCENT = 85;
 const DAILY_DEVOTION_REWARD_XP = 35;
 const DAILY_DEVOTION_REWARD_LIFE = 1;
+const MORNING_FAITH_DEFAULT_TIME = "07:00";
 const WEEKLY_CHALLENGE_TARGET = 7;
 const PROFILE_INDEX_KEY = "faithProfilesIndex";
 const PROFILE_ACTIVE_KEY = "faithActiveProfileId";
@@ -5722,6 +5723,106 @@ function renderDailyThought() {
   if (dailyPracticalText) dailyPracticalText.textContent = `${t("practicalPrefix")}: ${item.practical}`;
 }
 
+function ensureMorningFaithState() {
+  if (!state.morningFaith || typeof state.morningFaith !== "object") {
+    state.morningFaith = {};
+  }
+  const today = localDayKey();
+  if (state.morningFaith.day !== today) {
+    state.morningFaith.day = today;
+    state.morningFaith.reflection = "";
+    state.morningFaith.challengeStarted = false;
+    state.morningFaith.notified = false;
+  }
+  if (!state.morningFaith.time) {
+    state.morningFaith.time = MORNING_FAITH_DEFAULT_TIME;
+  }
+  if (typeof state.morningFaith.enabled !== "boolean") {
+    state.morningFaith.enabled = false;
+  }
+  return state.morningFaith;
+}
+
+function morningFaithReviewLine() {
+  const dueCount = reviewDueEntries(12).length;
+  const weak = weakestMasteryEntries(1)[0];
+  if (dueCount > 0 && weak) {
+    return `Smart review: ${dueCount} review target${dueCount === 1 ? "" : "s"} due. Focus area: ${weak.theme || weak.label || "Bible mastery"}.`;
+  }
+  if (dueCount > 0) {
+    return `Smart review: ${dueCount} review target${dueCount === 1 ? "" : "s"} due today.`;
+  }
+  if (weak) {
+    return `Smart review: no due items yet. Weak area to revisit: ${weak.theme || weak.label || "Bible mastery"}.`;
+  }
+  return "Smart review: complete stages to build your mastery path.";
+}
+
+function toggleMorningFaithReminder() {
+  const morning = ensureMorningFaithState();
+  morning.enabled = !morning.enabled;
+  if (morning.enabled && "Notification" in window && Notification.permission === "default") {
+    Promise.resolve(Notification.requestPermission()).catch(() => {});
+  }
+  persist();
+  renderMorningFaithMode();
+  showFeatureMoment(
+    morning.enabled ? "Morning Faith reminder enabled" : "Morning Faith reminder paused",
+    morning.enabled
+      ? "When FAITHSHIELD is open near your chosen time, it can remind you to begin the daily verse, challenge, and reflection."
+      : "Morning Faith will stay available, but reminder prompts are paused.",
+    { icon: "☀️", sfx: morning.enabled ? "success" : null, durationMs: 2600 }
+  );
+}
+
+function saveMorningFaithReflection() {
+  const morning = ensureMorningFaithState();
+  const input = document.getElementById("morningFaithReflection");
+  const note = String((input && input.value) || "").trim();
+  if (!note) {
+    showFeatureMoment(
+      "Write a Morning Faith reflection first",
+      "Add one short sentence about how you will live today's verse.",
+      { icon: "✍️", sfx: null, durationMs: 2300 }
+    );
+    return;
+  }
+  morning.reflection = note.slice(0, 240);
+  ensureDailyDevotionState();
+  state.dailyDevotion.note = morning.reflection;
+  state.dailyDevotion.reflection = true;
+  ensureDailyCalendarEntry(localDayKey()).reflection = true;
+  persist();
+  render();
+  showFeatureMoment(
+    "Morning reflection saved",
+    "Your daily reflection is saved into the devotion quest.",
+    { icon: "📝", durationMs: 2200 }
+  );
+}
+
+function maybeShowMorningFaithReminder() {
+  const morning = ensureMorningFaithState();
+  if (!morning.enabled || morning.notified) return;
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  if (`${hh}:${mm}` < String(morning.time || MORNING_FAITH_DEFAULT_TIME)) return;
+  const thought = dailyThoughtForToday();
+  const body = thought ? `${thought.ref}: ${thought.thought}` : "Begin today's verse, challenge, and reflection.";
+  morning.notified = true;
+  persist();
+  if ("Notification" in window && Notification.permission === "granted") {
+    try {
+      new Notification("Morning Faith", { body });
+    } catch (_) {
+      showFeatureMoment("Morning Faith", body, { icon: "☀️", durationMs: 3600 });
+    }
+  } else {
+    showFeatureMoment("Morning Faith", body, { icon: "☀️", durationMs: 3600 });
+  }
+}
+
 function eraIntroCopy(era) {
   const map = {
     genesis: "Creation to Babel",
@@ -6838,6 +6939,14 @@ function ensurePremiumHubStyles() {
     ".hub-quick-actions .ghost-btn{min-width:160px;justify-content:center;}",
     ".cloud-save-actions{display:flex;flex-wrap:wrap;gap:10px;}",
     ".cloud-save-summary{margin:0 0 12px;}",
+    ".morning-faith-card textarea{margin-top:10px;min-height:92px;}",
+    ".morning-faith-reminder-row,.morning-faith-actions,.sound-test-grid,.screenshot-mode-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}",
+    ".morning-faith-reminder-row input{min-width:136px;max-width:180px;padding:10px 12px;border-radius:12px;border:1px solid rgba(248,238,214,.22);background:rgba(255,255,255,.05);color:#f8ecd6;font-weight:700;}",
+    ".sound-test-card .ghost-btn,.screenshot-mode-card .ghost-btn,.morning-faith-card .ghost-btn{min-width:150px;justify-content:center;}",
+    ".sound-test-meter{height:10px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden;min-width:160px;}",
+    ".sound-test-meter span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#e5b85d,#8bd3dd);}",
+    "body.screenshot-mode .recap-indicator{display:none!important;}",
+    "body.screenshot-mode .feature-card,body.screenshot-mode .challenge-card{outline:1px solid rgba(229,184,93,.24);outline-offset:2px;}",
     ".chapter-intro-overlay .welcome-card{max-width:min(94vw,860px);}",
     ".chapter-intro-copy{display:grid;gap:12px;text-align:left;}",
     ".chapter-intro-copy p{margin:0;}",
@@ -7455,6 +7564,227 @@ function renderDailyChallengeCalendar() {
   }
 }
 
+function renderMorningFaithMode() {
+  if (!appRoot) return;
+  const morning = ensureMorningFaithState();
+  const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
+  const dailyWordCard = document.querySelector(".daily-word-card");
+  let section = document.getElementById("morningFaithSection");
+  if (!section) {
+    section = document.createElement("section");
+    section.id = "morningFaithSection";
+    section.className = "feature-card morning-faith-card";
+    section.innerHTML = [
+      '<div class="feature-head">',
+      '  <h2>Offline Morning Faith</h2>',
+      '  <p id="morningFaithStatus" class="meta">Daily verse, challenge, reflection, and reminder</p>',
+      '</div>',
+      '<p id="morningFaithVerse" class="meta"></p>',
+      '<p id="morningFaithAction" class="meta"></p>',
+      '<p id="morningFaithReview" class="premium-chip"></p>',
+      '<div class="morning-faith-reminder-row" style="margin-top:14px;">',
+      '  <label class="meta" for="morningFaithTime">Reminder time</label>',
+      '  <input id="morningFaithTime" type="time" />',
+      '  <button id="toggleMorningFaithReminderBtn" class="ghost-btn" type="button">Enable Reminder</button>',
+      '</div>',
+      '<textarea id="morningFaithReflection" class="journal-input" rows="3" placeholder="One short Morning Faith reflection"></textarea>',
+      '<div class="morning-faith-actions" style="margin-top:12px;">',
+      '  <button id="startMorningFaithChallengeBtn" class="ghost-btn" type="button">Start Daily Challenge</button>',
+      '  <button id="saveMorningFaithReflectionBtn" class="ghost-btn" type="button">Save Morning Reflection</button>',
+      '  <button id="playMorningFaithRecapBtn" class="ghost-btn" type="button">Play Welcome Recap</button>',
+      '</div>',
+      '<p class="meta" style="margin-top:12px;">Apple does not allow third-party apps to replace the system alarm clock, so this mode uses an in-app/browser reminder path plus your daily FAITHSHIELD routine.</p>'
+    ].join("");
+    const anchor = dailyWordCard || progressSection;
+    if (anchor && anchor.parentNode) {
+      anchor.parentNode.insertBefore(section, anchor.nextSibling);
+    } else {
+      appRoot.appendChild(section);
+    }
+  }
+
+  const thought = dailyThoughtForToday();
+  const status = section.querySelector("#morningFaithStatus");
+  const verse = section.querySelector("#morningFaithVerse");
+  const action = section.querySelector("#morningFaithAction");
+  const review = section.querySelector("#morningFaithReview");
+  const timeInput = section.querySelector("#morningFaithTime");
+  const toggleBtn = section.querySelector("#toggleMorningFaithReminderBtn");
+  const reflection = section.querySelector("#morningFaithReflection");
+  const startBtn = section.querySelector("#startMorningFaithChallengeBtn");
+  const saveBtn = section.querySelector("#saveMorningFaithReflectionBtn");
+  const recapBtn = section.querySelector("#playMorningFaithRecapBtn");
+
+  if (status) {
+    status.textContent = morning.enabled
+      ? `Reminder on at ${morning.time || MORNING_FAITH_DEFAULT_TIME}`
+      : "Daily verse, challenge, reflection, and reminder";
+  }
+  if (verse) {
+    verse.textContent = thought
+      ? `${thought.ref}: ${thought.thought}`
+      : "Today's verse will appear here.";
+  }
+  if (action) {
+    action.textContent = thought
+      ? `Practical action: ${thought.practical}`
+      : "Practical action: take one faithful step today.";
+  }
+  if (review) {
+    review.textContent = morningFaithReviewLine();
+  }
+  if (timeInput) {
+    timeInput.value = morning.time || MORNING_FAITH_DEFAULT_TIME;
+    timeInput.onchange = (event) => {
+      morning.time = String(event.target.value || MORNING_FAITH_DEFAULT_TIME);
+      morning.notified = false;
+      persist();
+      renderMorningFaithMode();
+    };
+  }
+  if (toggleBtn) {
+    toggleBtn.textContent = morning.enabled ? "Pause Reminder" : "Enable Reminder";
+    toggleBtn.onclick = toggleMorningFaithReminder;
+  }
+  if (reflection && document.activeElement !== reflection) {
+    reflection.value = morning.reflection || "";
+  }
+  if (startBtn) {
+    startBtn.onclick = () => {
+      morning.challengeStarted = true;
+      persist();
+      if (typeof openDailyDevotionChallenge === "function" && openDailyDevotionChallenge()) {
+        showFeatureMoment("Morning Faith challenge started", "Complete the opened stage to finish today's daily challenge.", { icon: "⚔️", durationMs: 2200 });
+      } else {
+        showFeatureMoment("No daily challenge ready", "Unlock or reopen a stage to begin today's challenge.", { icon: "⚠️", sfx: null, durationMs: 2400 });
+      }
+    };
+  }
+  if (saveBtn) {
+    saveBtn.onclick = saveMorningFaithReflection;
+  }
+  if (recapBtn) {
+    recapBtn.onclick = () => playStoryRecapNow("manual");
+  }
+}
+
+function renderSoundTestPanel() {
+  if (!appRoot) return;
+  const progressSection = gameDashboard ? gameDashboard.closest("section") : null;
+  let section = document.getElementById("soundTestSection");
+  if (!section) {
+    section = document.createElement("section");
+    section.id = "soundTestSection";
+    section.className = "feature-card sound-test-card";
+    section.innerHTML = [
+      '<div class="feature-head">',
+      '  <h2>Sound Settings Test</h2>',
+      '  <p id="soundTestStatus" class="meta">Confirm music, voice, and SFX before playing.</p>',
+      '</div>',
+      '<div class="sound-test-grid">',
+      '  <button id="testMusicButton" class="ghost-btn" type="button">Test Music</button>',
+      '  <button id="testVoiceButton" class="ghost-btn" type="button">Test Voice</button>',
+      '  <button id="testSfxButton" class="ghost-btn" type="button">Test SFX</button>',
+      '  <div class="sound-test-meter" aria-hidden="true"><span id="soundTestMeterFill" style="width:72%"></span></div>',
+      '</div>'
+    ].join("");
+    if (progressSection && progressSection.parentNode) {
+      progressSection.parentNode.insertBefore(section, progressSection.nextSibling);
+    } else {
+      appRoot.appendChild(section);
+    }
+  }
+
+  const status = section.querySelector("#soundTestStatus");
+  const meter = section.querySelector("#soundTestMeterFill");
+  const testMusicButton = section.querySelector("#testMusicButton");
+  const testVoiceButton = section.querySelector("#testVoiceButton");
+  const testSfxButton = section.querySelector("#testSfxButton");
+  if (status) {
+    status.textContent = `Music ${state.audio && state.audio.music ? "On" : "Off"} • Volume ${state.audio && state.audio.volume ? state.audio.volume : "high"} • Voice ready`;
+  }
+  if (meter) {
+    const width = state.audio && state.audio.volume === "low" ? 38 : state.audio && state.audio.volume === "medium" ? 58 : 84;
+    meter.style.width = `${width}%`;
+  }
+  if (testMusicButton) {
+    testMusicButton.onclick = () => {
+      ensureAudio();
+      primeAudioAuto();
+      if (state.audio) state.audio.music = true;
+      updateAudioState();
+      if (typeof startMusicLoop === "function") startMusicLoop();
+      playSfx("success");
+      showFeatureMoment("Music test playing", "Game hub music has been restarted with your current volume setting.", { icon: "🎵", durationMs: 2200 });
+      renderSoundTestPanel();
+    };
+  }
+  if (testVoiceButton) {
+    testVoiceButton.onclick = () => playVoiceTest();
+  }
+  if (testSfxButton) {
+    testSfxButton.onclick = () => {
+      playSfx("badge");
+      window.setTimeout(() => playSfx("success"), 540);
+      showFeatureMoment("SFX test", "You should hear the badge fanfare and success tone.", { icon: "🎺", sfx: null, durationMs: 2200 });
+    };
+  }
+}
+
+function setScreenshotMode(enabled) {
+  document.body.classList.toggle("screenshot-mode", Boolean(enabled));
+  showFeatureMoment(
+    enabled ? "Screenshot mode on" : "Screenshot mode off",
+    enabled
+      ? "Recap badges are hidden and gameplay sections are outlined for cleaner App Store captures."
+      : "Normal gameplay display restored.",
+    { icon: "📸", sfx: null, durationMs: 2200 }
+  );
+  renderScreenshotModePanel();
+}
+
+function renderScreenshotModePanel() {
+  if (!appRoot) return;
+  let section = document.getElementById("screenshotModeSection");
+  const storySection = storyPathHeading ? storyPathHeading.closest("section") : null;
+  if (!section) {
+    section = document.createElement("section");
+    section.id = "screenshotModeSection";
+    section.className = "feature-card screenshot-mode-card";
+    section.innerHTML = [
+      '<div class="feature-head">',
+      '  <h2>App Store Screenshot Helper</h2>',
+      '  <p class="meta">Use gameplay-focused captures that show the app in real use.</p>',
+      '</div>',
+      '<p class="meta">Best shots: boss battle, question challenge, chapter intro, Badge Shield or Hall of Faith, and Mastery Review.</p>',
+      '<div class="screenshot-mode-actions" style="margin-top:12px;">',
+      '  <button id="toggleScreenshotModeBtn" class="ghost-btn" type="button">Screenshot Mode</button>',
+      '  <button id="jumpScreenshotBossBtn" class="ghost-btn" type="button">Go to Story Path</button>',
+      '  <button id="jumpScreenshotMasteryBtn" class="ghost-btn" type="button">Go to Mastery</button>',
+      '</div>'
+    ].join("");
+    if (storySection && storySection.parentNode) {
+      storySection.parentNode.insertBefore(section, storySection);
+    } else {
+      appRoot.appendChild(section);
+    }
+  }
+  const enabled = document.body.classList.contains("screenshot-mode");
+  const toggle = section.querySelector("#toggleScreenshotModeBtn");
+  const story = section.querySelector("#jumpScreenshotBossBtn");
+  const mastery = section.querySelector("#jumpScreenshotMasteryBtn");
+  if (toggle) {
+    toggle.textContent = enabled ? "Turn Screenshot Mode Off" : "Turn Screenshot Mode On";
+    toggle.onclick = () => setScreenshotMode(!enabled);
+  }
+  if (story) {
+    story.onclick = () => smoothScrollToNode(storyPathHeading || stageGrid || appRoot);
+  }
+  if (mastery) {
+    mastery.onclick = () => smoothScrollToNode(document.getElementById("masterySection") || appRoot);
+  }
+}
+
 function ensureExperienceSections() {
   if (!appRoot) return;
 
@@ -7864,7 +8194,7 @@ function ensureExperienceSections() {
         '  <label class="toggle-row" for="controllerToggle"><input id="controllerToggle" type="checkbox" /> Enable controller support (beta)</label>',
         '  <label class="toggle-row" for="badgeCeremonyAutoOpenToggle"><input id="badgeCeremonyAutoOpenToggle" type="checkbox" /> Auto-open Badge Shield</label>',
         '</div>',
-        '<p class="meta">Hotkeys: H = hub, P = story path, M = music, Esc = close panel.</p>'
+        '<p class="meta">Hotkeys: H = hub, P = story path, M = music, Esc = close panel. Challenges support keyboard, touch, and mouse flow where possible.</p>'
       ].join("");
       if (postStoryAnchor) {
         postStoryAnchor.parentNode.insertBefore(desktopControlsSection, postStoryAnchor);
@@ -8490,11 +8820,16 @@ function ensureHubSectionOrder() {
     ? document.getElementById("accessibilityHeading").closest("section")
     : null;
   const badgeSection = document.querySelector(".badge-section");
+  const morningFaithSection = document.getElementById("morningFaithSection");
+  const soundTestSection = document.getElementById("soundTestSection");
+  const screenshotModeSection = document.getElementById("screenshotModeSection");
   const preferredSections = [
     hubQuickNav,
     storyJourneySection,
     cloudSaveSection,
+    soundTestSection,
     dailyThoughtCard,
+    morningFaithSection,
     todayPlanSection,
     streakSection,
     practiceSection,
@@ -8504,6 +8839,7 @@ function ensureHubSectionOrder() {
     hallOfFaithSection,
     masterySection,
     campaignMapSection,
+    screenshotModeSection,
     desktopControlsSection,
     accessibilitySection,
     badgeSection
@@ -8533,12 +8869,15 @@ function renderExperienceSections() {
   renderStoryJourneyOptions();
   renderCloudSavePanel();
   ensureChapterIntroOverlay();
+  renderSoundTestPanel();
+  renderMorningFaithMode();
   renderDailyChallengeCalendar();
   renderHallOfFaith();
   renderCampaignMap();
   renderMasteryPanel();
   renderDailyDevotionQuest();
   renderWeeklyChallenge();
+  renderScreenshotModePanel();
   renderDesktopControls();
   ensureHubQuickNav();
   ensureHubSectionOrder();
@@ -18466,17 +18805,45 @@ function bossSpriteSheetMarkup(profile, bossRatio, playerRatio, attackPhase, ani
   `;
 }
 
-function retroBossSpriteMarkup(profile, bossRatio = 1, playerRatio = 1) {
-  const bossState = bossRatio <= 0.25 ? "faltering" : bossRatio <= 0.5 ? "wounded" : playerRatio <= 0.34 ? "taunting" : "fierce";
+function retroBossSpriteMarkup(profile, bossRatio = 1, playerRatio = 1, attackPhase = "idle", animationTick = 0) {
+  const safeTick = Math.max(0, Number(animationTick) || 0);
+  const frame = safeTick % 4;
+  const phase = attackPhase === "strike" ? "strike" : attackPhase === "telegraph" ? "telegraph" : attackPhase === "hurt" ? "hurt" : "idle";
+  const defeated = bossRatio <= 0;
+  const bossState = defeated
+    ? "defeated"
+    : phase === "strike"
+      ? "attacking"
+      : phase === "telegraph"
+        ? "winding"
+        : bossRatio <= 0.25
+          ? "faltering"
+          : bossRatio <= 0.5 || phase === "hurt"
+            ? "wounded"
+            : playerRatio <= 0.34
+              ? "taunting"
+              : "fierce";
   const scale = profile && Number.isFinite(profile.stature) ? profile.stature : 1;
-  const auraOpacity = bossState === "faltering" ? 0.28 : bossState === "wounded" ? 0.34 : 0.46;
-  const headTilt = bossState === "faltering" ? -4 : bossState === "taunting" ? 3 : 0;
-  const bodyTilt = bossState === "faltering" ? -3 : bossState === "taunting" ? 2 : 0;
-  const eyeY = bossState === "taunting" ? 74 : 76;
-  const browLift = bossState === "faltering" ? 2 : bossState === "taunting" ? -2 : -1;
-  const mouthMarkup = bossState === "faltering"
+  const bob = defeated ? 16 : [0, -3, 0, 2][frame];
+  const strikeLean = phase === "strike" ? 9 : phase === "telegraph" ? -5 : 0;
+  const frameTilt = frame === 1 ? 1.4 : frame === 3 ? -1.2 : 0;
+  const auraOpacity = bossState === "defeated" ? 0.12 : bossState === "faltering" ? 0.28 : bossState === "wounded" ? 0.34 : phase === "strike" ? 0.58 : 0.46;
+  const headTilt = (bossState === "faltering" ? -4 : bossState === "taunting" ? 3 : bossState === "defeated" ? -12 : 0) + (phase === "strike" ? 5 : 0);
+  const bodyTilt = (bossState === "faltering" ? -3 : bossState === "taunting" ? 2 : bossState === "defeated" ? -18 : 0) + strikeLean + frameTilt;
+  const eyeY = bossState === "taunting" || phase === "telegraph" ? 74 : 76;
+  const browLift = bossState === "faltering" || bossState === "defeated" ? 2 : bossState === "taunting" || phase === "strike" ? -2 : -1;
+  const weaponShiftX = phase === "strike" ? -18 : phase === "telegraph" ? 10 : frame === 1 ? 2 : 0;
+  const weaponShiftY = phase === "strike" ? -8 : defeated ? 20 : 0;
+  const weaponRotate = phase === "strike" ? -18 : phase === "telegraph" ? 10 : defeated ? 54 : frame === 1 ? -2 : 0;
+  const leftArmRotate = phase === "strike" ? 2 : phase === "telegraph" ? 22 : bossState === "defeated" ? 40 : 14;
+  const rightArmRotate = phase === "strike" ? -52 : phase === "telegraph" ? -8 : bossState === "defeated" ? 24 : -18;
+  const defeatOpacity = bossState === "defeated" ? 0.58 : 1;
+  const hurtFlash = phase === "hurt" || bossState === "wounded" || bossState === "faltering";
+  const mouthMarkup = bossState === "defeated"
+    ? `<path d="M92 98 L112 98" fill="none" stroke="#2c1c15" stroke-width="3" stroke-linecap="square" />`
+    : bossState === "faltering"
     ? `<rect x="96" y="95" width="10" height="3" fill="#2c1c15" />`
-    : bossState === "taunting"
+    : bossState === "taunting" || phase === "strike"
       ? `<path d="M92 95 Q101 102 112 95" fill="none" stroke="#2c1c15" stroke-width="3" stroke-linecap="square" />`
       : `<path d="M92 98 Q101 92 112 98" fill="none" stroke="#2c1c15" stroke-width="3" stroke-linecap="square" />`;
   const browLeft = `<rect x="86" y="${69 + browLift}" width="12" height="3" fill="#1b1410" transform="rotate(-12 92 ${70 + browLift})" />`;
@@ -18545,7 +18912,10 @@ function retroBossSpriteMarkup(profile, bossRatio = 1, playerRatio = 1) {
         <circle cx="110" cy="124" r="82" fill="${profile.trim}" opacity="0.18" />
         <circle cx="110" cy="124" r="56" fill="${profile.armor}" opacity="0.16" />
       </g>
-      <g transform="translate(110 140) scale(${scale}) rotate(${bodyTilt}) translate(-110 -140)">
+      ${phase === "strike" ? `<path d="M151 76 C185 104 186 138 158 171" fill="none" stroke="${profile.trim}" stroke-width="8" stroke-linecap="square" opacity="0.42" />` : ""}
+      ${phase === "telegraph" ? `<rect x="32" y="35" width="156" height="8" fill="${profile.trim}" opacity="0.16" />` : ""}
+      ${hurtFlash ? `<g opacity="0.7"><rect x="52" y="42" width="10" height="10" fill="#f8e6b0" /><rect x="172" y="88" width="8" height="8" fill="#f8e6b0" /><rect x="34" y="142" width="7" height="7" fill="#f8e6b0" /></g>` : ""}
+      <g transform="translate(110 ${140 + bob}) scale(${scale}) rotate(${bodyTilt}) translate(-110 -140)" opacity="${defeatOpacity}">
         <path d="M76 111 Q110 78 144 111 L148 190 L72 190 Z" fill="${profile.cape}" opacity="0.74" />
         <rect x="82" y="170" width="18" height="48" fill="${profile.robeDark}" />
         <rect x="120" y="170" width="18" height="48" fill="${profile.robeDark}" />
@@ -18554,11 +18924,11 @@ function retroBossSpriteMarkup(profile, bossRatio = 1, playerRatio = 1) {
         <path d="M74 116 L146 116 L156 198 L64 198 Z" fill="${profile.robe}" stroke="${profile.robeDark}" stroke-width="3" />
         <path d="M86 116 L110 150 L134 116" fill="none" stroke="${profile.trim}" stroke-width="6" />
         <rect x="88" y="104" width="44" height="20" fill="${profile.armor}" stroke="${profile.robeDark}" stroke-width="3" />
-        <rect x="74" y="118" width="16" height="64" rx="6" fill="${profile.skin}" transform="rotate(14 82 150)" />
-        <rect x="130" y="118" width="16" height="64" rx="6" fill="${profile.skin}" transform="rotate(-18 138 150)" />
+        <rect x="74" y="118" width="16" height="64" rx="6" fill="${profile.skin}" transform="rotate(${leftArmRotate} 82 150)" />
+        <rect x="130" y="118" width="16" height="64" rx="6" fill="${profile.skin}" transform="rotate(${rightArmRotate} 138 150)" />
         <circle cx="80" cy="181" r="8" fill="${profile.skin}" />
         <circle cx="140" cy="181" r="8" fill="${profile.skin}" />
-        ${bossWeaponMarkup}
+        <g transform="translate(${weaponShiftX} ${weaponShiftY}) rotate(${weaponRotate} 154 108)">${bossWeaponMarkup}</g>
         <g transform="rotate(${headTilt} 110 78)">
           <rect x="88" y="52" width="44" height="16" rx="6" fill="${profile.hair}" />
           <circle cx="110" cy="78" r="28" fill="${profile.skin}" stroke="#2d2119" stroke-width="3" />
@@ -18575,6 +18945,7 @@ function retroBossSpriteMarkup(profile, bossRatio = 1, playerRatio = 1) {
           ${mouthMarkup}
         </g>
       </g>
+      ${bossState === "defeated" ? `<text x="110" y="42" text-anchor="middle" fill="#f8e6b0" font-size="15" font-weight="800">DEFEATED</text>` : ""}
     </svg>
   `;
 }
@@ -18648,7 +19019,7 @@ function retroBossBattleSceneMarkup(
   if (attackPhase === "strike") duelClasses.push("is-strike");
   if (incomingDirection) duelClasses.push(`dir-${incomingDirection}`);
   const bossMarkup = bossSpriteSheetMarkup(profile, bossRatio, playerRatio, attackPhase, animationTick)
-    || retroBossSpriteMarkup(profile, bossRatio, playerRatio);
+    || retroBossSpriteMarkup(profile, bossRatio, playerRatio, attackPhase, animationTick);
   return `
     <div class="${duelClasses.join(" ")}">
       <div class="faith-boss-duel-foe">${bossMarkup}</div>
@@ -18867,18 +19238,24 @@ function renderBoss(meta, mode, feedback) {
     const maxBoss = Math.max(1, Number(mode.bossHealth) || 1);
     const maxPlayer = Math.max(1, Number(mode.playerHealth) || 1);
     const animation = bossSpriteAnimationDefinition(profile, attackPhase, bossHp / maxBoss, playerHp / maxPlayer);
-    return Math.max(66, Number(animation && animation.speed) || 120);
+    if (animation) return Math.max(66, Number(animation.speed) || 120);
+    if (attackPhase === "strike") return 86;
+    if (attackPhase === "telegraph") return 110;
+    if (attackPhase === "hurt") return 96;
+    return 190;
   };
 
   const startSpriteLoop = () => {
-    if (spriteLoopStarted || !profile.spriteSheet) return;
-    const record = ensureBossSpriteSheetRecord(profile.spriteSheet, (resolved) => {
-      if (resolved && resolved.status === "ready") {
-        updateBars();
-        startSpriteLoop();
-      }
-    });
-    if (!record || record.status !== "ready") return;
+    if (spriteLoopStarted) return;
+    if (profile.spriteSheet) {
+      const record = ensureBossSpriteSheetRecord(profile.spriteSheet, (resolved) => {
+        if (resolved && resolved.status === "ready") {
+          updateBars();
+          startSpriteLoop();
+        }
+      });
+      if (!record || record.status !== "ready") return;
+    }
     spriteLoopStarted = true;
     const tick = () => {
       if (!running) return;
@@ -22088,6 +22465,8 @@ armFirstInteractionRecap();
 window.setTimeout(primeAudioAuto, 0);
 window.setTimeout(primeAudioAuto, 220);
 window.setTimeout(primeAudioAuto, 650);
+window.setTimeout(maybeShowMorningFaithReminder, 1500);
+window.setInterval(maybeShowMorningFaithReminder, 60000);
 window.addEventListener("pageshow", () => {
   clearHiddenCleanupTimer();
   applyPerformanceMode();
