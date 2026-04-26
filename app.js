@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-21-premium-experience-systems-v1";
+const CONTENT_VERSION = "2026-04-26-deep-question-pool-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -765,7 +765,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 57;
+const ACTIVITY_SCHEMA_VERSION = 58;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -3259,10 +3259,12 @@ const NATIONS_BABEL_FACT_ADVANCED_EXPANSION = [
 const CALL_OF_ABRAM_QUIZ_EASY_EXPANSION = [
   { era: "patriarchs", prompt: "Who went with Abram into the land of Canaan?", options: ["Lot", "Pharaoh", "Melchizedek", "Chedorlaomer"], answer: "Lot", sourceRef: "Genesis 12:5" },
   { era: "patriarchs", prompt: "Why did Abram go down into Egypt?", options: ["Because there was a famine in the land", "Because Lot was king there", "Because Melchizedek invited him", "Because the ark landed there"], answer: "Because there was a famine in the land", sourceRef: "Genesis 12:10" },
+  { era: "patriarchs", prompt: "Where did Abram go during the famine?", options: ["Egypt", "Haran", "Shinar", "Bethel"], answer: "Egypt", sourceRef: "Genesis 12:10" },
   { era: "patriarchs", prompt: "Between which two places did Abram pitch his tent after he came into the land?", options: ["Bethel and Ai", "Hebron and Gerar", "Sodom and Gomorrah", "Dan and Beersheba"], answer: "Bethel and Ai", sourceRef: "Genesis 12:8" },
   { era: "patriarchs", prompt: "What did Yahweh promise Abram at Shechem?", options: ["To your offspring I will give this land", "You will return to Eden", "You will reign in Egypt", "You will build a temple"], answer: "To your offspring I will give this land", sourceRef: "Genesis 12:7" },
   { era: "patriarchs", prompt: "Toward what region did Abram journey after leaving the area between Bethel and Ai?", options: ["The Negev", "Damascus", "Shinar", "Salem"], answer: "The Negev", sourceRef: "Genesis 12:9" },
   { era: "patriarchs", prompt: "What did Abram ask Sarai to say she was when they entered Egypt?", options: ["His sister", "His daughter", "His servant", "His widow"], answer: "His sister", sourceRef: "Genesis 12:13" },
+  { era: "patriarchs", prompt: "Abram asked Sarai to say she was what to him in Egypt?", options: ["Sister", "Mother", "Servant", "Neighbor"], answer: "Sister", sourceRef: "Genesis 12:13" },
   { era: "patriarchs", prompt: "What happened to Pharaoh and his house because of Sarai, Abram's wife?", options: ["They were struck with great plagues", "They received manna", "They crossed the Jordan", "They found a ram"], answer: "They were struck with great plagues", sourceRef: "Genesis 12:17" },
   { era: "patriarchs", prompt: "What was Abram very rich in when he came up out of Egypt?", options: ["Livestock, silver, and gold", "Horses, iron, and cedar", "Chariots, wheat, and oil", "Tents, camels, and purple cloth"], answer: "Livestock, silver, and gold", sourceRef: "Genesis 13:2" },
   { era: "patriarchs", prompt: "Who chose all the Plain of the Jordan?", options: ["Lot", "Abram", "Melchizedek", "Pharaoh"], answer: "Lot", sourceRef: "Genesis 13:10-11" },
@@ -3384,6 +3386,237 @@ const CALL_OF_ABRAM_FACT_ADVANCED_EXPANSION = [
   { era: "patriarchs", parts: ["In", "the", "fourth", "generation", "they", "will", "come", "here", "again"], sourceRef: "Genesis 15:16" }
 ];
 
+const WILDERNESS_QUIZ_EASY_EXPANSION = [
+  { era: "wilderness", prompt: "What did the people ask when they first saw manna?", options: ["What is it?", "Where is Moses?", "Who goes first?", "Why are we here?"], answer: "What is it?", sourceRef: "Exodus 16:15" },
+  { era: "wilderness", prompt: "What food came in the evening around the camp?", options: ["Quail", "Locusts", "Fish", "Dates"], answer: "Quail", sourceRef: "Exodus 16:13" },
+  { era: "wilderness", prompt: "On which day did Israel gather twice as much manna?", options: ["The sixth day", "The first day", "The fourth day", "The seventh day"], answer: "The sixth day", sourceRef: "Exodus 16:5,22" },
+  { era: "wilderness", prompt: "What did Moses strike so water came out for the people?", options: ["The rock", "The altar", "The cloud", "The sea"], answer: "The rock", sourceRef: "Exodus 17:6" },
+  { era: "wilderness", prompt: "Who helped Moses hold up his hands in battle?", options: ["Aaron and Hur", "Joshua and Caleb", "Nadab and Abihu", "Miriam and Zipporah"], answer: "Aaron and Hur", sourceRef: "Exodus 17:12" },
+  { era: "wilderness", prompt: "Who advised Moses to appoint able men over the people?", options: ["Jethro", "Joshua", "Caleb", "Eleazar"], answer: "Jethro", sourceRef: "Exodus 18:17-21" },
+  { era: "wilderness", prompt: "Which two men trusted Yahweh after the spies returned?", options: ["Joshua and Caleb", "Aaron and Hur", "Nadab and Abihu", "Eldad and Medad"], answer: "Joshua and Caleb", sourceRef: "Numbers 14:6-9" },
+  { era: "wilderness", prompt: "What giant people did the spies say they saw in the land?", options: ["Anakim", "Philistines", "Babylonians", "Romans"], answer: "Anakim", sourceRef: "Numbers 13:33" },
+  { era: "wilderness", prompt: "What happened to Miriam after speaking against Moses?", options: ["She became leprous", "She became queen", "She crossed Jordan", "She left the camp forever"], answer: "She became leprous", sourceRef: "Numbers 12:10" },
+  { era: "wilderness", prompt: "What rested over the tabernacle when Israel camped?", options: ["The cloud", "A crown", "A rainbow", "A trumpet"], answer: "The cloud", sourceRef: "Numbers 9:15-18" },
+  { era: "wilderness", prompt: "What did Yahweh send among the people when they complained in Numbers 21?", options: ["Fiery serpents", "Flood waters", "Hornets", "Bears"], answer: "Fiery serpents", sourceRef: "Numbers 21:6" },
+  { era: "wilderness", prompt: "What did Moses make so those bitten could look and live?", options: ["A bronze serpent", "A bronze altar", "A silver trumpet", "A golden calf"], answer: "A bronze serpent", sourceRef: "Numbers 21:8-9" },
+  { era: "wilderness", prompt: "Which king of Moab sent for Balaam?", options: ["Balak", "Og", "Sihon", "Eglon"], answer: "Balak", sourceRef: "Numbers 22:2-6" },
+  { era: "wilderness", prompt: "What animal spoke to Balaam on the road?", options: ["A donkey", "A camel", "A ram", "A lion"], answer: "A donkey", sourceRef: "Numbers 22:28" },
+  { era: "wilderness", prompt: "According to Deuteronomy 6:5, what should Israel do with all its heart?", options: ["Love Yahweh", "Build a tower", "Choose a king", "Hide in caves"], answer: "Love Yahweh", sourceRef: "Deuteronomy 6:5" }
+];
+
+const WILDERNESS_QUIZ_MEDIUM_EXPANSION = [
+  { era: "wilderness", prompt: "How much manna was each person to gather?", options: ["An omer a head", "A talent each", "Two ephahs", "A homer"], answer: "An omer a head", sourceRef: "Exodus 16:16" },
+  { era: "wilderness", prompt: "What happened to manna kept overnight against God's command?", options: ["It bred worms and became foul", "It became sweeter", "It doubled", "It turned into quail"], answer: "It bred worms and became foul", sourceRef: "Exodus 16:20" },
+  { era: "wilderness", prompt: "What names did Moses give the place where Israel tested Yahweh for water?", options: ["Massah and Meribah", "Eshcol and Paran", "Sin and Sinai", "Haran and Ur"], answer: "Massah and Meribah", sourceRef: "Exodus 17:7" },
+  { era: "wilderness", prompt: "What kind of men did Jethro tell Moses to appoint?", options: ["Able men who fear God and hate unjust gain", "Only Levites", "Only elders from Judah", "Only firstborn sons"], answer: "Able men who fear God and hate unjust gain", sourceRef: "Exodus 18:21" },
+  { era: "wilderness", prompt: "How long did the spies search the land?", options: ["Forty days", "Seven days", "Twelve days", "Seventy days"], answer: "Forty days", sourceRef: "Numbers 13:25" },
+  { era: "wilderness", prompt: "What fruit did the spies bring from Eshcol?", options: ["A cluster of grapes", "Dates only", "Olives only", "Pomegranates only"], answer: "A cluster of grapes", sourceRef: "Numbers 13:23-24" },
+  { era: "wilderness", prompt: "What did Caleb say about taking the land?", options: ["We are well able to overcome it", "We must return to Egypt", "We need a king first", "We should wait forty years"], answer: "We are well able to overcome it", sourceRef: "Numbers 13:30" },
+  { era: "wilderness", prompt: "What sentence fell on the unbelieving generation after the spy report?", options: ["They would wander forty years", "They would rebuild Babel", "They would return to Ur", "They would become judges"], answer: "They would wander forty years", sourceRef: "Numbers 14:33-34" },
+  { era: "wilderness", prompt: "Who were swallowed up when the earth opened in rebellion?", options: ["Korah, Dathan, and Abiram", "Joshua and Caleb", "Nadab and Abihu", "Balak and Balaam"], answer: "Korah, Dathan, and Abiram", sourceRef: "Numbers 16:31-33" },
+  { era: "wilderness", prompt: "What budded to confirm Yahweh's choice of Aaron?", options: ["Aaron's rod", "Moses' staff", "A fig branch", "A trumpet"], answer: "Aaron's rod", sourceRef: "Numbers 17:8" },
+  { era: "wilderness", prompt: "At Meribah, what did Moses do instead of speaking to the rock?", options: ["He struck it twice", "He prayed silently", "He built an altar", "He called the priests"], answer: "He struck it twice", sourceRef: "Numbers 20:11-12" },
+  { era: "wilderness", prompt: "What did Balaam say he could only speak?", options: ["The word God puts in my mouth", "What Balak commands", "What the donkey says", "Whatever Israel fears"], answer: "The word God puts in my mouth", sourceRef: "Numbers 22:38" },
+  { era: "wilderness", prompt: "Which two Amorite kings were defeated east of the Jordan?", options: ["Sihon and Og", "Balak and Eglon", "Jabin and Sisera", "Pharaoh and Amalek"], answer: "Sihon and Og", sourceRef: "Numbers 21:21-35" },
+  { era: "wilderness", prompt: "What did Moses say man does not live by alone?", options: ["Bread", "Water", "Sacrifice", "The sword"], answer: "Bread", sourceRef: "Deuteronomy 8:3" },
+  { era: "wilderness", prompt: "What should Israel talk about at home and on the road according to Deuteronomy 6:7?", options: ["Yahweh's words", "The kings of Canaan", "The plagues of Egypt only", "The walls of Jericho"], answer: "Yahweh's words", sourceRef: "Deuteronomy 6:6-7" }
+];
+
+const WILDERNESS_QUIZ_ADVANCED_EXPANSION = [
+  { era: "wilderness", prompt: "What did Yahweh say the manna would test in Exodus 16:4?", options: ["Whether they would walk in His law", "Whether they could build a sanctuary", "Whether they would choose a king", "Whether they would cross Jordan"], answer: "Whether they would walk in His law", sourceRef: "Exodus 16:4" },
+  { era: "wilderness", prompt: "Which tribe set out first in the camp's march order?", options: ["Judah", "Reuben", "Dan", "Ephraim"], answer: "Judah", sourceRef: "Numbers 10:14" },
+  { era: "wilderness", prompt: "How many elders did Yahweh tell Moses to gather at the Tent of Meeting?", options: ["Seventy", "Twelve", "Forty", "Ten"], answer: "Seventy", sourceRef: "Numbers 11:16-17" },
+  { era: "wilderness", prompt: "Which two men prophesied in the camp after the Spirit rested on the elders?", options: ["Eldad and Medad", "Nadab and Abihu", "Dathan and Abiram", "Sihon and Og"], answer: "Eldad and Medad", sourceRef: "Numbers 11:26-29" },
+  { era: "wilderness", prompt: "How did Yahweh say He spoke with Moses, unlike other prophets?", options: ["Mouth to mouth", "Only in dreams", "Only through angels", "Only by tablets"], answer: "Mouth to mouth", sourceRef: "Numbers 12:6-8" },
+  { era: "wilderness", prompt: "What comparison did the spies make about themselves before the Anakim?", options: ["We were in our own sight as grasshoppers", "We were lions among lambs", "We were hidden among rocks", "We were taller than all"], answer: "We were in our own sight as grasshoppers", sourceRef: "Numbers 13:33" },
+  { era: "wilderness", prompt: "What happened to the men who brought the evil report of the land?", options: ["They died by the plague before Yahweh", "They were sent back to Egypt", "They became judges", "They crossed the Jordan first"], answer: "They died by the plague before Yahweh", sourceRef: "Numbers 14:36-37" },
+  { era: "wilderness", prompt: "What sign against rebels was placed before the covenant after Korah's rebellion?", options: ["Aaron's rod that budded", "The bronze serpent", "The manna jar", "The altar of Yahweh Nissi"], answer: "Aaron's rod that budded", sourceRef: "Numbers 17:10" },
+  { era: "wilderness", prompt: "What did Balaam say he saw but not now in Numbers 24:17?", options: ["A star out of Jacob", "A city on seven hills", "A ram in the thicket", "A ladder to heaven"], answer: "A star out of Jacob", sourceRef: "Numbers 24:17" },
+  { era: "wilderness", prompt: "How did Moses say Yahweh carried Israel in the wilderness?", options: ["As a man carries his son", "As a king carries a crown", "As an eagle carries fish", "As the sea carries ships"], answer: "As a man carries his son", sourceRef: "Deuteronomy 1:31" },
+  { era: "wilderness", prompt: "What did Moses say should be written on house doorposts and gates?", options: ["Yahweh's words", "The names of tribes only", "The camp order", "The census numbers"], answer: "Yahweh's words", sourceRef: "Deuteronomy 6:9" },
+  { era: "wilderness", prompt: "What did Moses say Yahweh used the wilderness to reveal about Israel?", options: ["What was in their heart", "Their military strength", "Their royal line", "Their building skill"], answer: "What was in their heart", sourceRef: "Deuteronomy 8:2" }
+];
+
+const WILDERNESS_SPELLING_EASY_EXPANSION = [
+  { era: "wilderness", prompt: "Spell the bread from heaven.", answer: "manna", sourceRef: "Exodus 16:15" },
+  { era: "wilderness", prompt: "Spell Moses' father-in-law.", answer: "Jethro", sourceRef: "Exodus 18:1" },
+  { era: "wilderness", prompt: "Spell the faithful spy who stood with Joshua.", answer: "Caleb", sourceRef: "Numbers 14:6-9" },
+  { era: "wilderness", prompt: "Spell the king of Moab who hired Balaam.", answer: "Balak", sourceRef: "Numbers 22:2-6" }
+];
+
+const WILDERNESS_SPELLING_MEDIUM_EXPANSION = [
+  { era: "wilderness", prompt: "Spell the place named for testing in Exodus 17:7.", answer: "Massah", sourceRef: "Exodus 17:7" },
+  { era: "wilderness", prompt: "Spell the paired place named for quarreling in Exodus 17:7.", answer: "Meribah", sourceRef: "Exodus 17:7" },
+  { era: "wilderness", prompt: "Spell the valley where the spies cut down the grape cluster.", answer: "Eshcol", sourceRef: "Numbers 13:24" },
+  { era: "wilderness", prompt: "Spell the priestly son who received Aaron's garments.", answer: "Eleazar", sourceRef: "Numbers 20:25-28" }
+];
+
+const WILDERNESS_SPELLING_ADVANCED_EXPANSION = [
+  { era: "wilderness", prompt: "Spell the giant people mentioned in Numbers 13:33.", answer: "Anakim", sourceRef: "Numbers 13:33" },
+  { era: "wilderness", prompt: "Spell the Amorite king defeated at Heshbon.", answer: "Sihon", sourceRef: "Numbers 21:21-24" },
+  { era: "wilderness", prompt: "Spell the king of Bashan defeated after Sihon.", answer: "Og", sourceRef: "Numbers 21:33-35" },
+  { era: "wilderness", prompt: "Spell the prophet hired by Balak.", answer: "Balaam", sourceRef: "Numbers 22:5" }
+];
+
+const WILDERNESS_ORDER_EASY_EXPANSION = [
+  { era: "wilderness", items: ["Quail comes in the evening", "Manna appears in the morning", "People ask, \"What is it?\""], sourceRef: "Exodus 16:13-15" },
+  { era: "wilderness", items: ["Israel thirsts at Rephidim", "Moses strikes the rock", "Water comes out"], sourceRef: "Exodus 17:1-6" },
+  { era: "wilderness", items: ["Spies search the land", "They carry back grapes", "Joshua and Caleb urge trust"], sourceRef: "Numbers 13:21-30; 14:6-9" },
+  { era: "wilderness", items: ["Fiery serpents bite the people", "Moses makes the bronze serpent", "Those who look live"], sourceRef: "Numbers 21:6-9" }
+];
+
+const WILDERNESS_ORDER_MEDIUM_EXPANSION = [
+  { era: "wilderness", items: ["Jethro sees Moses judging alone", "Jethro advises shared leadership", "Moses appoints leaders"], sourceRef: "Exodus 18:13-24" },
+  { era: "wilderness", items: ["Miriam speaks against Moses", "Miriam becomes leprous", "Moses cries for healing"], sourceRef: "Numbers 12:1-13" },
+  { era: "wilderness", items: ["Korah rebels", "The earth opens", "Aaron's rod buds"], sourceRef: "Numbers 16:1-33; 17:8" },
+  { era: "wilderness", items: ["Balak summons Balaam", "The donkey sees the angel", "Balaam blesses Israel"], sourceRef: "Numbers 22:5-35; 23:11-12" }
+];
+
+const WILDERNESS_ORDER_ADVANCED_EXPANSION = [
+  { era: "wilderness", items: ["Seventy elders gathered", "The Spirit rests on them", "Eldad and Medad prophesy in the camp"], sourceRef: "Numbers 11:16-17,25-27" },
+  { era: "wilderness", items: ["Spies report giants", "People refuse to enter", "Generation sentenced to wander"], sourceRef: "Numbers 13:32-33; 14:1-4; 14:33-34" },
+  { era: "wilderness", items: ["Aaron dies on Mount Hor", "Israel defeats Arad", "Bronze serpent lifted"], sourceRef: "Numbers 20:28; 21:1-3; 21:8-9" },
+  { era: "wilderness", items: ["Sihon refuses passage", "Israel defeats Sihon", "Israel defeats Og"], sourceRef: "Numbers 21:23-24,33-35" }
+];
+
+const WILDERNESS_FACT_EASY_EXPANSION = [
+  { era: "wilderness", parts: ["Yahweh", "gave", "them", "bread", "from", "heaven"], sourceRef: "Exodus 16:4" },
+  { era: "wilderness", parts: ["What", "is", "it"], sourceRef: "Exodus 16:15" },
+  { era: "wilderness", parts: ["Moses", "called", "its", "name", "Yahweh", "Nissi"], sourceRef: "Exodus 17:15" },
+  { era: "wilderness", parts: ["Joshua", "and", "Caleb", "tore", "their", "clothes"], sourceRef: "Numbers 14:6" }
+];
+
+const WILDERNESS_FACT_MEDIUM_EXPANSION = [
+  { era: "wilderness", parts: ["They", "gathered", "it", "morning", "by", "morning"], sourceRef: "Exodus 16:21" },
+  { era: "wilderness", parts: ["Moses'", "hands", "were", "steady", "until", "sunset"], sourceRef: "Exodus 17:12" },
+  { era: "wilderness", parts: ["We", "are", "well", "able", "to", "overcome", "it"], sourceRef: "Numbers 13:30" },
+  { era: "wilderness", parts: ["The", "earth", "opened", "its", "mouth"], sourceRef: "Numbers 16:32" }
+];
+
+const WILDERNESS_FACT_ADVANCED_EXPANSION = [
+  { era: "wilderness", parts: ["Would", "that", "all", "Yahweh's", "people", "were", "prophets"], sourceRef: "Numbers 11:29" },
+  { era: "wilderness", parts: ["We", "were", "in", "our", "own", "sight", "as", "grasshoppers"], sourceRef: "Numbers 13:33" },
+  { era: "wilderness", parts: ["Yahweh", "is", "slow", "to", "anger", "and", "abundant", "in", "loving", "kindness"], sourceRef: "Numbers 14:18" },
+  { era: "wilderness", parts: ["Man", "doesn't", "live", "by", "bread", "only"], sourceRef: "Deuteronomy 8:3" }
+];
+
+const JUDGES_QUIZ_EASY_EXPANSION = [
+  { era: "judges", prompt: "Who was the left-handed judge from Benjamin?", options: ["Ehud", "Othniel", "Gideon", "Samson"], answer: "Ehud", sourceRef: "Judges 3:15" },
+  { era: "judges", prompt: "What did Ehud secretly carry to King Eglon?", options: ["A two-edged sword", "A sling", "A trumpet", "An oxgoad"], answer: "A two-edged sword", sourceRef: "Judges 3:16" },
+  { era: "judges", prompt: "Which judge struck six hundred Philistines with an oxgoad?", options: ["Shamgar", "Barak", "Jephthah", "Boaz"], answer: "Shamgar", sourceRef: "Judges 3:31" },
+  { era: "judges", prompt: "Who called Barak to gather men at Mount Tabor?", options: ["Deborah", "Jael", "Naomi", "Ruth"], answer: "Deborah", sourceRef: "Judges 4:6" },
+  { era: "judges", prompt: "Who killed Sisera while he slept?", options: ["Jael", "Deborah", "Ruth", "Hannah"], answer: "Jael", sourceRef: "Judges 4:21" },
+  { era: "judges", prompt: "What did Gideon's men carry inside the pitchers?", options: ["Torches", "Stones", "Scrolls", "Bread"], answer: "Torches", sourceRef: "Judges 7:16" },
+  { era: "judges", prompt: "What title did the angel use for Gideon?", options: ["Mighty man of valor", "Prince of peace", "First king", "Faithful priest"], answer: "Mighty man of valor", sourceRef: "Judges 6:12" },
+  { era: "judges", prompt: "Who made a vow before fighting the Ammonites?", options: ["Jephthah", "Gideon", "Samson", "Deborah"], answer: "Jephthah", sourceRef: "Judges 11:30-31" },
+  { era: "judges", prompt: "Who cut Samson's hair?", options: ["Delilah", "Jael", "Deborah", "Naomi"], answer: "Delilah", sourceRef: "Judges 16:19" },
+  { era: "judges", prompt: "What did Samson pull down at the end of his life?", options: ["The pillars of the house", "The walls of Jericho", "The ark curtain", "The bronze altar"], answer: "The pillars of the house", sourceRef: "Judges 16:29-30" },
+  { era: "judges", prompt: "In what town did Naomi and her family live before the famine?", options: ["Bethlehem", "Hebron", "Ramah", "Shiloh"], answer: "Bethlehem", sourceRef: "Ruth 1:1-2" },
+  { era: "judges", prompt: "Who was Boaz to Elimelech's family?", options: ["A near kinsman", "A priest", "A judge", "A prophet"], answer: "A near kinsman", sourceRef: "Ruth 2:1; 3:12" },
+  { era: "judges", prompt: "What child was born to Ruth and Boaz?", options: ["Obed", "Jesse", "Samuel", "Perez"], answer: "Obed", sourceRef: "Ruth 4:13,17" },
+  { era: "judges", prompt: "Who was Obed's son?", options: ["Jesse", "David", "Boaz", "Samuel"], answer: "Jesse", sourceRef: "Ruth 4:17" },
+  { era: "judges", prompt: "What phrase closes the book of Judges about Israel's condition?", options: ["Everyone did that which was right in his own eyes", "Every tribe served Yahweh in peace", "The temple stood in Jerusalem", "The king restored the law"], answer: "Everyone did that which was right in his own eyes", sourceRef: "Judges 21:25" }
+];
+
+const JUDGES_QUIZ_MEDIUM_EXPANSION = [
+  { era: "judges", prompt: "How long did the land have rest after Othniel?", options: ["Forty years", "Eighty years", "Twenty years", "Seven years"], answer: "Forty years", sourceRef: "Judges 3:11" },
+  { era: "judges", prompt: "How long did the land have rest after Ehud?", options: ["Eighty years", "Forty years", "Twenty years", "Seven years"], answer: "Eighty years", sourceRef: "Judges 3:30" },
+  { era: "judges", prompt: "How many hundred chariots of iron did Jabin have?", options: ["Nine hundred", "Three hundred", "Six hundred", "One thousand"], answer: "Nine hundred", sourceRef: "Judges 4:3" },
+  { era: "judges", prompt: "What did Deborah say would happen to Barak's honor?", options: ["Sisera would be sold into a woman's hand", "He would become king", "He would die before battle", "He would rebuild Jericho"], answer: "Sisera would be sold into a woman's hand", sourceRef: "Judges 4:9" },
+  { era: "judges", prompt: "What was Gideon's second fleece sign?", options: ["Fleece dry, ground wet", "Ground dry, fleece wet", "Fire from heaven", "A rainbow"], answer: "Fleece dry, ground wet", sourceRef: "Judges 6:39-40" },
+  { era: "judges", prompt: "Why did Yahweh reduce Gideon's army?", options: ["So Israel could not boast against Him", "Because food was low", "Because Midian surrendered", "Because Deborah commanded it"], answer: "So Israel could not boast against Him", sourceRef: "Judges 7:2" },
+  { era: "judges", prompt: "What dream did Gideon hear in Midian's camp?", options: ["A cake of barley bread overturning a tent", "A ladder reaching heaven", "A burning bush on a hill", "A star falling into the sea"], answer: "A cake of barley bread overturning a tent", sourceRef: "Judges 7:13" },
+  { era: "judges", prompt: "What shout did Gideon's men raise with the trumpets?", options: ["The sword of Yahweh and of Gideon", "Hear, O Israel", "Yahweh Nissi forever", "To the ark"], answer: "The sword of Yahweh and of Gideon", sourceRef: "Judges 7:20" },
+  { era: "judges", prompt: "What came out first from Jephthah's house?", options: ["His daughter", "A lamb", "A servant", "A priest"], answer: "His daughter", sourceRef: "Judges 11:34-35" },
+  { era: "judges", prompt: "What began to happen to Samson between Zorah and Eshtaol?", options: ["The Spirit of Yahweh began to move him", "He became king", "He wrote the law", "He built an altar"], answer: "The Spirit of Yahweh began to move him", sourceRef: "Judges 13:25" },
+  { era: "judges", prompt: "What sprang up when Samson called to God for water at Lehi?", options: ["A spring", "A river of milk", "An altar of stone", "A field of grain"], answer: "A spring", sourceRef: "Judges 15:18-19" },
+  { era: "judges", prompt: "What did Naomi tell Ruth to do at the threshing floor?", options: ["Lie down at Boaz's feet", "Return to Moab", "Hide in the grain bin", "Go to the judges"], answer: "Lie down at Boaz's feet", sourceRef: "Ruth 3:3-4" },
+  { era: "judges", prompt: "Why did the nearer kinsman refuse to redeem Naomi's land and Ruth?", options: ["Lest he mar his own inheritance", "He feared Boaz", "He served Jabin", "He had no sandal"], answer: "Lest he mar his own inheritance", sourceRef: "Ruth 4:6" },
+  { era: "judges", prompt: "What custom confirmed redemption in Ruth 4?", options: ["The man drew off his sandal", "A trumpet sounded", "A fleece was laid down", "A lamb was slain"], answer: "The man drew off his sandal", sourceRef: "Ruth 4:7-8" },
+  { era: "judges", prompt: "What did Gideon ask from the men of Succoth while pursuing Midian's kings?", options: ["Loaves of bread", "Trumpets", "A sword", "A tent peg"], answer: "Loaves of bread", sourceRef: "Judges 8:5" }
+];
+
+const JUDGES_QUIZ_ADVANCED_EXPANSION = [
+  { era: "judges", prompt: "Who was the Mesopotamian king under whom Israel first served in Judges?", options: ["Chushan Rishathaim", "Eglon", "Jabin", "Balak"], answer: "Chushan Rishathaim", sourceRef: "Judges 3:8" },
+  { era: "judges", prompt: "At what tree did Deborah judge Israel?", options: ["The palm tree of Deborah", "The oak of Ophrah", "The terebinth of Mamre", "The tamarisk at Beersheba"], answer: "The palm tree of Deborah", sourceRef: "Judges 4:5" },
+  { era: "judges", prompt: "Which river swept away Sisera's host in Deborah's song?", options: ["The river Kishon", "The Jordan", "The Jabbok", "The Arnon"], answer: "The river Kishon", sourceRef: "Judges 5:21" },
+  { era: "judges", prompt: "What phrase described the roads in Israel before Deborah arose?", options: ["The highways were unoccupied", "The gates were all burned", "The sea blocked the people", "The tribes were all united"], answer: "The highways were unoccupied", sourceRef: "Judges 5:6-7" },
+  { era: "judges", prompt: "What did Gideon tear down by night before Midian was defeated?", options: ["The altar of Baal and the Asherah beside it", "The gates of Gaza", "The walls of Jericho", "The calf at Sinai"], answer: "The altar of Baal and the Asherah beside it", sourceRef: "Judges 6:25-27" },
+  { era: "judges", prompt: "What new name was given to Gideon after the Baal altar incident?", options: ["Jerubbaal", "Jair", "Ibzan", "Tola"], answer: "Jerubbaal", sourceRef: "Judges 6:32" },
+  { era: "judges", prompt: "Which Midianite princes were captured and killed after Gideon's victory?", options: ["Oreb and Zeeb", "Zebah and Zalmunna", "Sisera and Jabin", "Balak and Balaam"], answer: "Oreb and Zeeb", sourceRef: "Judges 7:25" },
+  { era: "judges", prompt: "What snare did Gideon later make from the earrings of gold?", options: ["An ephod", "A crown", "A bronze serpent", "A silver trumpet"], answer: "An ephod", sourceRef: "Judges 8:27" },
+  { era: "judges", prompt: "Who spoke the parable of the trees from Mount Gerizim?", options: ["Jotham", "Jephthah", "Boaz", "Samson"], answer: "Jotham", sourceRef: "Judges 9:7-15" },
+  { era: "judges", prompt: "What word was used as the pronunciation test at the Jordan crossings?", options: ["Shibboleth", "Ephod", "Kishon", "Meribah"], answer: "Shibboleth", sourceRef: "Judges 12:5-6" },
+  { era: "judges", prompt: "What did Samson find in the lion's carcass?", options: ["A swarm of bees and honey", "A sword", "A tent peg", "A fleece"], answer: "A swarm of bees and honey", sourceRef: "Judges 14:8" },
+  { era: "judges", prompt: "What did Samson tie between pairs of foxes before sending them into Philistine grain?", options: ["Torches", "Swords", "Trumpets", "Nets"], answer: "Torches", sourceRef: "Judges 15:4-5" },
+  { era: "judges", prompt: "What was the name of the spring God opened for Samson at Lehi?", options: ["En Hakkore", "Meribah", "Eshcol", "Bethlehem"], answer: "En Hakkore", sourceRef: "Judges 15:19" },
+  { era: "judges", prompt: "What final prayer did Samson make before pushing the pillars?", options: ["Remember me, please, and strengthen me just this once", "Make me king over Israel", "Send me back to Zorah", "Raise me with Gideon"], answer: "Remember me, please, and strengthen me just this once", sourceRef: "Judges 16:28" },
+  { era: "judges", prompt: "Which ancestor line closes the book of Ruth?", options: ["Perez to David", "Shem to Abram", "Aaron to Samuel", "Judah to Solomon"], answer: "Perez to David", sourceRef: "Ruth 4:18-22" }
+];
+
+const JUDGES_SPELLING_EASY_EXPANSION = [
+  { era: "judges", prompt: "Spell the first judge raised after Israel cried out.", answer: "Othniel", sourceRef: "Judges 3:9" },
+  { era: "judges", prompt: "Spell the left-handed deliverer from Benjamin.", answer: "Ehud", sourceRef: "Judges 3:15" },
+  { era: "judges", prompt: "Spell the prophetess who judged Israel.", answer: "Deborah", sourceRef: "Judges 4:4" },
+  { era: "judges", prompt: "Spell the woman who struck Sisera.", answer: "Jael", sourceRef: "Judges 4:21" }
+];
+
+const JUDGES_SPELLING_MEDIUM_EXPANSION = [
+  { era: "judges", prompt: "Spell the judge who led three hundred men.", answer: "Gideon", sourceRef: "Judges 7:7" },
+  { era: "judges", prompt: "Spell the judge whose vow brought sorrow to his house.", answer: "Jephthah", sourceRef: "Judges 11:30-35" },
+  { era: "judges", prompt: "Spell the Nazirite judge whose hair was cut.", answer: "Samson", sourceRef: "Judges 13:5; 16:19" },
+  { era: "judges", prompt: "Spell the kinsman redeemer of Ruth.", answer: "Boaz", sourceRef: "Ruth 2:1; 4:9-10" }
+];
+
+const JUDGES_SPELLING_ADVANCED_EXPANSION = [
+  { era: "judges", prompt: "Spell the Midianite prince paired with Oreb.", answer: "Zeeb", sourceRef: "Judges 7:25" },
+  { era: "judges", prompt: "Spell the captain of Jabin's army.", answer: "Sisera", sourceRef: "Judges 4:2" },
+  { era: "judges", prompt: "Spell the name given to Gideon after the Baal altar was torn down.", answer: "Jerubbaal", sourceRef: "Judges 6:32" },
+  { era: "judges", prompt: "Spell the son born to Ruth and Boaz.", answer: "Obed", sourceRef: "Ruth 4:17" }
+];
+
+const JUDGES_ORDER_EASY_EXPANSION = [
+  { era: "judges", items: ["Israel cries out", "Othniel delivers Israel", "The land has rest"], sourceRef: "Judges 3:9-11" },
+  { era: "judges", items: ["Deborah calls Barak", "Sisera flees on foot", "Jael strikes Sisera"], sourceRef: "Judges 4:6-9,17,21" },
+  { era: "judges", items: ["Angel appears to Gideon", "Fleece sign given", "Three hundred defeat Midian"], sourceRef: "Judges 6:12; 6:36-40; 7:7,19-22" },
+  { era: "judges", items: ["Ruth stays with Naomi", "Ruth gleans in Boaz's field", "Boaz redeems Ruth"], sourceRef: "Ruth 1:16; 2:3; 4:9-10" }
+];
+
+const JUDGES_ORDER_MEDIUM_EXPANSION = [
+  { era: "judges", items: ["Ehud makes a dagger", "Ehud gives the secret message", "Moab is subdued"], sourceRef: "Judges 3:16-22,30" },
+  { era: "judges", items: ["Gideon's army reduced", "Dream heard in Midian's camp", "Trumpets sound around the camp"], sourceRef: "Judges 7:2-15,20" },
+  { era: "judges", items: ["Jephthah makes a vow", "Jephthah defeats Ammon", "Jephthah's daughter comes out"], sourceRef: "Judges 11:30-34" },
+  { era: "judges", items: ["Samson kills the lion", "Samson poses the riddle", "Samson pulls down the pillars"], sourceRef: "Judges 14:5-6,14; 16:29-30" }
+];
+
+const JUDGES_ORDER_ADVANCED_EXPANSION = [
+  { era: "judges", items: ["Jabin oppresses Israel", "Deborah judges under the palm", "The song celebrates victory"], sourceRef: "Judges 4:3-5; 5:1" },
+  { era: "judges", items: ["Gideon tears down Baal's altar", "Gideon called Jerubbaal", "Gideon makes an ephod"], sourceRef: "Judges 6:27-32; 8:27" },
+  { era: "judges", items: ["Abimelech takes silver from Baal Berith", "Jotham speaks from Gerizim", "Abimelech dies from a millstone wound"], sourceRef: "Judges 9:4-7,53-54" },
+  { era: "judges", items: ["Ruth asks under Boaz's skirt", "Nearer kinsman refuses", "Obed is born"], sourceRef: "Ruth 3:9; 4:6; 4:13,17" }
+];
+
+const JUDGES_FACT_EASY_EXPANSION = [
+  { era: "judges", parts: ["Yahweh", "raised", "up", "a", "savior", "for", "them", "Othniel"], sourceRef: "Judges 3:9" },
+  { era: "judges", parts: ["Ehud", "was", "a", "left-handed", "man"], sourceRef: "Judges 3:15" },
+  { era: "judges", parts: ["Deborah", "a", "prophetess", "judged", "Israel"], sourceRef: "Judges 4:4" },
+  { era: "judges", parts: ["Where", "you", "go", "I", "will", "go"], sourceRef: "Ruth 1:16" }
+];
+
+const JUDGES_FACT_MEDIUM_EXPANSION = [
+  { era: "judges", parts: ["The", "land", "had", "rest", "forty", "years"], sourceRef: "Judges 3:11" },
+  { era: "judges", parts: ["Jael", "took", "a", "tent", "peg"], sourceRef: "Judges 4:21" },
+  { era: "judges", parts: ["The", "sword", "of", "Yahweh", "and", "of", "Gideon"], sourceRef: "Judges 7:20" },
+  { era: "judges", parts: ["Boaz", "said", "Yahweh", "repay", "your", "work"], sourceRef: "Ruth 2:12" }
+];
+
+const JUDGES_FACT_ADVANCED_EXPANSION = [
+  { era: "judges", parts: ["The", "highways", "were", "unoccupied"], sourceRef: "Judges 5:6" },
+  { era: "judges", parts: ["Yahweh's", "Spirit", "came", "on", "Gideon"], sourceRef: "Judges 6:34" },
+  { era: "judges", parts: ["Out", "of", "the", "eater", "came", "out", "food"], sourceRef: "Judges 14:14" },
+  { era: "judges", parts: ["A", "worthy", "woman", "is", "better", "to", "you", "than", "seven", "sons"], sourceRef: "Ruth 4:15" }
+];
+
 quizBank.push(...NATIONS_BABEL_QUIZ_EASY_EXPANSION);
 mediumQuizBank.push(...NATIONS_BABEL_QUIZ_MEDIUM_EXPANSION);
 advancedQuizBank.push(...NATIONS_BABEL_QUIZ_ADVANCED_EXPANSION);
@@ -3408,6 +3641,30 @@ advancedOrderBank.push(...CALL_OF_ABRAM_ORDER_ADVANCED_EXPANSION);
 factBank.push(...CALL_OF_ABRAM_FACT_EASY_EXPANSION);
 mediumFactBank.push(...CALL_OF_ABRAM_FACT_MEDIUM_EXPANSION);
 advancedFactBank.push(...CALL_OF_ABRAM_FACT_ADVANCED_EXPANSION);
+quizBank.push(...WILDERNESS_QUIZ_EASY_EXPANSION);
+mediumQuizBank.push(...WILDERNESS_QUIZ_MEDIUM_EXPANSION);
+advancedQuizBank.push(...WILDERNESS_QUIZ_ADVANCED_EXPANSION);
+spellingBank.push(...WILDERNESS_SPELLING_EASY_EXPANSION);
+mediumSpellingBank.push(...WILDERNESS_SPELLING_MEDIUM_EXPANSION);
+advancedSpellingBank.push(...WILDERNESS_SPELLING_ADVANCED_EXPANSION);
+orderBank.push(...WILDERNESS_ORDER_EASY_EXPANSION);
+mediumOrderBank.push(...WILDERNESS_ORDER_MEDIUM_EXPANSION);
+advancedOrderBank.push(...WILDERNESS_ORDER_ADVANCED_EXPANSION);
+factBank.push(...WILDERNESS_FACT_EASY_EXPANSION);
+mediumFactBank.push(...WILDERNESS_FACT_MEDIUM_EXPANSION);
+advancedFactBank.push(...WILDERNESS_FACT_ADVANCED_EXPANSION);
+quizBank.push(...JUDGES_QUIZ_EASY_EXPANSION);
+mediumQuizBank.push(...JUDGES_QUIZ_MEDIUM_EXPANSION);
+advancedQuizBank.push(...JUDGES_QUIZ_ADVANCED_EXPANSION);
+spellingBank.push(...JUDGES_SPELLING_EASY_EXPANSION);
+mediumSpellingBank.push(...JUDGES_SPELLING_MEDIUM_EXPANSION);
+advancedSpellingBank.push(...JUDGES_SPELLING_ADVANCED_EXPANSION);
+orderBank.push(...JUDGES_ORDER_EASY_EXPANSION);
+mediumOrderBank.push(...JUDGES_ORDER_MEDIUM_EXPANSION);
+advancedOrderBank.push(...JUDGES_ORDER_ADVANCED_EXPANSION);
+factBank.push(...JUDGES_FACT_EASY_EXPANSION);
+mediumFactBank.push(...JUDGES_FACT_MEDIUM_EXPANSION);
+advancedFactBank.push(...JUDGES_FACT_ADVANCED_EXPANSION);
 
 function normalizePoolText(value) {
   return normalizeQuizAnswerKey(String(value || ""));
@@ -11485,12 +11742,14 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
   const usedSources = options.usedSources instanceof Set ? options.usedSources : null;
   const usageKeyForItem = (item) => canonicalizeQuestionUsageRef(item && (item.historySourceRef || historyKeyForItem(item, normalizedBucket)));
 
-  const sourceFiltered = usedSources
+  const sourceFilteredByReference = usedSources
     ? source.filter((item) => {
       const usageKey = usageKeyForItem(item);
       return !usageKey || !usedSources.has(usageKey);
     })
     : source;
+  const sourceFiltered = sourceFilteredByReference.length ? sourceFilteredByReference : source;
+  const referencePoolExhausted = Boolean(usedSources && !sourceFilteredByReference.length);
 
   const refUsageCounts = options.refUsageCounts instanceof Map ? options.refUsageCounts : null;
   const maxRefUses = Number.isFinite(Number(options.maxRefUses)) ? Math.max(1, Number(options.maxRefUses)) : null;
@@ -11515,9 +11774,7 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
     })
     : refFiltered;
 
-  const pickPool = usedSources
-    ? (conceptFiltered.length ? conceptFiltered : (refFiltered.length ? refFiltered : sourceFiltered))
-    : (conceptFiltered.length ? conceptFiltered : (refFiltered.length ? refFiltered : source));
+  const pickPool = conceptFiltered.length ? conceptFiltered : (refFiltered.length ? refFiltered : sourceFiltered);
   if (!pickPool.length) return { item: null, reuseCount: 0 };
 
   const historyScope = options.scopeKey || (scopedPool.length ? era : "all");
@@ -11549,7 +11806,7 @@ function pickWithoutRepeat(pool, era, bucket, options = {}) {
         return Math.random() - 0.5;
       });
     choice = rankedUnseen[0] || null;
-  } else if (options.allowReuse) {
+  } else if (options.allowReuse || referencePoolExhausted) {
     const reusablePool = pickPool
       .slice()
       .sort((a, b) => {
@@ -11610,12 +11867,16 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
     counts[signature] = (counts[signature] || 0) + 1;
   });
 
-  const filterBySource = (items) => (usedSources
-    ? items.filter((item) => {
+  const filterBySource = (items) => {
+    if (!usedSources) return items;
+    const filtered = items.filter((item) => {
       const usageKey = usageKeyForItem(item);
       return !usageKey || !usedSources.has(usageKey);
     })
-    : items);
+    // A Bible reference may produce several different valid prompts. If the reference
+    // set is exhausted, keep the player moving by selecting the least-used item.
+    return filtered.length >= count ? filtered : items;
+  };
 
   const refUsageCounts = options.refUsageCounts instanceof Map ? options.refUsageCounts : null;
   const maxRefUses = Number.isFinite(Number(options.maxRefUses)) ? Math.max(1, Number(options.maxRefUses)) : null;
@@ -11690,7 +11951,7 @@ function pickManyWithoutRepeat(pool, era, bucket, count, options = {}) {
 
   let candidates = buildSelection(filterByConceptCap(filterByReferenceCap(filterBySource(source))));
 
-  if (candidates.length < count && options.allowReuse) {
+  if (candidates.length < count) {
     const reusable = shuffled(filterByConceptCap(filterByReferenceCap(filterBySource(source)))).sort((a, b) => {
       const aRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(a)) || 0) : 0;
       const bRefCount = refUsageCounts ? (refUsageCounts.get(referenceKeyForItem(b)) || 0) : 0;
@@ -12127,11 +12388,11 @@ const THEME_DERIVED_POOL_RULES = {
     fact: { perRef: 1, maxItems: 14 }
   },
   "Wilderness Trust": {
-    quiz: { perRef: 1, maxItems: 14 },
-    spelling: { perRef: 1, maxItems: 12 },
-    orderBase: { perRef: 1, maxItems: 8 },
-    order: { perRef: 1, maxItems: 12 },
-    fact: { perRef: 1, maxItems: 14 }
+    quiz: { perRef: 1, maxItems: 28 },
+    spelling: { perRef: 1, maxItems: 16 },
+    orderBase: { perRef: 1, maxItems: 10 },
+    order: { perRef: 1, maxItems: 16 },
+    fact: { perRef: 1, maxItems: 18 }
   },
   "Jordan Crossing": {
     quiz: { perRef: 1, maxItems: 16 },
@@ -12148,11 +12409,11 @@ const THEME_DERIVED_POOL_RULES = {
     fact: { perRef: 1, maxItems: 14 }
   },
   "Cycle of Judges": {
-    quiz: { perRef: 1, maxItems: 16 },
-    spelling: { perRef: 1, maxItems: 12 },
-    orderBase: { perRef: 1, maxItems: 8 },
-    order: { perRef: 1, maxItems: 12 },
-    fact: { perRef: 1, maxItems: 14 }
+    quiz: { perRef: 1, maxItems: 30 },
+    spelling: { perRef: 1, maxItems: 16 },
+    orderBase: { perRef: 1, maxItems: 10 },
+    order: { perRef: 1, maxItems: 16 },
+    fact: { perRef: 1, maxItems: 18 }
   },
   "Ruth's Faithfulness": {
     quiz: { perRef: 1, maxItems: 14 },
@@ -12183,6 +12444,24 @@ const THEME_DERIVED_POOL_RULES = {
     fact: { perRef: 1, maxItems: 14 }
   }
 };
+
+const GLOBAL_THEME_POOL_DEPTH_FLOOR = {
+  quiz: 28,
+  spelling: 16,
+  orderBase: 10,
+  order: 16,
+  fact: 18
+};
+
+Object.values(THEME_DERIVED_POOL_RULES).forEach((limits) => {
+  Object.entries(GLOBAL_THEME_POOL_DEPTH_FLOOR).forEach(([kind, floor]) => {
+    if (!limits[kind]) {
+      limits[kind] = { perRef: 1, maxItems: floor };
+      return;
+    }
+    limits[kind].maxItems = Math.max(Number(limits[kind].maxItems) || 0, floor);
+  });
+});
 
 const THEME_DIFFICULTY_REFERENCE_CAPS = {
   "Call of Abram": {
