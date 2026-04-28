@@ -4535,6 +4535,14 @@ let shareTextTitle = null;
 let shareTextArea = null;
 let shareTextCopyBtn = null;
 let shareTextCloseBtn = null;
+let shareCardPreviewOverlay = null;
+let shareCardPreviewTitle = null;
+let shareCardPreviewText = null;
+let shareCardPreviewImage = null;
+let shareCardPreviewSaveLink = null;
+let shareCardPreviewNativeBtn = null;
+let shareCardPreviewCopyBtn = null;
+let shareCardPreviewCloseBtn = null;
 let recapIndicator = null;
 let recapIndicatorLabel = null;
 let storyJourneySection = null;
@@ -6640,6 +6648,117 @@ function downloadCanvasPng(canvas, fileName) {
   }
 }
 
+function ensureShareCardPreviewOverlay() {
+  if (shareCardPreviewOverlay && shareCardPreviewOverlay.isConnected) return;
+  if (!appRoot) return;
+
+  if (!document.getElementById("shareCardPreviewStyles")) {
+    const style = document.createElement("style");
+    style.id = "shareCardPreviewStyles";
+    style.textContent = [
+      ".share-card-preview-img{width:min(100%,420px);max-height:52vh;object-fit:contain;border-radius:18px;border:1px solid rgba(229,184,93,.38);box-shadow:0 18px 50px rgba(0,0,0,.32);background:#0d1725;margin:12px auto;display:block;}",
+      ".share-card-preview-note{font-size:.95rem;opacity:.9;}",
+      ".share-card-preview-save{display:inline-flex;align-items:center;justify-content:center;}"
+    ].join("");
+    document.head.appendChild(style);
+  }
+
+  shareCardPreviewOverlay = document.createElement("div");
+  shareCardPreviewOverlay.id = "shareCardPreviewOverlay";
+  shareCardPreviewOverlay.className = "welcome-overlay hidden";
+  shareCardPreviewOverlay.setAttribute("aria-live", "polite");
+  shareCardPreviewOverlay.setAttribute("role", "dialog");
+  shareCardPreviewOverlay.setAttribute("aria-modal", "true");
+  shareCardPreviewOverlay.innerHTML = [
+    '<div class="welcome-card share-card">',
+    `  <p class="eyebrow">${challengeCopy("Share Card Ready", "Tarjeta lista para compartir")}</p>`,
+    '  <h2 id="shareCardPreviewTitle">FAITHSHIELD Share Card</h2>',
+    '  <p id="shareCardPreviewText" class="share-card-preview-note"></p>',
+    '  <img id="shareCardPreviewImage" class="share-card-preview-img" alt="FAITHSHIELD share card preview" />',
+    '  <div class="share-actions">',
+    `    <a id="shareCardPreviewSaveLink" class="cta-btn share-card-preview-save" href="#" download="faithshield-card.png">${challengeCopy("Save Image", "Guardar imagen")}</a>`,
+    `    <button id="shareCardPreviewNativeBtn" class="ghost-btn" type="button">${challengeCopy("Share Options", "Opciones para compartir")}</button>`,
+    `    <button id="shareCardPreviewCopyBtn" class="ghost-btn" type="button">${challengeCopy("Copy Text", "Copiar texto")}</button>`,
+    `    <button id="shareCardPreviewCloseBtn" class="ghost-btn" type="button">${challengeCopy("Close", "Cerrar")}</button>`,
+    '  </div>',
+    '</div>'
+  ].join("");
+
+  appRoot.appendChild(shareCardPreviewOverlay);
+  shareCardPreviewTitle = shareCardPreviewOverlay.querySelector("#shareCardPreviewTitle");
+  shareCardPreviewText = shareCardPreviewOverlay.querySelector("#shareCardPreviewText");
+  shareCardPreviewImage = shareCardPreviewOverlay.querySelector("#shareCardPreviewImage");
+  shareCardPreviewSaveLink = shareCardPreviewOverlay.querySelector("#shareCardPreviewSaveLink");
+  shareCardPreviewNativeBtn = shareCardPreviewOverlay.querySelector("#shareCardPreviewNativeBtn");
+  shareCardPreviewCopyBtn = shareCardPreviewOverlay.querySelector("#shareCardPreviewCopyBtn");
+  shareCardPreviewCloseBtn = shareCardPreviewOverlay.querySelector("#shareCardPreviewCloseBtn");
+
+  if (shareCardPreviewCloseBtn) {
+    shareCardPreviewCloseBtn.onclick = () => closeShareCardPreviewOverlay();
+  }
+  shareCardPreviewOverlay.addEventListener("click", (event) => {
+    if (event.target === shareCardPreviewOverlay) closeShareCardPreviewOverlay();
+  });
+}
+
+function closeShareCardPreviewOverlay() {
+  if (!shareCardPreviewOverlay) return;
+  shareCardPreviewOverlay.classList.add("hidden");
+  updateOverlayLock();
+}
+
+function openShareCardPreview(canvas, fileName, titleText, messageText) {
+  ensureShareCardPreviewOverlay();
+  if (!shareCardPreviewOverlay || !shareCardPreviewImage || !canvas || typeof canvas.toDataURL !== "function") return false;
+
+  let dataUrl = "";
+  try {
+    dataUrl = canvas.toDataURL("image/png");
+  } catch (_) {
+    dataUrl = "";
+  }
+  if (!dataUrl) return false;
+
+  const title = String(titleText || "FAITHSHIELD Share Card");
+  const message = String(messageText || "").trim();
+  const safeFileName = String(fileName || "faithshield-card.png");
+  if (shareCardPreviewTitle) shareCardPreviewTitle.textContent = title;
+  if (shareCardPreviewText) {
+    shareCardPreviewText.textContent = challengeCopy(
+      "Use Save Image, Share Options, or Copy Text. If your device blocks saving, long-press the image.",
+      "Usa Guardar imagen, Opciones para compartir o Copiar texto. Si tu dispositivo bloquea guardar, manten presionada la imagen."
+    );
+  }
+  shareCardPreviewImage.src = dataUrl;
+  if (shareCardPreviewSaveLink) {
+    shareCardPreviewSaveLink.href = dataUrl;
+    shareCardPreviewSaveLink.download = safeFileName;
+  }
+  if (shareCardPreviewNativeBtn) {
+    shareCardPreviewNativeBtn.onclick = () => nativeShareOrCopy(title, message, () => {
+      showFeatureMoment(
+        challengeCopy("Share text ready", "Texto listo para compartir"),
+        challengeCopy("Paste it into any app.", "Pegalo en cualquier app."),
+        { icon: "📣", durationMs: 1700 }
+      );
+    });
+  }
+  if (shareCardPreviewCopyBtn) {
+    shareCardPreviewCopyBtn.onclick = () => copyTextToClipboardOrPrompt(message, () => {
+      showFeatureMoment(
+        challengeCopy("Share text copied", "Texto copiado"),
+        challengeCopy("You can now paste it anywhere.", "Ahora puedes pegarlo donde quieras."),
+        { icon: "✅", durationMs: 1600 }
+      );
+    });
+  }
+
+  shareCardPreviewOverlay.classList.remove("hidden");
+  if (shareCardPreviewOverlay.scrollTo) shareCardPreviewOverlay.scrollTo({ top: 0, behavior: "auto" });
+  updateOverlayLock();
+  return true;
+}
+
 function openCanvasPngInNewTab(canvas, fileName, titleText = "FAITHSHIELD Era Card") {
   if (!canvas || typeof canvas.toDataURL !== "function") return false;
   try {
@@ -6706,7 +6825,16 @@ async function exportBadgeCard(badge) {
     }
   }
 
+  const previewOpened = openShareCardPreview(
+    canvas,
+    fileName,
+    `${badge.name} • FAITHSHIELD`,
+    badgeShareMessage(badge)
+  );
+  if (previewOpened) return true;
+
   downloadBlob(blob, fileName);
+  copyTextToClipboardOrPrompt(badgeShareMessage(badge));
   return true;
 }
 
@@ -6715,7 +6843,10 @@ async function exportCurrentShareCard() {
   if (!badge) return;
   const done = await exportBadgeCard(badge);
   if (done && shareBadgeText) {
-    shareBadgeText.textContent = `${badgeShareMessage(badge)} (${t("downloadCard")})`;
+    shareBadgeText.textContent = challengeCopy(
+      "Badge card ready. Use Save Image, Share Options, or Copy Text.",
+      "Tarjeta de insignia lista. Usa Guardar imagen, Opciones para compartir o Copiar texto."
+    );
   }
 }
 
@@ -6860,7 +6991,16 @@ async function exportReflectionCard(payload = currentReflectionSharePayload()) {
     }
   }
 
+  const previewOpened = openShareCardPreview(
+    canvas,
+    fileName,
+    `${t("reflectionCardTitle")} • FAITHSHIELD`,
+    reflectionShareMessage(payload)
+  );
+  if (previewOpened) return true;
+
   downloadBlob(blob, fileName);
+  copyTextToClipboardOrPrompt(reflectionShareMessage(payload));
   return true;
 }
 
@@ -9984,18 +10124,57 @@ function closeShareOverlay() {
   updateOverlayLock();
 }
 
+function isLikelyMobileShareDevice() {
+  const ua = navigator.userAgent || "";
+  return /iPhone|iPad|iPod|Android/i.test(ua)
+    || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
+}
+
+function setShareStatus(message) {
+  if (shareBadgeText && message) shareBadgeText.textContent = message;
+}
+
 function shareViaText() {
   const badge = currentShareBadge();
   if (!badge) return;
-  const text = encodeURIComponent(badgeShareMessage(badge));
-  window.location.href = `sms:&body=${text}`;
+  const message = badgeShareMessage(badge);
+
+  if (!isLikelyMobileShareDevice()) {
+    openShareTextOverlay(challengeCopy("Text Message Share", "Compartir por mensaje"), message);
+    setShareStatus(challengeCopy(
+      "Text message apps are not always available on desktop. Copy this text into your message app.",
+      "Las apps de mensajes no siempre estan disponibles en escritorio. Copia este texto en tu app de mensajes."
+    ));
+    return;
+  }
+
+  setShareStatus(challengeCopy(
+    "Opening Messages. If it does not open, use Copy Text.",
+    "Abriendo Mensajes. Si no se abre, usa Copiar texto."
+  ));
+  showFeatureMoment(
+    challengeCopy("Opening Messages", "Abriendo Mensajes"),
+    challengeCopy("If your device blocks it, tap Copy Text.", "Si tu dispositivo lo bloquea, toca Copiar texto."),
+    { icon: "✉", durationMs: 1600, sfx: null }
+  );
+  window.location.href = `sms:?&body=${encodeURIComponent(message)}`;
 }
 
 function shareViaEmail() {
   const badge = currentShareBadge();
   if (!badge) return;
   const subject = encodeURIComponent("My FAITHSHIELD badge accomplishment");
-  const body = encodeURIComponent(badgeShareMessage(badge));
+  const message = badgeShareMessage(badge);
+  const body = encodeURIComponent(message);
+  setShareStatus(challengeCopy(
+    "Opening Email. If it does not open, use Copy Text.",
+    "Abriendo correo. Si no se abre, usa Copiar texto."
+  ));
+  showFeatureMoment(
+    challengeCopy("Opening Email", "Abriendo correo"),
+    challengeCopy("If your device blocks it, tap Copy Text.", "Si tu dispositivo lo bloquea, toca Copiar texto."),
+    { icon: "@", durationMs: 1600, sfx: null }
+  );
   window.location.href = `mailto:?subject=${subject}&body=${body}`;
 }
 
@@ -10004,23 +10183,8 @@ function shareViaSocial() {
   if (!badge) return;
   const text = badgeShareMessage(badge);
 
-  if (navigator.share) {
-    navigator.share({ title: "FAITHSHIELD Badge", text }).catch(() => {
-      copyTextToClipboardOrPrompt(text, () => {
-        if (shareBadgeText) shareBadgeText.textContent = `${text} (Copied)`;
-      });
-    });
-    return;
-  }
-
-  if (isDesktopViewport()) {
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-    return;
-  }
-
-  copyTextToClipboardOrPrompt(text, () => {
-    if (shareBadgeText) shareBadgeText.textContent = `${text} (Copied)`;
+  nativeShareOrCopy("FAITHSHIELD Badge", text, () => {
+    setShareStatus(`${text} (Copied)`);
   });
 }
 
@@ -10202,12 +10366,13 @@ function updateOverlayLock() {
   const shieldOpen = badgeShieldOverlay && !badgeShieldOverlay.classList.contains("hidden");
   const eraCardOpen = false;
   const shareTextOpen = shareTextOverlay && !shareTextOverlay.classList.contains("hidden");
+  const shareCardPreviewOpen = shareCardPreviewOverlay && !shareCardPreviewOverlay.classList.contains("hidden");
   const eraFinaleOpen = eraFinaleOverlay && !eraFinaleOverlay.classList.contains("hidden");
   const finalOpen = finalOverlay && !finalOverlay.classList.contains("hidden");
   const creditsOpen = creditsOverlay && !creditsOverlay.classList.contains("hidden");
   const theaterOpen = storyTheaterOverlay && !storyTheaterOverlay.classList.contains("hidden");
   const chapterIntroOpen = chapterIntroOverlay && !chapterIntroOverlay.classList.contains("hidden");
-  document.body.classList.toggle("has-overlay", Boolean(activityOpen || welcomeOpen || shareOpen || shieldOpen || eraCardOpen || shareTextOpen || eraFinaleOpen || finalOpen || creditsOpen || theaterOpen || chapterIntroOpen));
+  document.body.classList.toggle("has-overlay", Boolean(activityOpen || welcomeOpen || shareOpen || shieldOpen || eraCardOpen || shareTextOpen || shareCardPreviewOpen || eraFinaleOpen || finalOpen || creditsOpen || theaterOpen || chapterIntroOpen));
 
 }
 
@@ -10597,6 +10762,7 @@ function resetProgress() {
   stopFinaleMusic();
   stopCreditsMusic();
   closeShareOverlay();
+  closeShareCardPreviewOverlay();
   closeBadgeShield();
   hideEraFinale();
   pendingEraFinaleEra = null;
@@ -22544,6 +22710,21 @@ if (activityOverlay) {
 
 window.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
+  if (shareCardPreviewOverlay && !shareCardPreviewOverlay.classList.contains("hidden")) {
+    event.preventDefault();
+    closeShareCardPreviewOverlay();
+    return;
+  }
+  if (shareTextOverlay && !shareTextOverlay.classList.contains("hidden")) {
+    event.preventDefault();
+    closeShareTextOverlay();
+    return;
+  }
+  if (shareOverlay && !shareOverlay.classList.contains("hidden")) {
+    event.preventDefault();
+    closeShareOverlay();
+    return;
+  }
   if (!activityOverlay || activityOverlay.classList.contains("hidden")) return;
   requestActivityClose(event);
 });
