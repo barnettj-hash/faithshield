@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-26-deep-question-pool-v1";
+const CONTENT_VERSION = "2026-04-28-instant-level-flow-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -4601,6 +4601,10 @@ let badgeUnlockToastNode = null;
 let stageCompleteToastTimer = 0;
 let stageCompleteToastNode = null;
 let stageAutoCloseTimer = 0;
+const STAGE_COMPLETE_CLOSE_DELAY_MS = 80;
+const STAGE_CLOSE_MAX_DELAY_MS = 160;
+const STAGE_FAILURE_CLOSE_DELAY_MS = 700;
+const STAGE_FAILURE_CLOSE_MAX_DELAY_MS = 900;
 let badgePraiseUtterance = null;
 let badgeCeremonyRevealTimer = 0;
 let badgeCeremonyCloseTimer = 0;
@@ -10416,15 +10420,26 @@ function clearStageAutoCloseTimer() {
   stageAutoCloseTimer = 0;
 }
 
-function queueStageAutoClose(stageId, delayMs = 850) {
+function queueStageAutoClose(stageId, delayMs = null) {
   clearStageAutoCloseTimer();
   if (state.activeStage === stageId) {
     releaseActiveChallengeRuntime();
   }
+  const completedStage = isDone(stageId);
+  const fallbackDelay = completedStage ? STAGE_COMPLETE_CLOSE_DELAY_MS : STAGE_FAILURE_CLOSE_DELAY_MS;
+  const maxDelay = completedStage ? STAGE_CLOSE_MAX_DELAY_MS : STAGE_FAILURE_CLOSE_MAX_DELAY_MS;
+  const requestedDelay = Number(delayMs);
+  const safeDelay = Math.max(
+    0,
+    Math.min(
+      Number.isFinite(requestedDelay) ? requestedDelay : fallbackDelay,
+      maxDelay
+    )
+  );
   stageAutoCloseTimer = window.setTimeout(() => {
     stageAutoCloseTimer = 0;
     if (state.activeStage === stageId) closeActivity();
-  }, delayMs);
+  }, safeDelay);
 }
 
 function isDesktopViewport() {
@@ -10517,14 +10532,16 @@ function completeStage(meta, mode, options = {}) {
     captureHubScrollPosition(state.activeStage || meta.id);
   }
   if (options.returnTarget) queueHubReturn(options.returnTarget);
-  const result = markDone(meta.id, mode);
   if (!options.returnTarget && returnStageId) {
     preferStageHubReturn(returnStageId);
   }
+  const result = markDone(meta.id, mode);
   if (result && !result.celebrationBadge) {
     showStageCompleteMoment(result, options);
   }
-  const delayMs = options.delayMs || (result && result.celebrationBadge ? 980 : 760);
+  const delayMs = Number.isFinite(Number(options.delayMs))
+    ? Number(options.delayMs)
+    : STAGE_COMPLETE_CLOSE_DELAY_MS;
   queueStageAutoClose(meta.id, delayMs);
   return result;
 }
@@ -15066,6 +15083,15 @@ function renderStageGridIncremental() {
   const sections = buildEraSections();
   const completedSet = new Set(state.completed);
   stageGrid.innerHTML = "";
+
+  if (pendingStageFocusId) {
+    sections.forEach((section) => {
+      stageGrid.appendChild(createEraSectionNode(section, completedSet));
+    });
+    flushPendingStageFocus();
+    maybeShowCompletionFinale();
+    return;
+  }
 
   let idx = 0;
   const frameBudgetMs = runtimePerformance.performanceLite ? 6 : 10;
