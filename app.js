@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-04-28-instant-level-flow-v1";
+const CONTENT_VERSION = "2026-05-02-saul-david-audio-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -765,7 +765,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 58;
+const ACTIVITY_SCHEMA_VERSION = 59;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -3617,6 +3617,166 @@ const JUDGES_FACT_ADVANCED_EXPANSION = [
   { era: "judges", parts: ["A", "worthy", "woman", "is", "better", "to", "you", "than", "seven", "sons"], sourceRef: "Ruth 4:15" }
 ];
 
+const SAUL_QUIZ_EASY_EXPANSION = [
+  { era: "saul", prompt: "Who was Saul's father?", options: ["Kish", "Jesse", "Abner", "Ner"], answer: "Kish", sourceRef: "1 Samuel 9:1-2" },
+  { era: "saul", prompt: "From which tribe was Saul?", options: ["Benjamin", "Judah", "Levi", "Ephraim"], answer: "Benjamin", sourceRef: "1 Samuel 9:1,21" },
+  { era: "saul", prompt: "What animals was Saul searching for when he first went out with his servant?", options: ["Donkeys", "Sheep", "Oxen", "Camels"], answer: "Donkeys", sourceRef: "1 Samuel 9:3" },
+  { era: "saul", prompt: "Who did Saul go to see in the city when the donkeys were not found?", options: ["Samuel the seer", "David the shepherd", "Ahimelech the priest", "Jonathan the prince"], answer: "Samuel the seer", sourceRef: "1 Samuel 9:6,18-19" },
+  { era: "saul", prompt: "What did Samuel pour on Saul's head when God chose him?", options: ["Oil", "Water", "Wine", "Blood"], answer: "Oil", sourceRef: "1 Samuel 10:1" },
+  { era: "saul", prompt: "Where was Saul hiding when Israel gathered to present the king?", options: ["Among the baggage", "In Samuel's house", "By the altar", "In the vineyard"], answer: "Among the baggage", sourceRef: "1 Samuel 10:22" },
+  { era: "saul", prompt: "Which city did Saul save from Nahash the Ammonite?", options: ["Jabesh Gilead", "Jericho", "Bethlehem", "Hebron"], answer: "Jabesh Gilead", sourceRef: "1 Samuel 11:1-11" },
+  { era: "saul", prompt: "What came upon Saul when he heard the news from Jabesh Gilead?", options: ["The Spirit of God", "A deep sleep", "A plague", "A dream"], answer: "The Spirit of God", sourceRef: "1 Samuel 11:6" },
+  { era: "saul", prompt: "How long did Saul wait at Gilgal before offering the burnt offering himself?", options: ["Seven days", "Three days", "Twelve days", "Forty days"], answer: "Seven days", sourceRef: "1 Samuel 13:8" },
+  { era: "saul", prompt: "Who attacked the Philistine garrison and stirred up battle in 1 Samuel 13?", options: ["Jonathan", "Abner", "Samuel", "David"], answer: "Jonathan", sourceRef: "1 Samuel 13:3" },
+  { era: "saul", prompt: "What did Saul build after the victory when the people ate with the blood?", options: ["An altar to Yahweh", "A tower", "A palace", "A city gate"], answer: "An altar to Yahweh", sourceRef: "1 Samuel 14:35" },
+  { era: "saul", prompt: "Which Amalekite king did Saul keep alive?", options: ["Agag", "Achish", "Adoni Bezek", "Sisera"], answer: "Agag", sourceRef: "1 Samuel 15:8" }
+];
+
+const SAUL_QUIZ_MEDIUM_EXPANSION = [
+  { era: "saul", prompt: "What sign was Saul told would happen at Rachel's tomb?", options: ["Men would tell him the donkeys were found", "Samuel would meet him there", "A Philistine camp would flee", "Oil would flow from a rock"], answer: "Men would tell him the donkeys were found", sourceRef: "1 Samuel 10:2" },
+  { era: "saul", prompt: "What would happen to Saul when he met the band of prophets?", options: ["He would prophesy with them", "He would defeat them in battle", "He would judge Israel", "He would build an altar"], answer: "He would prophesy with them", sourceRef: "1 Samuel 10:5-6,10" },
+  { era: "saul", prompt: "What question did people ask when they saw Saul prophesying?", options: ["Is Saul also among the prophets?", "Is Saul now the high priest?", "Is Saul the son of Samuel?", "Is Saul stronger than Jonathan?"], answer: "Is Saul also among the prophets?", sourceRef: "1 Samuel 10:11-12" },
+  { era: "saul", prompt: "What did Samuel write down and lay up before Yahweh after the kingdom was presented?", options: ["The manner of the kingdom", "The songs of victory", "The names of the tribes", "The law of offerings"], answer: "The manner of the kingdom", sourceRef: "1 Samuel 10:25" },
+  { era: "saul", prompt: "What threat did Nahash make against the men of Jabesh Gilead?", options: ["To thrust out everyone's right eye", "To take all their flocks", "To burn every house", "To make them build a tower"], answer: "To thrust out everyone's right eye", sourceRef: "1 Samuel 11:2" },
+  { era: "saul", prompt: "What did Saul cut into pieces and send through Israel to gather the people for battle?", options: ["A yoke of oxen", "A cloak", "A ram's horn", "A scroll"], answer: "A yoke of oxen", sourceRef: "1 Samuel 11:7" },
+  { era: "saul", prompt: "What did Saul say should happen to the men who spoke against his kingship after the victory?", options: ["No man shall be put to death this day", "Stone them at once", "Send them to Philistia", "Make them priests"], answer: "No man shall be put to death this day", sourceRef: "1 Samuel 11:12-13" },
+  { era: "saul", prompt: "Why did Samuel say Saul had acted foolishly at Gilgal?", options: ["He did not keep Yahweh's commandment", "He hid from the people", "He fled from Nahash", "He forgot the ark"], answer: "He did not keep Yahweh's commandment", sourceRef: "1 Samuel 13:13" },
+  { era: "saul", prompt: "What did Jonathan taste with the end of his rod in the forest?", options: ["Honey", "Milk", "Oil", "Water"], answer: "Honey", sourceRef: "1 Samuel 14:27" },
+  { era: "saul", prompt: "What did the people do to keep Saul from killing Jonathan because of the oath?", options: ["They rescued Jonathan", "They cast lots again", "They sent Samuel away", "They made a new offering"], answer: "They rescued Jonathan", sourceRef: "1 Samuel 14:45" },
+  { era: "saul", prompt: "What did Saul and the people spare from Amalek besides Agag?", options: ["The best sheep, oxen, and lambs", "The priests and Levites", "The city walls", "The tabernacle furniture"], answer: "The best sheep, oxen, and lambs", sourceRef: "1 Samuel 15:9" },
+  { era: "saul", prompt: "What did Samuel hear that exposed Saul's disobedience?", options: ["The bleating of sheep and lowing of oxen", "The blast of trumpets", "The shout of Philistines", "The sound of rain"], answer: "The bleating of sheep and lowing of oxen", sourceRef: "1 Samuel 15:14" }
+];
+
+const SAUL_QUIZ_ADVANCED_EXPANSION = [
+  { era: "saul", prompt: "What meal portion had Samuel set aside for Saul before revealing God's choice?", options: ["The thigh and what was on it", "The whole lamb", "The firstfruits basket", "The showbread"], answer: "The thigh and what was on it", sourceRef: "1 Samuel 9:23-24" },
+  { era: "saul", prompt: "What did Samuel say God had turned for Saul after he met the prophets?", options: ["God gave him another heart", "God gave him a sword", "God gave him riches", "God gave him many sons"], answer: "God gave him another heart", sourceRef: "1 Samuel 10:9" },
+  { era: "saul", prompt: "At what place did Samuel renew the kingdom after Saul's victory over Nahash?", options: ["Gilgal", "Shiloh", "Ramah", "Bethel"], answer: "Gilgal", sourceRef: "1 Samuel 11:14-15" },
+  { era: "saul", prompt: "What did Samuel call the Philistine force gathered against Israel in 1 Samuel 13?", options: ["Thirty thousand chariots with horsemen and people as the sand", "Twelve tribes with oxen and carts", "Seven kings with bronze shields", "Three hundred captains with slings"], answer: "Thirty thousand chariots with horsemen and people as the sand", sourceRef: "1 Samuel 13:5" },
+  { era: "saul", prompt: "What weapon was missing from the hands of Saul's soldiers except for Saul and Jonathan?", options: ["Swords and spears", "Bows and arrows", "Slings and stones", "Trumpets and torches"], answer: "Swords and spears", sourceRef: "1 Samuel 13:22" },
+  { era: "saul", prompt: "How did Jonathan describe Yahweh's power before climbing against the Philistine outpost?", options: ["There is no restraint to Yahweh to save by many or by few", "Yahweh helps only the strongest", "Victory belongs to kings alone", "The battle waits for a sign from Eli"], answer: "There is no restraint to Yahweh to save by many or by few", sourceRef: "1 Samuel 14:6" },
+  { era: "saul", prompt: "What happened in the Philistine camp after Jonathan's first strike with his armor bearer?", options: ["There was trembling and a very great trembling from God", "A rainstorm ended the battle", "Saul was crowned again", "Samuel blew seven trumpets"], answer: "There was trembling and a very great trembling from God", sourceRef: "1 Samuel 14:15" },
+  { era: "saul", prompt: "What did Saul do before learning Jonathan had tasted honey?", options: ["He put the people under an oath not to eat", "He offered peace to Amalek", "He sent David to Jesse", "He hid among the baggage"], answer: "He put the people under an oath not to eat", sourceRef: "1 Samuel 14:24" },
+  { era: "saul", prompt: "What did Saul set up for himself after returning from Amalek?", options: ["A monument at Carmel", "A throne in Shiloh", "A bronze altar at Ramah", "A city gate at Gibeah"], answer: "A monument at Carmel", sourceRef: "1 Samuel 15:12" },
+  { era: "saul", prompt: "How did Samuel describe rebellion and stubbornness when rebuking Saul?", options: ["Rebellion is as the sin of witchcraft, and stubbornness as idolatry", "Rebellion is like famine, and stubbornness like drought", "Rebellion is like leprosy, and stubbornness like death", "Rebellion is like Egypt, and stubbornness like Philistia"], answer: "Rebellion is as the sin of witchcraft, and stubbornness as idolatry", sourceRef: "1 Samuel 15:23" },
+  { era: "saul", prompt: "What did Saul ask Samuel to do after confessing his sin before the elders?", options: ["Honor me now before the elders of my people", "Anoint Jonathan instead", "Take the kingdom back from me", "Return to Ramah at once"], answer: "Honor me now before the elders of my people", sourceRef: "1 Samuel 15:30" },
+  { era: "saul", prompt: "How did Agag come to Samuel before being judged?", options: ["Cheerfully", "Crying in chains", "Hidden among baggage", "Riding in a chariot"], answer: "Cheerfully", sourceRef: "1 Samuel 15:32" }
+];
+
+const SAUL_SPELLING_EASY_EXPANSION = [
+  { era: "saul", prompt: "Spell the name of Saul's father.", answer: "Kish", sourceRef: "1 Samuel 9:1" },
+  { era: "saul", prompt: "Spell the city Saul rescued from Nahash.", answer: "Jabesh", sourceRef: "1 Samuel 11:1-11" },
+  { era: "saul", prompt: "Spell the prophet who anointed Saul.", answer: "Samuel", sourceRef: "1 Samuel 10:1" },
+  { era: "saul", prompt: "Spell the son of Saul who attacked the Philistine garrison.", answer: "Jonathan", sourceRef: "1 Samuel 13:3" }
+];
+
+const SAUL_SPELLING_MEDIUM_EXPANSION = [
+  { era: "saul", prompt: "Spell the king of Amalek whom Saul spared alive.", answer: "Agag", sourceRef: "1 Samuel 15:8" },
+  { era: "saul", prompt: "Spell the place where the kingdom was renewed after victory.", answer: "Gilgal", sourceRef: "1 Samuel 11:14-15" },
+  { era: "saul", prompt: "Spell the tribe from which Saul came.", answer: "Benjamin", sourceRef: "1 Samuel 9:21" },
+  { era: "saul", prompt: "Spell the place where Saul looked for the donkeys and met Samuel.", answer: "Ramah", sourceRef: "1 Samuel 9:18-20; 15:34" }
+];
+
+const SAUL_SPELLING_ADVANCED_EXPANSION = [
+  { era: "saul", prompt: "Spell the place where Saul was hiding when presented as king.", answer: "Baggage", sourceRef: "1 Samuel 10:22" },
+  { era: "saul", prompt: "Spell the hill where Saul's home was located.", answer: "Gibeah", sourceRef: "1 Samuel 10:26" },
+  { era: "saul", prompt: "Spell the Philistine people Saul and Jonathan fought.", answer: "Philistines", sourceRef: "1 Samuel 13:3-5" },
+  { era: "saul", prompt: "Spell the city where Saul set up a monument after Amalek.", answer: "Carmel", sourceRef: "1 Samuel 15:12" }
+];
+
+const SAUL_ORDER_ADVANCED_EXPANSION = [
+  { era: "saul", items: ["Saul searches for donkeys", "Samuel anoints Saul", "Saul hides among the baggage"], sourceRef: "1 Samuel 9:3-6; 10:1; 10:22" },
+  { era: "saul", items: ["Nahash threatens Jabesh", "Saul sends oxen pieces through Israel", "Israel defeats Ammon"], sourceRef: "1 Samuel 11:2,7,11" },
+  { era: "saul", items: ["Jonathan attacks the garrison", "Saul offers the burnt offering", "Samuel says the kingdom will not continue"], sourceRef: "1 Samuel 13:3,9-14" },
+  { era: "saul", items: ["Saul spares Agag", "Samuel hears the sheep", "Samuel hacks Agag in pieces"], sourceRef: "1 Samuel 15:8,14,33" }
+];
+
+const SAUL_FACT_ADVANCED_EXPANSION = [
+  { era: "saul", parts: ["Is", "Saul", "also", "among", "the", "prophets"], sourceRef: "1 Samuel 10:11" },
+  { era: "saul", parts: ["Tomorrow", "about", "this", "time", "I", "will", "send", "you", "a", "man"], sourceRef: "1 Samuel 9:16" },
+  { era: "saul", parts: ["To", "obey", "is", "better", "than", "sacrifice"], sourceRef: "1 Samuel 15:22" },
+  { era: "saul", parts: ["Because", "you", "have", "rejected", "Yahweh's", "word"], sourceRef: "1 Samuel 15:23" }
+];
+
+const DAVID_QUIZ_EASY_EXPANSION = [
+  { era: "david", prompt: "Who was David's father?", options: ["Jesse", "Kish", "Samuel", "Saul"], answer: "Jesse", sourceRef: "1 Samuel 16:1; 17:12" },
+  { era: "david", prompt: "What was David doing when Samuel came to Jesse's house?", options: ["Keeping the sheep", "Serving in Saul's palace", "Fighting Philistines", "Building an altar"], answer: "Keeping the sheep", sourceRef: "1 Samuel 16:11" },
+  { era: "david", prompt: "Which brother of David first passed before Samuel?", options: ["Eliab", "Abinadab", "Shammah", "Nethanel"], answer: "Eliab", sourceRef: "1 Samuel 16:6" },
+  { era: "david", prompt: "Which brother passed before Samuel after Eliab?", options: ["Abinadab", "Shammah", "David", "Jonathan"], answer: "Abinadab", sourceRef: "1 Samuel 16:8" },
+  { era: "david", prompt: "Which brother passed before Samuel after Abinadab?", options: ["Shammah", "Eliab", "Saul", "Jesse"], answer: "Shammah", sourceRef: "1 Samuel 16:9" },
+  { era: "david", prompt: "What did Samuel pour on David when he anointed him?", options: ["Oil", "Water", "Wine", "Blood"], answer: "Oil", sourceRef: "1 Samuel 16:13" },
+  { era: "david", prompt: "How many smooth stones did David choose from the brook?", options: ["Five", "Three", "Seven", "Ten"], answer: "Five", sourceRef: "1 Samuel 17:40" },
+  { era: "david", prompt: "What weapon did David carry against Goliath?", options: ["A sling", "A spear", "A sword", "A bow"], answer: "A sling", sourceRef: "1 Samuel 17:40,49-50" },
+  { era: "david", prompt: "What did Jesse send with David for his brothers?", options: ["Bread and grain", "Silver and gold", "Tents and shields", "Oil and incense"], answer: "Bread and grain", sourceRef: "1 Samuel 17:17" },
+  { era: "david", prompt: "What did Jesse send for the captain of their thousand?", options: ["Ten cheeses", "Five lambs", "Two oxen", "A silver cup"], answer: "Ten cheeses", sourceRef: "1 Samuel 17:18" },
+  { era: "david", prompt: "Whose armor did David refuse before facing Goliath?", options: ["Saul's", "Jonathan's", "Abner's", "Samuel's"], answer: "Saul's", sourceRef: "1 Samuel 17:38-39" },
+  { era: "david", prompt: "What part of Goliath did the stone strike?", options: ["His forehead", "His hand", "His shield", "His spear arm"], answer: "His forehead", sourceRef: "1 Samuel 17:49" }
+];
+
+const DAVID_QUIZ_MEDIUM_EXPANSION = [
+  { era: "david", prompt: "What did Yahweh tell Samuel not to look at when Eliab appeared?", options: ["His face and height", "His shield and spear", "His flocks and servants", "His house and vineyard"], answer: "His face and height", sourceRef: "1 Samuel 16:7" },
+  { era: "david", prompt: "What does Yahweh look at according to 1 Samuel 16:7?", options: ["The heart", "The armor", "The tribe", "The height"], answer: "The heart", sourceRef: "1 Samuel 16:7" },
+  { era: "david", prompt: "How many of Jesse's sons passed before Samuel before David was called?", options: ["Seven", "Three", "Eight", "Twelve"], answer: "Seven", sourceRef: "1 Samuel 16:10-11" },
+  { era: "david", prompt: "What did David say came to him when he kept his father's sheep?", options: ["A lion and a bear", "A serpent and a wolf", "A thief and a judge", "A ram and a goat"], answer: "A lion and a bear", sourceRef: "1 Samuel 17:34-36" },
+  { era: "david", prompt: "What did David take from the lion or bear when it seized a lamb?", options: ["He delivered it out of its mouth", "He traded for it with bread", "He set a trap in the cave", "He called the army"], answer: "He delivered it out of its mouth", sourceRef: "1 Samuel 17:34-35" },
+  { era: "david", prompt: "Which brother burned with anger when David asked about the battle?", options: ["Eliab", "Abinadab", "Shammah", "Jonathan"], answer: "Eliab", sourceRef: "1 Samuel 17:28" },
+  { era: "david", prompt: "What reward had Saul promised to the man who killed Goliath?", options: ["Great riches, his daughter, and his father's house free in Israel", "A field in Bethlehem", "A place among the priests", "A captaincy over Benjamin"], answer: "Great riches, his daughter, and his father's house free in Israel", sourceRef: "1 Samuel 17:25" },
+  { era: "david", prompt: "What did David say about the uncircumcised Philistine's defiance?", options: ["He defied the armies of the living God", "He defied Jesse's sons only", "He defied Saul's shield", "He defied the judges of Israel"], answer: "He defied the armies of the living God", sourceRef: "1 Samuel 17:26,36" },
+  { era: "david", prompt: "In whose name did David come to Goliath?", options: ["Yahweh of Armies", "The king of Israel", "The God of Bethel", "The men of Judah"], answer: "Yahweh of Armies", sourceRef: "1 Samuel 17:45" },
+  { era: "david", prompt: "What did David say all the earth would know after the battle?", options: ["That there is a God in Israel", "That Saul is the greatest king", "That Jesse's house is richest", "That Goliath's sword was strongest"], answer: "That there is a God in Israel", sourceRef: "1 Samuel 17:46" },
+  { era: "david", prompt: "What did David say all the assembly would know about the Lord's deliverance?", options: ["Yahweh saves not with sword and spear", "Yahweh only helps trained soldiers", "Yahweh always chooses the tallest", "Yahweh fights by chariots"], answer: "Yahweh saves not with sword and spear", sourceRef: "1 Samuel 17:47" },
+  { era: "david", prompt: "What did David use to cut off Goliath's head after the giant fell?", options: ["Goliath's own sword", "Saul's spear", "Jonathan's bow", "A shepherd's knife"], answer: "Goliath's own sword", sourceRef: "1 Samuel 17:51" }
+];
+
+const DAVID_QUIZ_ADVANCED_EXPANSION = [
+  { era: "david", prompt: "Why did Samuel fear going to Bethlehem to anoint a new king?", options: ["Saul would hear it and kill him", "The Philistines were already there", "Jesse would refuse him", "David had fled the city"], answer: "Saul would hear it and kill him", sourceRef: "1 Samuel 16:2" },
+  { era: "david", prompt: "What sacrifice did Samuel say he had come to offer at Bethlehem?", options: ["A sacrifice to Yahweh", "A peace offering to Saul", "A Nazarite vow", "A thank offering to Jesse"], answer: "A sacrifice to Yahweh", sourceRef: "1 Samuel 16:2-5" },
+  { era: "david", prompt: "How did Jesse identify David before Samuel?", options: ["The youngest, and behold, he keeps the sheep", "The strongest, and behold, he keeps the gate", "The oldest, and behold, he keeps the army", "The wisest, and behold, he keeps the records"], answer: "The youngest, and behold, he keeps the sheep", sourceRef: "1 Samuel 16:11" },
+  { era: "david", prompt: "What happened after Samuel anointed David?", options: ["The Spirit of Yahweh came mightily on David from that day forward", "Saul immediately crowned him", "The Philistines fled the land", "Jesse sent him to Ramah forever"], answer: "The Spirit of Yahweh came mightily on David from that day forward", sourceRef: "1 Samuel 16:13" },
+  { era: "david", prompt: "How did Goliath appear compared with the men of Israel?", options: ["His height was six cubits and a span, and all Israel was afraid", "He was short but fast", "He carried no armor", "He hid from David"], answer: "His height was six cubits and a span, and all Israel was afraid", sourceRef: "1 Samuel 17:4; 17:11" },
+  { era: "david", prompt: "How many days did Goliath present himself morning and evening?", options: ["Forty days", "Seven days", "Twelve days", "Three days"], answer: "Forty days", sourceRef: "1 Samuel 17:16" },
+  { era: "david", prompt: "What did Jesse ask David to bring back from the camp besides greeting his brothers?", options: ["A pledge from them", "Their swords", "Their armor", "A new sling"], answer: "A pledge from them", sourceRef: "1 Samuel 17:18" },
+  { era: "david", prompt: "What did Saul say would happen to the family of the man who killed the Philistine?", options: ["His father's house would be free in Israel", "They would move to Shiloh", "They would become priests", "They would inherit Hebron"], answer: "His father's house would be free in Israel", sourceRef: "1 Samuel 17:25" },
+  { era: "david", prompt: "How did David answer Saul when asked how he could fight Goliath?", options: ["Your servant kept his father's sheep and Yahweh delivered him from lion and bear", "He had trained with Jonathan's armor", "He had already defeated Amalek", "He had a sword from Samuel"], answer: "Your servant kept his father's sheep and Yahweh delivered him from lion and bear", sourceRef: "1 Samuel 17:34-37" },
+  { era: "david", prompt: "What did David put in his shepherd's bag before approaching the Philistine?", options: ["Five smooth stones", "Seven loaves", "A new spear", "A trumpet"], answer: "Five smooth stones", sourceRef: "1 Samuel 17:40" },
+  { era: "david", prompt: "What did Goliath say he would do to David's flesh?", options: ["Give it to the birds of the sky and beasts of the field", "Burn it with fire", "Cast it into the sea", "Carry it to Saul"], answer: "Give it to the birds of the sky and beasts of the field", sourceRef: "1 Samuel 17:44" },
+  { era: "david", prompt: "What did the men of Israel and Judah do after Goliath fell?", options: ["Rose up, shouted, and pursued the Philistines", "Built an altar on the field", "Made David king that day", "Returned quietly to Bethlehem"], answer: "Rose up, shouted, and pursued the Philistines", sourceRef: "1 Samuel 17:52" }
+];
+
+const DAVID_SPELLING_EASY_EXPANSION = [
+  { era: "david", prompt: "Spell the name of David's father.", answer: "Jesse", sourceRef: "1 Samuel 17:12" },
+  { era: "david", prompt: "Spell David's oldest brother.", answer: "Eliab", sourceRef: "1 Samuel 16:6; 17:13" },
+  { era: "david", prompt: "Spell the brother who passed before Samuel after Eliab.", answer: "Abinadab", sourceRef: "1 Samuel 16:8" },
+  { era: "david", prompt: "Spell the third brother named before Samuel.", answer: "Shammah", sourceRef: "1 Samuel 16:9" }
+];
+
+const DAVID_SPELLING_MEDIUM_EXPANSION = [
+  { era: "david", prompt: "Spell the Philistine champion David fought.", answer: "Goliath", sourceRef: "1 Samuel 17:4" },
+  { era: "david", prompt: "Spell the place from which David took smooth stones.", answer: "Brook", sourceRef: "1 Samuel 17:40" },
+  { era: "david", prompt: "Spell the title David used for God in battle: Yahweh of ____.", answer: "Armies", sourceRef: "1 Samuel 17:45" },
+  { era: "david", prompt: "Spell the weapon David used.", answer: "Sling", sourceRef: "1 Samuel 17:40" }
+];
+
+const DAVID_SPELLING_ADVANCED_EXPANSION = [
+  { era: "david", prompt: "Spell the king whose armor David refused.", answer: "Saul", sourceRef: "1 Samuel 17:38-39" },
+  { era: "david", prompt: "Spell the place where Samuel anointed David.", answer: "Bethlehem", sourceRef: "1 Samuel 16:4,13" },
+  { era: "david", prompt: "Spell the field animal David said he struck before facing Goliath.", answer: "Bear", sourceRef: "1 Samuel 17:36" },
+  { era: "david", prompt: "Spell the other predator David named from shepherding.", answer: "Lion", sourceRef: "1 Samuel 17:34-36" }
+];
+
+const DAVID_ORDER_ADVANCED_EXPANSION = [
+  { era: "david", items: ["Samuel sees Eliab", "David is called from the sheep", "Samuel anoints David"], sourceRef: "1 Samuel 16:6,11-13" },
+  { era: "david", items: ["Jesse sends food to the camp", "Eliab rebukes David", "David is brought to Saul"], sourceRef: "1 Samuel 17:17-18,28,31-33" },
+  { era: "david", items: ["David refuses Saul's armor", "David takes five smooth stones", "David runs toward the Philistine"], sourceRef: "1 Samuel 17:39-40,48" },
+  { era: "david", items: ["Stone strikes the forehead", "Goliath falls", "David cuts off his head"], sourceRef: "1 Samuel 17:49-51" }
+];
+
+const DAVID_FACT_ADVANCED_EXPANSION = [
+  { era: "david", parts: ["Man", "looks", "at", "the", "outward", "appearance", "but", "Yahweh", "looks", "at", "the", "heart"], sourceRef: "1 Samuel 16:7" },
+  { era: "david", parts: ["Your", "servant", "used", "to", "keep", "his", "father's", "sheep"], sourceRef: "1 Samuel 17:34" },
+  { era: "david", parts: ["The", "battle", "is", "Yahweh's"], sourceRef: "1 Samuel 17:47" },
+  { era: "david", parts: ["I", "come", "to", "you", "in", "Yahweh", "of", "Armies'", "name"], sourceRef: "1 Samuel 17:45" }
+];
+
 quizBank.push(...NATIONS_BABEL_QUIZ_EASY_EXPANSION);
 mediumQuizBank.push(...NATIONS_BABEL_QUIZ_MEDIUM_EXPANSION);
 advancedQuizBank.push(...NATIONS_BABEL_QUIZ_ADVANCED_EXPANSION);
@@ -3665,6 +3825,22 @@ advancedOrderBank.push(...JUDGES_ORDER_ADVANCED_EXPANSION);
 factBank.push(...JUDGES_FACT_EASY_EXPANSION);
 mediumFactBank.push(...JUDGES_FACT_MEDIUM_EXPANSION);
 advancedFactBank.push(...JUDGES_FACT_ADVANCED_EXPANSION);
+quizBank.push(...SAUL_QUIZ_EASY_EXPANSION);
+mediumQuizBank.push(...SAUL_QUIZ_MEDIUM_EXPANSION);
+advancedQuizBank.push(...SAUL_QUIZ_ADVANCED_EXPANSION);
+spellingBank.push(...SAUL_SPELLING_EASY_EXPANSION);
+mediumSpellingBank.push(...SAUL_SPELLING_MEDIUM_EXPANSION);
+advancedSpellingBank.push(...SAUL_SPELLING_ADVANCED_EXPANSION);
+advancedOrderBank.push(...SAUL_ORDER_ADVANCED_EXPANSION);
+advancedFactBank.push(...SAUL_FACT_ADVANCED_EXPANSION);
+quizBank.push(...DAVID_QUIZ_EASY_EXPANSION);
+mediumQuizBank.push(...DAVID_QUIZ_MEDIUM_EXPANSION);
+advancedQuizBank.push(...DAVID_QUIZ_ADVANCED_EXPANSION);
+spellingBank.push(...DAVID_SPELLING_EASY_EXPANSION);
+mediumSpellingBank.push(...DAVID_SPELLING_MEDIUM_EXPANSION);
+advancedSpellingBank.push(...DAVID_SPELLING_ADVANCED_EXPANSION);
+advancedOrderBank.push(...DAVID_ORDER_ADVANCED_EXPANSION);
+advancedFactBank.push(...DAVID_FACT_ADVANCED_EXPANSION);
 
 function normalizePoolText(value) {
   return normalizeQuizAnswerKey(String(value || ""));
@@ -3809,6 +3985,7 @@ let lastStoryRecapFingerprint = "";
 let lastStoryRecapAt = 0;
 let pendingStoryRecapReason = "";
 let storyRecapRetryArmed = false;
+let autoStoryRecapPlayedThisSession = false;
 let activeStoryTheaterEra = null;
 let storyStillSequenceTimer = 0;
 let storyStillSequenceToken = 0;
@@ -12613,18 +12790,18 @@ const THEME_DERIVED_POOL_RULES = {
     fact: { perRef: 1, maxItems: 14 }
   },
   "Saul's Kingship": {
-    quiz: { perRef: 1, maxItems: 16 },
-    spelling: { perRef: 1, maxItems: 12 },
-    orderBase: { perRef: 1, maxItems: 8 },
-    order: { perRef: 1, maxItems: 12 },
-    fact: { perRef: 1, maxItems: 14 }
+    quiz: { perRef: 1, maxItems: 32 },
+    spelling: { perRef: 1, maxItems: 18 },
+    orderBase: { perRef: 1, maxItems: 12 },
+    order: { perRef: 1, maxItems: 18 },
+    fact: { perRef: 1, maxItems: 20 }
   },
   "David and Courage": {
-    quiz: { perRef: 1, maxItems: 16 },
-    spelling: { perRef: 1, maxItems: 12 },
-    orderBase: { perRef: 1, maxItems: 8 },
-    order: { perRef: 1, maxItems: 12 },
-    fact: { perRef: 1, maxItems: 14 }
+    quiz: { perRef: 1, maxItems: 32 },
+    spelling: { perRef: 1, maxItems: 18 },
+    orderBase: { perRef: 1, maxItems: 12 },
+    order: { perRef: 1, maxItems: 18 },
+    fact: { perRef: 1, maxItems: 20 }
   }
 };
 
@@ -15904,6 +16081,12 @@ function stopStoryRecap() {
   } catch (_) {
     // Ignore speech engine teardown errors.
   }
+  if (shouldRefreshAmbientAudio()) {
+    updateAudioState();
+    window.setTimeout(() => {
+      if (shouldRefreshAmbientAudio()) startMusicLoop();
+    }, 40);
+  }
 }
 
 function clearPendingStoryRecap() {
@@ -15935,6 +16118,9 @@ function disarmStoryRecapRetry() {
 
 function queueStoryRecapRetry(reason = "return") {
   const recapReason = String(reason || pendingStoryRecapReason || "return");
+  if (["welcome-dismiss", "first-interaction"].includes(recapReason) && autoStoryRecapPlayedThisSession) {
+    return false;
+  }
   if (!shouldAllowQueuedStoryRecap(recapReason)) return false;
   pendingStoryRecapReason = recapReason;
   if (storyRecapRetryArmed) return true;
@@ -15947,6 +16133,11 @@ function queueStoryRecapRetry(reason = "return") {
 
 function handleStoryRecapRetry() {
   if (!pendingStoryRecapReason) {
+    disarmStoryRecapRetry();
+    return;
+  }
+  if (["welcome-dismiss", "first-interaction"].includes(pendingStoryRecapReason) && autoStoryRecapPlayedThisSession) {
+    pendingStoryRecapReason = "";
     disarmStoryRecapRetry();
     return;
   }
@@ -16178,13 +16369,17 @@ function buildRecordedStoryRecapClips(payload) {
 }
 
 function playRecordedStoryRecap(options = {}) {
+  const recapReason = String(options.reason || "return");
+  if (["welcome-dismiss", "first-interaction"].includes(recapReason) && autoStoryRecapPlayedThisSession && !options.force) {
+    return Promise.resolve(false);
+  }
   if (!options.ignoreUserActivation && storyRecapNeedsUserActivation()) {
-    queueStoryRecapRetry(options.reason || "return");
+    queueStoryRecapRetry(recapReason);
     return Promise.resolve(false);
   }
 
   if (!canPlayStoryRecapMedia()) {
-    queueStoryRecapRetry(options.reason || "return");
+    queueStoryRecapRetry(recapReason);
     return Promise.resolve(false);
   }
 
@@ -16216,6 +16411,12 @@ function playRecordedStoryRecap(options = {}) {
       if (storyRecapAudioToken !== token) return;
       storyRecapAudio = null;
       setRecapIndicator(false);
+      if (shouldRefreshAmbientAudio()) {
+        updateAudioState();
+        window.setTimeout(() => {
+          if (shouldRefreshAmbientAudio()) startMusicLoop();
+        }, 40);
+      }
     };
 
     const playNext = () => {
@@ -16261,6 +16462,7 @@ function playRecordedStoryRecap(options = {}) {
               lastStoryRecapFingerprint = payload.fingerprint;
               lastStoryRecapAt = Date.now();
               pendingStoryRecapReason = "";
+              if (["welcome-dismiss", "first-interaction"].includes(recapReason)) autoStoryRecapPlayedThisSession = true;
               disarmStoryRecapRetry();
               finishResolve(true);
             }
@@ -16278,6 +16480,7 @@ function playRecordedStoryRecap(options = {}) {
           lastStoryRecapFingerprint = payload.fingerprint;
           lastStoryRecapAt = Date.now();
           pendingStoryRecapReason = "";
+          if (["welcome-dismiss", "first-interaction"].includes(recapReason)) autoStoryRecapPlayedThisSession = true;
           disarmStoryRecapRetry();
           finishResolve(true);
         }
@@ -16369,13 +16572,17 @@ function playVoiceTest() {
 }
 
 function speakStoryReturnRecap(options = {}) {
+  const recapReason = String(options.reason || "return");
+  if (["welcome-dismiss", "first-interaction"].includes(recapReason) && autoStoryRecapPlayedThisSession && !options.force) {
+    return false;
+  }
   if (!options.ignoreUserActivation && storyRecapNeedsUserActivation()) {
-    queueStoryRecapRetry(options.reason || "return");
+    queueStoryRecapRetry(recapReason);
     return false;
   }
 
   if (!canSpeakStoryRecap()) {
-    queueStoryRecapRetry(options.reason || "return");
+    queueStoryRecapRetry(recapReason);
     return false;
   }
 
@@ -16413,6 +16620,12 @@ function speakStoryReturnRecap(options = {}) {
     clearFallbackTimer();
     if (storyRecapUtterance === utterance) storyRecapUtterance = null;
     setRecapIndicator(false);
+    if (shouldRefreshAmbientAudio()) {
+      updateAudioState();
+      window.setTimeout(() => {
+        if (shouldRefreshAmbientAudio()) startMusicLoop();
+      }, 40);
+    }
   };
   utterance.onstart = () => {
     speechStarted = true;
@@ -16421,6 +16634,7 @@ function speakStoryReturnRecap(options = {}) {
     lastStoryRecapFingerprint = payload.fingerprint;
     lastStoryRecapAt = Date.now();
     pendingStoryRecapReason = "";
+    if (["welcome-dismiss", "first-interaction"].includes(recapReason)) autoStoryRecapPlayedThisSession = true;
     disarmStoryRecapRetry();
   };
   utterance.onend = finish;
@@ -16428,7 +16642,7 @@ function speakStoryReturnRecap(options = {}) {
 
   const speak = () => {
     if (!canSpeakStoryRecap(utterance)) {
-      queueStoryRecapRetry(options.reason || "return");
+      queueStoryRecapRetry(recapReason);
       finish();
       return;
     }
@@ -16447,7 +16661,7 @@ function speakStoryReturnRecap(options = {}) {
         });
       }, 900);
     } catch (_) {
-      queueStoryRecapRetry(options.reason || "return");
+      queueStoryRecapRetry(recapReason);
       finish();
     }
   };
