@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-05-07-final-certificate-v1";
+const CONTENT_VERSION = "2026-05-07-question-pool-glitch-hardening-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -765,7 +765,7 @@ const THEME_KEYWORDS = {
 
 
 const QUESTION_ACTIVITY_TYPES = new Set(["quiz", "speaker", "hebrew", "spelling", "order", "fact", "truefalse", "matching"]);
-const ACTIVITY_SCHEMA_VERSION = 59;
+const ACTIVITY_SCHEMA_VERSION = 61;
 const LEGACY_THEMED_INTERACTIVE_MODE_SETS = Object.fromEntries(
   Object.entries(THEME_KEYWORDS).filter(([, value]) => (
     Array.isArray(value)
@@ -12033,6 +12033,137 @@ function buildQuestionPoolExhaustedActivity(meta, activityKind = "question") {
   };
 }
 
+function quizLikeOptionsAreValid(activity) {
+  if (!activity || typeof activity !== "object") return false;
+  const quizLike = activity.type === "quiz" || activity.type === "speaker" || activity.type === "hebrew";
+  if (!quizLike) return true;
+  if (!Array.isArray(activity.options) || activity.options.length < 4) return false;
+  const normalizedOptions = activity.options.map((option) => normalizeQuizAnswerKey(option)).filter(Boolean);
+  const normalizedAnswer = normalizeQuizAnswerKey(activity.answer);
+  if (!normalizedAnswer || !normalizedOptions.includes(normalizedAnswer)) return false;
+  return new Set(normalizedOptions).size === normalizedOptions.length;
+}
+
+function matchingOptionsAreValid(activity) {
+  if (!activity || activity.type !== "matching") return true;
+  if (!Array.isArray(activity.options) || !activity.options.length) return false;
+  const normalizedOptions = activity.options.map((option) => normalizeSpellingAnswer(option)).filter(Boolean);
+  return new Set(normalizedOptions).size === normalizedOptions.length;
+}
+
+function questionActivityIsPlayable(activity) {
+  if (!activity || typeof activity !== "object" || activity.type === "exhausted") return false;
+  if (!QUESTION_ACTIVITY_TYPES.has(activity.type)) return true;
+  if (!quizLikeOptionsAreValid(activity)) return false;
+  if (!matchingOptionsAreValid(activity)) return false;
+  if (activity.type === "spelling" && !normalizeSpellingAnswer(activity.answer)) return false;
+  if ((activity.type === "order" || activity.type === "fact") && (!Array.isArray(activity.items) || !activity.items.length)) return false;
+  return true;
+}
+
+function questionActivityMatchesTheme(activity, theme) {
+  if (!activity || !theme || !QUESTION_ACTIVITY_TYPES.has(activity.type)) return true;
+  if (!activity.sourceRef) return false;
+  return itemMatchesTheme(activity, theme);
+}
+
+function activityIsSafeForMeta(activity, meta) {
+  return Boolean(
+    activity
+    && questionActivityIsPlayable(activity)
+    && questionActivityMatchesTheme(activity, meta.theme)
+  );
+}
+
+function rememberSafeFallbackQuestion(item, theme, bucket = "quiz") {
+  if (!item || !theme) return 0;
+  const normalizedBucket = canonicalQuestionBucket(bucket);
+  const historyKey = "global:" + normalizedBucket + ":" + themeScopeKey(theme, normalizedBucket);
+  const record = historyRecordFor(historyKey);
+  const signature = itemSignature(item);
+  const previousUses = record.uses.filter((entry) => entry === signature).length;
+  record.uses.push(signature);
+  if (record.uses.length > 5000) {
+    record.uses.splice(0, record.uses.length - 5000);
+  }
+  state.questionHistory[historyKey] = record;
+  return previousUses;
+}
+
+function sectionSafeQuizPool(theme, difficulty) {
+  const pools = []
+    .concat(quizPoolForDifficulty(difficulty))
+    .concat(derivedQuizPoolForTheme(theme, difficulty))
+    .concat(quizBank, mediumQuizBank, advancedQuizBank)
+    .concat(buildQuizItemsFromInteractiveSets(theme, interactiveModeSetsForTheme(theme)));
+
+  return dedupeActivityPool(pools, "quiz")
+    .filter((item) => itemMatchesTheme(item, theme))
+    .filter((item) => normalizeQuizAnswerKey(item.answer));
+}
+
+function buildSectionSafeQuizActivity(meta, theme, difficulty, focus = null) {
+  const pool = sectionSafeQuizPool(theme, difficulty);
+  if (!pool.length) return null;
+
+  const usedSources = usedQuestionSourcesForDifficulty(state.difficulty, "quiz", theme);
+  const refUsageCounts = themeReferenceUsageCountsForDifficulty(state.difficulty, theme);
+  const conceptUsageCounts = themeConceptUsageCounts(theme);
+  const recentRecord = historyRecordFor("global:quiz:" + themeScopeKey(theme, "quiz"));
+  const recentSet = recentUseSet(recentRecord, 12);
+
+  const focusedPool = focus && focus.themeName === theme.name
+    ? pool.filter((item) => {
+      const concept = conceptKeyForItem(item);
+      return (!focus.concept || concept === focus.concept)
+        && (!focus.refKey || referenceKeysForItem(item).includes(focus.refKey));
+    })
+    : [];
+  const source = focusedPool.length ? focusedPool : pool;
+
+  const ranked = source
+    .slice()
+    .sort((a, b) => {
+      const aUsageKey = canonicalizeQuestionUsageRef(a.historySourceRef || historyKeyForItem(a, "quiz"));
+      const bUsageKey = canonicalizeQuestionUsageRef(b.historySourceRef || historyKeyForItem(b, "quiz"));
+      const aUsed = usedSources.has(aUsageKey) ? 1 : 0;
+      const bUsed = usedSources.has(bUsageKey) ? 1 : 0;
+      if (aUsed !== bUsed) return aUsed - bUsed;
+
+      const aRecent = recentSet.has(itemSignature(a)) ? 1 : 0;
+      const bRecent = recentSet.has(itemSignature(b)) ? 1 : 0;
+      if (aRecent !== bRecent) return aRecent - bRecent;
+
+      const aConceptCount = conceptUsageCounts.get(conceptKeyForItem(a)) || 0;
+      const bConceptCount = conceptUsageCounts.get(conceptKeyForItem(b)) || 0;
+      if (aConceptCount !== bConceptCount) return aConceptCount - bConceptCount;
+
+      const aRefCount = referenceKeysForItem(a).reduce((total, refKey) => total + (refUsageCounts.get(refKey) || 0), 0);
+      const bRefCount = referenceKeysForItem(b).reduce((total, refKey) => total + (refUsageCounts.get(refKey) || 0), 0);
+      if (aRefCount !== bRefCount) return aRefCount - bRefCount;
+
+      return Math.random() - 0.5;
+    });
+
+  for (const item of ranked) {
+    const options = buildQuizOptions(item, theme.era, Math.max(4, difficulty.quizOptions || 4), pool);
+    const draft = {
+      type: "quiz",
+      sourceRef: item.sourceRef,
+      historySourceRef: item.historySourceRef || historyKeyForItem(item, "quiz"),
+      prompt: stagePrompt(meta, item.prompt),
+      options,
+      answer: item.answer
+    };
+    if (!activityIsSafeForMeta(draft, meta)) continue;
+    const reuseCount = rememberSafeFallbackQuestion(item, theme, "quiz");
+    draft.prompt = stagePrompt(meta, item.prompt, reuseCount);
+    return draft;
+  }
+
+  return null;
+}
+
 function createChallengeHint(text) {
   const hint = document.createElement("p");
   hint.className = "challenge-hint";
@@ -13525,11 +13656,17 @@ function activityFor(meta) {
       && !cachedQuizLikeOptions.includes(normalizeQuizAnswerKey(cached.answer))
     );
     const cachedQuizTooShort = Boolean(cachedQuizLikeOptions && cachedQuizLikeOptions.length < 4);
+    const cachedOutOfSection = Boolean(
+      QUESTION_ACTIVITY_TYPES.has(cached.type)
+      && !questionActivityMatchesTheme(cached, meta.theme)
+    );
     const shouldRebuild = cached.type === "exhausted"
       || cachedVersion !== ACTIVITY_SCHEMA_VERSION
       || cachedQuizHasDuplicateOptions
       || cachedQuizMissingAnswer
       || cachedQuizTooShort
+      || cachedOutOfSection
+      || !questionActivityIsPlayable(cached)
       || Boolean(cachedMatchingOptions && new Set(cachedMatchingOptions.filter(Boolean)).size !== cachedMatchingOptions.filter(Boolean).length);
     if (shouldRebuild) {
       delete state.stageActivities[cacheKey];
@@ -13600,8 +13737,14 @@ function activityFor(meta) {
   }
 
   if (!activity) {
-    const exhaustedType = (reviewFocus && reviewFocus.kind) || stageKindPlan(meta, difficulty)[0] || "question";
-    activity = buildQuestionPoolExhaustedActivity(meta, exhaustedType);
+    activity = buildSectionSafeQuizActivity(meta, meta.theme, difficulty, reviewFocus);
+  } else if (!activityIsSafeForMeta(activity, meta)) {
+    activity = buildSectionSafeQuizActivity(meta, meta.theme, difficulty, reviewFocus);
+  }
+
+  if (!activity) {
+    activity = buildFallbackQuizActivity(meta, meta.theme, difficulty, null, reviewFocus)
+      || buildQuestionPoolExhaustedActivity(meta, "question");
   }
 
   if (activity && typeof activity === "object") {
@@ -17247,6 +17390,11 @@ function renderStageActivity(meta, activity) {
   if (!activity || typeof activity !== "object") {
     renderPoolExhausted(meta, buildQuestionPoolExhaustedActivity(meta));
     return;
+  }
+
+  if (!activityIsSafeForMeta(activity, meta)) {
+    const difficulty = currentDifficulty();
+    activity = buildSectionSafeQuizActivity(meta, meta.theme, difficulty) || buildQuestionPoolExhaustedActivity(meta);
   }
 
   if (activity.type === "quiz" || activity.type === "speaker" || activity.type === "hebrew") {
