@@ -5,7 +5,7 @@ const MAX_LIVES = 5;
 const MAX_BADGES = 40;
 const XP_STAGE_CLEAR = 25;
 const XP_INTERACTIVE_CLEAR = 60;
-const CONTENT_VERSION = "2026-05-02-saul-david-audio-v1";
+const CONTENT_VERSION = "2026-05-07-final-certificate-v1";
 const CUTSCENE_DURATION_MS = 15000;
 const CUTSCENE_PROGRESS_FRAME_MS_LITE = 80;
 
@@ -10426,7 +10426,7 @@ function updateFinalCertificate() {
   if (finalHeading) finalHeading.textContent = `Congratulations, ${name}!`;
   if (finalMessage) {
     finalMessage.textContent = completedAllDifficulties
-      ? `Your time was not wasted in building your faith, ${name}. You completed the full Genesis-to-David journey and finished the Shield of Progress across Easy, Medium, and Advanced.`
+      ? `Congratulations ${name} for answering and fighting through to reach this point in God's story. The battle is won, but the fight continues. Be ready, FAITHSHIELD warrior!`
       : `Your progress is strong, ${name}. Complete Easy, Medium, and Advanced to finish the full Shield of Progress and unlock the final certificate. Difficulty seals earned: ${difficultyEarned}/3.`;
   }
   if (certificateName) certificateName.textContent = name;
@@ -10446,6 +10446,9 @@ function showFinalOverlay() {
   stopCreditsMusic();
   updateFinalCertificate();
   finalOverlay.classList.remove("hidden");
+  finalOverlay.classList.remove("certificate-unfolding");
+  void finalOverlay.offsetWidth;
+  finalOverlay.classList.add("certificate-unfolding");
   updateOverlayLock();
   playFinaleMusic();
 }
@@ -10453,6 +10456,7 @@ function showFinalOverlay() {
 function hideFinalOverlay() {
   if (!finalOverlay) return;
   finalOverlay.classList.add("hidden");
+  finalOverlay.classList.remove("certificate-unfolding");
   updateOverlayLock();
   stopFinaleMusic();
   if (state.audio.music) startMusicLoop();
